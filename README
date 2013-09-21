@@ -1,0 +1,10 @@
+Kernel README
+=============
+
+TODO
+----
+    * name project
+    * describe build system
+    * how to use bochs
+    * how bochs debugging is implemented
+    * how to use qemu
