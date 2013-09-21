@@ -38,7 +38,7 @@ INCLUDES := -I$(PWD) -I$(PWD)/lib
 ###############################################################################
 .PHONY: all clean 
 
-all: $(OBJFILES) linker.ld
+all: $(OBJFILES) $(HFILES) linker.ld grub.cfg
 	$(CC) -T linker.ld -o myos.bin -ffreestanding -O2 -nostdlib $(OBJFILES) -lgcc
 	mkdir -p isodir
 	mkdir -p isodir/boot
