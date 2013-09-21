@@ -25,3 +25,24 @@ outl:
 	movl 8(%esp), %eax
 	out %eax, %dx
 	ret
+
+.global inb
+inb:
+	xorl %eax, %eax
+	movw 4(%esp), %dx
+	in %dx, %al
+	ret
+
+.global inw
+inw:
+	xorl %eax, %eax
+	movw 4(%esp), %dx
+	in %dx, %ax
+	ret
+
+.global ind
+ind:
+	xorl %eax, %eax
+	movw 4(%esp), %dx
+	in %dx, %eax
+	ret

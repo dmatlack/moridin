@@ -14,8 +14,9 @@ void outw(uint16_t port, uint16_t val);
 // write 4 byte the given port
 void outl(uint16_t port, uint32_t val);
 
-/**
+// read 1 byte from the given port
 uint8_t inb(uint16_t port);
+// read 2 byte from the given port
 uint16_t inw(uint16_t port);
+// read 4 byte from the given port
 uint32_t ind(uint16_t port);
-**/
