@@ -47,11 +47,11 @@ all: $(OBJFILES) linker.ld
 	cp boot/grub.cfg isodir/boot/grub/grub.cfg
 	grub-mkrescue -o myos.iso isodir
 
-print:
-	$(CFILES)
-	$(SFILES)
-	$(HFILES)
-	$(OBJFILES)
+clean:
+	rm -rf isodir
+	rm -rf $(OBJFILES)
+	rm -rf myos.bin
+	rm -rf myos.iso
 
 ###############################################################################
 # General Make Rules for filetypes
