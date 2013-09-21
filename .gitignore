@@ -2,3 +2,4 @@
 *.bin
 *.iso
 isodir/
+.*.swp
