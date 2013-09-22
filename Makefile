@@ -10,7 +10,7 @@ PWD = $(shell pwd)
 ###############################################################################
 
 # directories with source code
-PROJDIRS := boot lib x86 kernel.c
+PROJDIRS := boot lib dev x86 kernel.c
 
 # source files by type
 CFILES = $(shell find $(PWD)/$(PROJDIRS) -type f -name "*.c")
@@ -38,7 +38,7 @@ INCLUDES := -I$(PWD) -I$(PWD)/lib
 ###############################################################################
 .PHONY: all clean 
 
-all: $(OBJFILES) $(HFILES) linker.ld grub.cfg
+all: $(OBJFILES) $(HFILES) linker.ld boot/grub.cfg
 	$(CC) -T linker.ld -o myos.bin -ffreestanding -O2 -nostdlib $(OBJFILES) -lgcc
 	mkdir -p isodir
 	mkdir -p isodir/boot
