@@ -20,3 +20,6 @@ uint8_t inb(uint16_t port);
 uint16_t inw(uint16_t port);
 // read 4 byte from the given port
 uint32_t ind(uint16_t port);
+
+// Delay 1/8 microsecond
+void iodelay(void);

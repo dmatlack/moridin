@@ -46,3 +46,10 @@ ind:
 	movw 4(%esp), %dx
 	in %dx, %eax
 	ret
+.global iodelay
+iodelay:
+    pushl %eax
+    inb $0x80,%al
+    inb $0x80,%al
+    popl %eax
+    ret
