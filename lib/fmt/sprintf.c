@@ -25,7 +25,7 @@
  */
 
 #include <stdarg.h>
-#include "doprnt.h"
+#include <fmt/doprnt.h>
 
 #define SPRINTF_UNLIMITED -1
 struct sprintf_state {

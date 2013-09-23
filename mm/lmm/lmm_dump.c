@@ -23,7 +23,7 @@
  * dump an LMM memory pool and do a thorough sanity check on it.
  */
 
-#include <stdio.h>
+#include <kern/kkprintf.h>
 #include <assert.h>
 
 #include <lmm/lmm.h>
@@ -33,14 +33,14 @@ void lmm_dump(lmm_t *lmm)
 {
 	struct lmm_region *reg;
 
-	printf("lmm_dump(lmm=%p)\n", lmm);
+	kprintf("lmm_dump(lmm=%p)\n", lmm);
 
 	for (reg = lmm->regions; reg; reg = reg->next)
 	{
 		struct lmm_node *node;
 		vm_size_t free_check;
 
-		printf(" region %08lx-%08lx size=%08lx flags=%08x pri=%d free=%08lx\n",
+		kprintf(" region %08lx-%08lx size=%08lx flags=%08x pri=%d free=%08lx\n",
 			reg->min, reg->max, reg->max - reg->min,
 			reg->flags, reg->pri, reg->free);
 
@@ -53,7 +53,7 @@ void lmm_dump(lmm_t *lmm)
 		free_check = 0;
 		for (node = reg->nodes; node; node = node->next)
 		{
-			printf("  node %p-%08lx size=%08lx next=%p\n",
+			kprintf("  node %p-%08lx size=%08lx next=%p\n",
 				node, (vm_offset_t)node + node->size, node->size, node->next);
 
 			assert(((vm_offset_t)node & ALIGN_MASK) == 0);
@@ -65,10 +65,10 @@ void lmm_dump(lmm_t *lmm)
 			free_check += node->size;
 		}
 
-		printf(" free_check=%08lx\n", free_check);
+		kprintf(" free_check=%08lx\n", free_check);
 		assert(reg->free == free_check);
 	}
 
-	printf("lmm_dump done\n");
+	kprintf("lmm_dump done\n");
 }
 

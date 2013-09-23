@@ -35,7 +35,7 @@
 #include <stdarg.h>
 #include <types.h>
 #include <ctype.h>
-#include "doscan.h"
+#include <fmt/doscan.h>
 
 /*
  * All I need is a miracle ...

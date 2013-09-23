@@ -27,47 +27,79 @@
  * the rights to redistribute these changes.
  */
 
-#include <stdio.h>
+
+/*****
+ * 
+ * Modified by David Matlack
+ *
+ *    Added 'k' prefix to datatypes and function names.
+ *
+ *****/
+
+
 #include <stdarg.h>
-#include "doprnt.h"
+#include <fmt/doprnt.h>
+#include <dev/vga.h>
 
 /* This version of printf is implemented in terms of putchar and puts.  */
 
-#define	PRINTF_BUFMAX	128
+#define	KPRINTF_BUFMAX	128
 
-struct printf_state {
-	char buf[PRINTF_BUFMAX];
+struct kprintf_state {
+	char buf[KPRINTF_BUFMAX];
 	unsigned int index;
 };
 
+int kputchar(int c)
+{
+	vga_putbyte(c);
+  return c;
+}
+
+/* Simple puts() implementation that just uses putchar().
+   Note that our printf() is implemented
+   in terms of only puts() and putchar(), so that's all we need.
+   The only reason the caller might want to replace this function
+   is if putchar() has extremely high overhead for some reason.  */
+int kputs(const char *s)
+{
+	while (*s)
+	{
+		kputchar(*s);
+		s++;
+	}
+	kputchar('\n');
+	return 0;
+}
+
 static void
-flush(struct printf_state *state)
+kflush(struct kprintf_state *state)
 {
 	int i;
 
 	for (i = 0; i < state->index; i++)
-		putchar(state->buf[i]);
+		kputchar(state->buf[i]);
 
 	state->index = 0;
 }
 
 static void
-printf_char(arg, c)
+kprintf_char(arg, c)
 	char *arg;
 	int c;
 {
-	struct printf_state *state = (struct printf_state *) arg;
+	struct kprintf_state *state = (struct kprintf_state *) arg;
 
 	if (c == '\n')
 	{
 		state->buf[state->index] = 0;
-		puts(state->buf);
+		kputs(state->buf);
 		state->index = 0;
 	}
-	else if ((c == 0) || (state->index >= PRINTF_BUFMAX))
+	else if ((c == 0) || (state->index >= KPRINTF_BUFMAX))
 	{
-		flush(state);
-		putchar(c);
+		kflush(state);
+		kputchar(c);
 	}
 	else
 	{
@@ -79,15 +111,15 @@ printf_char(arg, c)
 /*
  * Printing (to console)
  */
-int vprintf(const char *fmt, va_list args)
+int kvprintf(const char *fmt, va_list args)
 {
-	struct printf_state state;
+	struct kprintf_state state;
 
 	state.index = 0;
-	_doprnt(fmt, args, 0, (void (*)())printf_char, (char *) &state);
+	_doprnt(fmt, args, 0, (void (*)())kprintf_char, (char *) &state);
 
 	if (state.index != 0)
-	    flush(&state);
+	    kflush(&state);
 
 	/* _doprnt currently doesn't pass back error codes,
 	   so just assume nothing bad happened.  */
@@ -95,13 +127,13 @@ int vprintf(const char *fmt, va_list args)
 }
 
 int
-printf(const char *fmt, ...)
+kprintf(const char *fmt, ...)
 {
 	va_list	args;
 	int err;
 
 	va_start(args, fmt);
-	err = vprintf(fmt, args);
+	err = kvprintf(fmt, args);
 	va_end(args);
 
 	return err;

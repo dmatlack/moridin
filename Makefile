@@ -10,7 +10,7 @@ PWD = $(shell pwd)
 ###############################################################################
 
 # directories with source code
-PROJDIRS := boot lib dev x86 kernel.c
+PROJDIRS := boot lib dev x86 kern
 
 # source files by type
 CFILES = $(shell find $(PWD)/$(PROJDIRS) -type f -name "*.c")
@@ -31,7 +31,7 @@ WARNINGS := -Wall -Wextra -pedantic -Wshadow -Wpointer-arith -Wcast-align \
 			-Wuninitialized -Wconversion -Wstrict-prototypes
 
 CFLAGS := -g -std=c99 -ffreestanding $(WARNINGS)
-INCLUDES := -I$(PWD) -I$(PWD)/lib
+INCLUDES := -I$(PWD) -I$(PWD)/inc
 
 ###############################################################################
 # Targets

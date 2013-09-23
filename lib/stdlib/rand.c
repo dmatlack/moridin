@@ -34,29 +34,3 @@ srand(unsigned new_seed)
 {
 	seed[0] = seed[1] = new_seed;
 }
-
-#if 0 /* test code */
-
-#define CYCLES 100000000
-
-void main(int argc, char **argv)
-{
-	unsigned orig_seed = atol(argv[1]);
-	int i;
-
-	srand(orig_seed);
-	for(i = 0; i < CYCLES; i++)
-	{
-		int r = rand();
-		/*printf("%08x\n", r);*/
-		if ((seed[0] == orig_seed) && (seed[1] == orig_seed))
-		{
-			printf("repeates after %d cycles\n", i);
-			exit(0);
-		}
-	}
-	printf("still not repeating after %d cycles\n", CYCLES);
-}
-
-#endif
-

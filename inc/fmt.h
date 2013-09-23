@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 1995 The University of Utah and
+ * Copyright (c) 1996-1994 The University of Utah and
  * the Computer Systems Laboratory at the University of Utah (CSL).
  * All rights reserved.
  *
@@ -19,21 +19,26 @@
  * improvements that they make and grant CSL redistribution rights.
  */
 
-#include <stdio.h>
+/****
+ *
+ * Modified by David Matlack:
+ *  
+ *    Moved the following out of stdio.h and into fmt.h in order to
+ *    separate the print functionality and format functionality.
+ *
+ ****/
 
-/* Simple puts() implementation that just uses putchar().
-   Note that our printf() is implemented
-   in terms of only puts() and putchar(), so that's all we need.
-   The only reason the caller might want to replace this function
-   is if putchar() has extremely high overhead for some reason.  */
-int puts(const char *s)
-{
-	while (*s)
-	{
-		putchar(*s);
-		s++;
-	}
-	putchar('\n');
-	return 0;
-}
+#ifndef _FMT_H_
+#define _FMT_H_
 
+int vprintf(const char *__format, va_list __vl);
+int sprintf(char *__dest, const char *__format, ...)
+            __attribute__((__format__ (__printf__, 2, 3)));
+int snprintf(char *__dest, size_t __size, const char *__format, ...)
+             __attribute__((__format__ (__printf__, 3, 4)));
+int vsprintf(char *__dest, const char *__format, va_list __vl);
+int vsnprintf(char *__dest, size_t __size, const char *__format, va_list __vl);
+int sscanf(const char *__str, const char *__format, ...)
+           __attribute__((__format__ (__scanf__, 2, 3)));
+
+#endif /* _FLUX_MC_FMT_H_ */

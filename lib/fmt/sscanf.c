@@ -25,7 +25,7 @@
  */
 
 #include <stdarg.h>
-#include "doscan.h"
+#include <fmt/doscan.h>
 
 static int
 readchar(arg)

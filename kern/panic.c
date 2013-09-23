@@ -19,7 +19,7 @@
  * improvements that they make and grant CSL redistribution rights.
  */
 
-#include <stdio.h>
+#include <kern/kprintf.h>
 #include <stdarg.h>
 
 /*
@@ -31,10 +31,10 @@ void panic(const char *fmt, ...)
 	va_list vl;
 
 	va_start(vl, fmt);
-	vprintf(fmt, vl);
+	kvprintf(fmt, vl);
 	va_end(vl);
 
-	printf("\n");
+	kprintf("\n");
 
    /*
     * disable interrupts and loop.
