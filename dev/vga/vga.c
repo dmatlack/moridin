@@ -5,7 +5,7 @@
  *
  * @author David Matlack
  */
-#include "vga.h"
+#include <dev/vga.h>
 #include <x86/io.h>
 
 #define OFFSET(row, col) ((row)*(VGA_COLS) + (col))

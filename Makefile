@@ -31,7 +31,7 @@ WARNINGS := -Wall -Wextra -pedantic -Wshadow -Wpointer-arith -Wcast-align \
 			-Wuninitialized -Wconversion -Wstrict-prototypes
 
 CFLAGS := -g -std=c99 -ffreestanding $(WARNINGS)
-INCLUDES := -I$(PWD) -I$(PWD)/inc
+INCLUDES := -I$(PWD)/inc/lib -I$(PWD)/inc
 
 ###############################################################################
 # Targets

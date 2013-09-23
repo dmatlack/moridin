@@ -2,7 +2,6 @@
 #define _STDLIB_H_
 
 #include <stddef.h>  /* For size_t, NULL */
-#include <malloc.h>  /* "Listen to what the man says" */
 
 long atol(const char *__str);
 #define atoi(str) ((int)atol(str))
