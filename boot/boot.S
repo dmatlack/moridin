@@ -1,13 +1,18 @@
-#
+###############################################################################
 # @file boot/boot.S
 #
-# This file is heavily based off of the Bare Bones tutorial at:
-#   http://wiki.osdev.org/Bare_Bones
+# The Bare Bones tutorial on osdev served as a starting point for this
+# file: http://wiki.osdev.org/Bare_Bones
+#
+# Much of the source code in this file was taken from the CMU Operating
+# Systems course (15-410) starter code.
 #
 # @author David Matlack
-#
+###############################################################################
+#include <x86/seg.h>
 
-.include "x86/gdt.S"
+.global lgdt
+.global _start
 
 # Declare constants used for creating a multiboot header.
 .set ALIGN,    1<<0             # align loaded modules on page boundaries
@@ -16,21 +21,18 @@
 .set MAGIC,    0x1BADB002       # 'magic number' lets bootloader find the header
 .set CHECKSUM, -(MAGIC + FLAGS) # checksum of above, to prove we are multiboot
 
-# Allocate room for a small temporary stack
-.section .bootstrap_stack
-stack_bottom:
-  .space 4096
-stack_top:
+.include "x86/gdt.S"
 
 .section .text
 
-gdt:
+init_gdt: # see x86/gdt.h
   SEGDESC_NULL
   SEGDESC_KERNEL_TSS
   SEGDESC_KERNEL_CS
   SEGDESC_KERNEL_DS
   SEGDESC_USER_CS
   SEGDESC_USER_DS
+init_tss:
 
 # Declare a header as in the Multiboot Standard. The bootloader will 
 # search for this magic sequence and recognize us as a multiboot
@@ -43,21 +45,64 @@ gdt:
 
 # The linker script specifies _start is the entry point of the kernel. The
 # bootloader (e.g. grub) will drop us here.
-.global _start
 _start:
     cli                         # disable all interrupts 
     movl $stack_top, %esp       # set esp so that we can run on a stack
+
+    movl $init_tss, %eax        # set up the Global Descriptor Table
+    subl $init_gdt, %eax
+    subl $1, %eax
+    pushl %eax
+    pushl $init_gdt
+    call lgdt
+    addl $8, %esp
+
     call kernel_main            # enter the kernel (C code entry point)
 
-    # RETURNED FROM KERNEL MAIN = BAD
+    # Y U RETURN FROM KERNEL?
 
     cli                         # disable interrupts
     hlt                         # halt the cpu until the next interrupt arrives
 .Lhang:                         # create a local label rather than a real symbol
     jmp .Lhang                  # loop endlessly
 
+###
+# lgdt -- Load the Global Descriptor Table
+#
+# This function taken from the 15-410 starter code. I did not write it.
+#
+# DOES NOT OBEY C CALLING CONVENTIONS
+###
+lgdt:
+    movl 4(%esp), %eax      # 4(%esp) = gdt limit (the size of the gdt)
+    movl 8(%esp), %ecx      # 8(%esp) = address of the gdt
+    pushl %eax              # push 4 bytes (size of gdt)
+    pushw %cx               # push 2 bytes (addr of gdt)
+    lgdt (%esp)             # load the GDT 
+
+    # Do a longjmp to cause a GDT reload and to set the CS register
+    ljmp $SEGSEL_KERNEL_CS, $lgdt_reload  
+
+    # set the data segment registers
+lgdt_reload:
+    movl $SEGSEL_KERNEL_DS, %eax
+    movw %ax, %ds
+    movw %ax, %es
+    movw %ax, %fs
+    movw %ax, %gs
+    movw %ax, %ss
+    addl $6, %esp
+    ret
+
 # Set the size of the _start symbol to the current location '.' minus its start.
 # This is useful when debugging or when you implement call tracing.
 .size _start, . - _start
 
 .section .data
+
+# Allocate room for a small temporary stack
+.section .bootstrap_stack
+stack_bottom:
+  .space 4096
+stack_top:
+
