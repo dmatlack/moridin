@@ -23,14 +23,7 @@ void kernel_main() {
 
   vga_init();
 
-  for (i = 0; i < 10000; i++) {
-    if (i % 2 == 0) {
-      printf("%s", "Hello World!");
-    }
-    else {
-      printf("Hello 127.0.0.1!");
-    }
-    //delay();
-  }
+  printf("%s %s %s\n", "Things seem to be working", "!", "=)");
 
+  while (1) delay();
 }
