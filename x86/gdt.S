@@ -16,6 +16,7 @@
 
 ###
 # SEGMENT DESCRIPTOR
+#  See Intel IA-32 System Programming Guide (Section 3.4.3)
 #
 #  An 8-byte entry in the Global Descriptor Table. Contains all the 
 #  necessary information used to describe a segment.
