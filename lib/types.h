@@ -15,9 +15,12 @@ typedef unsigned long ptrdiff_t;
 typedef unsigned long vm_offset_t;
 typedef unsigned long vm_size_t;
 
-typedef enum {
-    FALSE = 0,
-    TRUE
-} boolean_t;
+typedef char bool;
+#define true  1
+#define TRUE  1
+#define false 0
+#define FALSE 0
+
+#define boolean_t bool
 
 #endif /* !LIB_TYPES_H */
