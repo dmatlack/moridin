@@ -7,6 +7,8 @@
 # @author David Matlack
 #
 
+.include "x86/gdt.S"
+
 # Declare constants used for creating a multiboot header.
 .set ALIGN,    1<<0             # align loaded modules on page boundaries
 .set MEMINFO,  1<<1             # provide memory map
@@ -21,6 +23,14 @@ stack_bottom:
 stack_top:
 
 .section .text
+
+gdt:
+  SEGDESC_NULL
+  SEGDESC_KERNEL_TSS
+  SEGDESC_KERNEL_CS
+  SEGDESC_KERNEL_DS
+  SEGDESC_USER_CS
+  SEGDESC_USER_DS
 
 # Declare a header as in the Multiboot Standard. The bootloader will 
 # search for this magic sequence and recognize us as a multiboot
