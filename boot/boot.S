@@ -4,11 +4,14 @@
 # The Bare Bones tutorial on osdev served as a starting point for this
 # file: http://wiki.osdev.org/Bare_Bones
 #
-# Much of the source code in this file was taken from the CMU Operating
-# Systems course (15-410) starter code.
+# Much of the source code and layout of this file was taken from the CMU 
+# Operating Systems course (15-410) starter code (410kern/boot/head.S).
+# I mostly just added documentation and separated out some of the code 
+# into separate files.
 #
 # @author David Matlack
 ###############################################################################
+
 #include <x86/seg.h>
 
 .global lgdt
@@ -22,26 +25,26 @@
 .set CHECKSUM, -(MAGIC + FLAGS) # checksum of above, to prove we are multiboot
 
 .include "x86/gdt.S"
+.include "x86/tss.S"
+
+.section .multiboot
+  .align 4
+  .long MAGIC
+  .long FLAGS
+  .long CHECKSUM
 
 .section .text
 
-init_gdt: # see x86/gdt.h
+init_idt: # TODO
+init_gdt: # see x86/gdt.S
   SEGDESC_NULL
   SEGDESC_KERNEL_TSS
   SEGDESC_KERNEL_CS
   SEGDESC_KERNEL_DS
   SEGDESC_USER_CS
   SEGDESC_USER_DS
-init_tss:
-
-# Declare a header as in the Multiboot Standard. The bootloader will 
-# search for this magic sequence and recognize us as a multiboot
-# kernel
-.section .multiboot
-  .align 4
-  .long MAGIC
-  .long FLAGS
-  .long CHECKSUM
+init_tss: # see x86/tss.S
+  TSS_SINGLE_TASK
 
 # The linker script specifies _start is the entry point of the kernel. The
 # bootloader (e.g. grub) will drop us here.
@@ -56,6 +59,11 @@ _start:
     pushl $init_gdt
     call lgdt
     addl $8, %esp
+
+    # TODO set up IDT
+
+    movl $SEGSEL_TSS, %eax      # set up a hardware task
+    ltr %ax
 
     call kernel_main            # enter the kernel (C code entry point)
 
