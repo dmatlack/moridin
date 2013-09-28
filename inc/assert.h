@@ -23,7 +23,13 @@
 #ifndef _ASSERT_H_
 #define _ASSERT_H_
 
-extern void panic(const char *format, ...);
+#define panic(...) \
+  do {                    \
+    kprintf(__VA_ARGS__); \
+    kprintf("\n");        \
+    __asm("cli");         \
+    while (1);            \
+  } while (0)
 
 #define assert(expression)  \
 	((void)((expression) ? 0 : (panic("%s:%u: failed assertion `%s'", \

@@ -3,14 +3,10 @@
  *
  * @author David Matlack
  */
+#include <kernel.h>
+
 #include <x86/io.h>
 #include <dev/vga.h>
-#include <kern/kprintf.h>
-#include <x86/idtr.h>
-
-#if defined(__linux__)
-#error "You are not using a cross-compiler, you will most certainly run into trouble"
-#endif
 
 void delay(void) {
   int i;
@@ -19,7 +15,7 @@ void delay(void) {
   }
 }
 
-void kernel_main(uint32_t esp, uint32_t idt) {
+void kernel_main() {
 
   vga_init();
 
