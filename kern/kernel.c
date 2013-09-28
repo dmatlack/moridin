@@ -4,6 +4,7 @@
  * @author David Matlack
  */
 #include <kernel.h>
+#include <debug.h>
 
 #include <x86/io.h>
 #include <dev/vga.h>
@@ -20,6 +21,7 @@ void kernel_main() {
   vga_init();
 
   kprintf("Hello World!\n");
+  dprintf("Hello Bochs Debug Console!\n");
 
   while (1) {
     delay();
