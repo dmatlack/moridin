@@ -6,8 +6,8 @@
 #
 # Much of the source code and layout of this file was taken from the CMU 
 # Operating Systems course (15-410) starter code (410kern/boot/head.S).
-# I mostly just added documentation and separated out some of the code 
-# into separate files.
+# I mostly just added documentation and organized some of the code into 
+# separate files.
 #
 # @author David Matlack
 ###############################################################################
@@ -50,7 +50,7 @@ init_tss: # see x86/tss.S
 # bootloader (e.g. grub) will drop us here.
 _start:
     cli                         # disable all interrupts 
-    movl $stack_top, %esp       # set esp so that we can run on a stack
+    movl $boot_stack_top, %esp  # set esp so that we can run on a stack
 
     movl $init_tss, %eax        # set up the Global Descriptor Table
     subl $init_gdt, %eax
@@ -109,8 +109,7 @@ lgdt_reload:
 .section .data
 
 # Allocate room for a small temporary stack
-.section .bootstrap_stack
-stack_bottom:
+boot_stack_bottom:
   .space 4096
-stack_top:
+boot_stack_top:
 
