@@ -15,6 +15,7 @@
 #include <x86/seg.h>
 
 .global lgdt
+.global lidt
 .global _start
 
 # Declare constants used for creating a multiboot header.
@@ -35,7 +36,8 @@
 
 .section .text
 
-init_idt: # TODO
+init_idt: # (256 entries) x (8 bytes per entry) = 2048 bytes
+  .space 2048
 init_gdt: # see x86/gdt.S
   SEGDESC_NULL
   SEGDESC_KERNEL_TSS
@@ -60,7 +62,13 @@ _start:
     call lgdt
     addl $8, %esp
 
-    # TODO set up IDT
+    movl $init_gdt, %eax        # set up the Interrupt Descriptor Table
+    subl $init_idt, %eax
+    subl $1, %eax
+    pushl %eax
+    pushl $init_idt
+    call lidt
+    addl $8, %esp
 
     movl $SEGSEL_TSS, %eax      # set up a hardware task
     ltr %ax
@@ -77,15 +85,13 @@ _start:
 ###
 # lgdt -- Load the Global Descriptor Table
 #
-# This function taken from the 15-410 starter code. I did not write it.
-#
-# DOES NOT OBEY C CALLING CONVENTIONS
+# This function taken from the 15-410 starter code. I only added comments.
 ###
 lgdt:
-    movl 4(%esp), %eax      # 4(%esp) = gdt limit (the size of the gdt)
-    movl 8(%esp), %ecx      # 8(%esp) = address of the gdt
-    pushl %eax              # push 4 bytes (size of gdt)
-    pushw %cx               # push 2 bytes (addr of gdt)
+    movl 4(%esp), %eax      # 4(%esp) = address of the gdt
+    movl 8(%esp), %ecx      # 8(%esp) = gdt limit (the size of the gdt)
+    pushl %eax              # push 4 bytes (addr of gdt)
+    pushw %cx               # push 2 bytes (size of gdt)
     lgdt (%esp)             # load the GDT 
 
     # Do a longjmp to cause a GDT reload and to set the CS register
@@ -100,6 +106,20 @@ lgdt_reload:
     movw %ax, %gs
     movw %ax, %ss
     addl $6, %esp
+    ret
+
+###
+# lidt -- Load the Interrupt Descriptor Table
+#
+# This function taken from the 15-410 starter code. I only added comments.
+###
+lidt:
+    movl 4(%esp), %eax    # 4(%esp) is the idt base address
+    movl 8(%esp), %ecx    # 8(%esp) is the idt limit/size
+    pushl %eax            # push 4 bytes for the base address
+    pushw %cx             # push 2 bytes for the limit
+    lidt (%esp)           # load the IDT
+    addl $6, %esp         # clean up our local stack
     ret
 
 # Set the size of the _start symbol to the current location '.' minus its start.

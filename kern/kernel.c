@@ -6,6 +6,7 @@
 #include <x86/io.h>
 #include <dev/vga.h>
 #include <kern/kprintf.h>
+#include <x86/idtr.h>
 
 #if defined(__linux__)
 #error "You are not using a cross-compiler, you will most certainly run into trouble"
@@ -17,15 +18,14 @@ void delay(void) {
     iodelay();
   }
 }
- 
-void kernel_main() {
+
+void kernel_main(uint32_t esp, uint32_t idt) {
 
   vga_init();
 
-  kprintf("%s %s %s\n", "Things seem to be working", "!", "=)");
+  kprintf("Hello World!\n");
 
   while (1) {
     delay();
-    kprintf("Still working...\n");
   }
 }
