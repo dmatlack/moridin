@@ -6,6 +6,11 @@
 #include <x86/pic.h>
 #include <x86/io.h>
 
+int pic_init(uint32_t master_offset, uint32_t slave_offset) {
+  pic_remap(master_offset, slave_offset);
+  return 0;
+}
+
 void pic_remap(uint32_t master_offset, uint32_t slave_offset) {
   uint8_t slave_irq_mask, master_irq_mask;
 

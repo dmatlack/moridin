@@ -81,6 +81,11 @@
 #define PIC_ICW4_8086 0x01
 
 /**
+ * @brief Initialize the PIC with the given master/slave vector offsets.
+ */
+int pic_init(uint32_t master_offset, uint32_t slave_offset);
+
+/**
  * @brief Remap the Master and Slave PIC's Vector Offsets.
  */
 void pic_remap(uint32_t master_offset, uint32_t slave_offset);

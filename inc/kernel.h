@@ -29,7 +29,7 @@ int kprintf(const char *fmt, ...);
 int panic(const char *fmt, ...);
 
 #define must_succeed(expression)  \
-	((void)((expression) ? 0 : (panic("%s:%u: failed assertion `%s'", \
+	((void)((expression) == 0 ? 0 : (panic("%s:%u: failed assertion `%s'", \
 					  __FILE__, __LINE__, #expression), 0)))
 
 #endif /* __KERNEL_H__ */

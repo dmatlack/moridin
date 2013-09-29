@@ -175,6 +175,7 @@ int vga_init(void) {
   vga.cursor_row = 0;
   vga.cursor_col = 0;
   vga.color = VGA_GREEN;
+  return 0;
 }
 
 void vga_putbyte(char ch) {
