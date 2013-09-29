@@ -9,21 +9,16 @@
 #include <x86/io.h>
 #include <dev/vga.h>
 
-void delay(void) {
-  int i;
-  for (i = 0; i < 500000; i++) {
-    iodelay();
-  }
-}
-
 void kernel_main() {
 
-  vga_init();
+  // initialize the Video Graphics Array so we can start printing
+  must_succeed( vga_init() );
 
+  // kernel printing
   kprintf("Hello World!\n");
+
+  // debug printing
   dprintf("Hello Bochs Debug Console!\n");
 
-  while (1) {
-    delay();
-  }
+  while (1) iodelay();
 }

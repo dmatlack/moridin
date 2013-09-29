@@ -17,6 +17,4 @@ int abs(int val);
 
 void qsort(void *a, size_t n, size_t es, int (*cmp)());
 
-void panic(const char *, ...);
-
 #endif
