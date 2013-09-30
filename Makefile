@@ -10,7 +10,7 @@ PWD = $(shell pwd)
 ###############################################################################
 
 # directories with source code
-PROJDIRS := boot lib dev x86 kern debug
+PROJDIR := boot lib dev x86 kernel debug
 
 # source files by type
 CFILES = $(shell find $(PWD)/$(PROJDIRS) -type f -name "*.c")
