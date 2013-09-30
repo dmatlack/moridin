@@ -1,7 +1,7 @@
 Kernel README
 =============
 
-This is a UNIX-like kernel for the i536 architecture.
+This is a kernel for the i536 architecture.
 
 WTF is i586? Learn here:
   http://myonlineusb.wordpress.com/2011/06/08/what-is-the-difference-between-i386-i486-i586-i686-i786/
@@ -12,6 +12,8 @@ Build
 The kernel is build using gcc and binutils, and being compiled for the
 i536 architecture. A good tutorial for building a cross compiler that
 will build this kernel is on osdev: http://wiki.osdev.org/GCC_Cross-Compiler.
+
+You will also need to install the GRUB utility programs and possibly xorisso.
 
 Bochs
 -----
