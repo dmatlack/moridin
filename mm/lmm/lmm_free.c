@@ -20,8 +20,8 @@
  */
 
 #include <assert.h>
-#include <lmm/lmm.h>
-#include <lmm/lmm_types.h>
+#include <mm/lmm.h>
+#include <mm/lmm_types.h>
 
 void lmm_free(lmm_t *lmm, void *block, vm_size_t size)
 {

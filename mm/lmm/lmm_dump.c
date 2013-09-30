@@ -26,8 +26,8 @@
 #include <kernel.h>
 #include <assert.h>
 
-#include <lmm/lmm.h>
-#include <lmm/lmm_types.h>
+#include <mm/lmm.h>
+#include <mm/lmm_types.h>
 
 void lmm_dump(lmm_t *lmm)
 {

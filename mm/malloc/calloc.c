@@ -21,7 +21,7 @@
 
 #include <assert.h>
 #include <stddef.h>
-#include <malloc/malloc_internal.h>
+#include "malloc_internal.h"
 #include <string.h>
 
 void *

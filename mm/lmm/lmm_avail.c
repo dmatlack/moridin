@@ -19,8 +19,8 @@
  * improvements that they make and grant CSL redistribution rights.
  */
 
-#include <lmm/lmm.h>
-#include <lmm/lmm_types.h>
+#include <mm/lmm.h>
+#include <mm/lmm_types.h>
 #include <assert.h>
 
 vm_size_t lmm_avail(lmm_t *lmm, lmm_flags_t flags)

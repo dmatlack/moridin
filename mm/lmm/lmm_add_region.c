@@ -19,8 +19,8 @@
  * improvements that they make and grant CSL redistribution rights.
  */
 
-#include <lmm/lmm.h>
-#include <lmm/lmm_types.h>
+#include <mm/lmm.h>
+#include <mm/lmm_types.h>
 #include <assert.h>
 
 void lmm_add_region(lmm_t *lmm, lmm_region_t *reg,

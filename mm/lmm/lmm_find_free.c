@@ -20,8 +20,8 @@
  */
 
 #include <assert.h>
-#include <lmm/lmm.h>
-#include <lmm/lmm_types.h>
+#include <mm/lmm.h>
+#include <mm/lmm_types.h>
 
 void lmm_find_free(lmm_t *lmm, vm_offset_t *inout_addr,
 		   vm_size_t *out_size, lmm_flags_t *out_flags)

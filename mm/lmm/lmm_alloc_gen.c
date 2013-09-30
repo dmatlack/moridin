@@ -19,8 +19,8 @@
  * improvements that they make and grant CSL redistribution rights.
  */
 
-#include <lmm/lmm.h>
-#include <lmm/lmm_types.h>
+#include <mm/lmm.h>
+#include <mm/lmm_types.h>
 #include <assert.h>
 
 void *lmm_alloc_gen(lmm_t *lmm, vm_size_t size, unsigned flags,

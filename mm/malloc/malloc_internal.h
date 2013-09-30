@@ -23,7 +23,7 @@
 #define _410KERN_MALLOC_INTERNALS_H_
 
 #include <types.h>
-#include <lmm/lmm.h>
+#include <mm/lmm.h>
 
 extern lmm_t malloc_lmm;
 
