@@ -19,7 +19,7 @@ int kputchar(int c) {
 }
 
 int kprintf(const char *fmt, ...) {
-  va_list	args;
+  va_list args;
   int err;
 
   // here we specify our putchar method
