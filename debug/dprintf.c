@@ -18,16 +18,16 @@ static int dputchar(int c) {
 }
 
 int dprintf(const char *fmt, ...) {
-	va_list	args;
-	int err;
+  va_list args;
+  int err;
 
   // here we specify our putchar method
   dprintf_state.putchar = dputchar;
 
   // now print using the specified putchar!
-	va_start(args, fmt);
-	err = _vprintf(&dprintf_state, fmt, args);
-	va_end(args);
+  va_start(args, fmt);
+  err = _vprintf(&dprintf_state, fmt, args);
+  va_end(args);
 
-	return err;
+  return err;
 }

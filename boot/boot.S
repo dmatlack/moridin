@@ -51,36 +51,36 @@ init_tss: # see x86/tss.S
 # The linker script specifies _start is the entry point of the kernel. The
 # bootloader (e.g. grub) will drop us here.
 _start:
-    cli                         # disable all interrupts 
-    movl $boot_stack_top, %esp  # set esp so that we can run on a stack
+  cli                         # disable all interrupts 
+  movl $boot_stack_top, %esp  # set esp so that we can run on a stack
 
-    movl $init_tss, %eax        # set up the Global Descriptor Table
-    subl $init_gdt, %eax
-    subl $1, %eax
-    pushl %eax
-    pushl $init_gdt
-    call lgdt
-    addl $8, %esp
+  movl $init_tss, %eax        # set up the Global Descriptor Table
+  subl $init_gdt, %eax
+  subl $1, %eax
+  pushl %eax
+  pushl $init_gdt
+  call lgdt
+  addl $8, %esp
 
-    movl $init_gdt, %eax        # set up the Interrupt Descriptor Table
-    subl $init_idt, %eax
-    subl $1, %eax
-    pushl %eax
-    pushl $init_idt
-    call lidt
-    addl $8, %esp
+  movl $init_gdt, %eax        # set up the Interrupt Descriptor Table
+  subl $init_idt, %eax
+  subl $1, %eax
+  pushl %eax
+  pushl $init_idt
+  call lidt
+  addl $8, %esp
 
-    movl $SEGSEL_TSS, %eax      # set up a hardware task
-    ltr %ax
+  movl $SEGSEL_TSS, %eax      # set up a hardware task
+  ltr %ax
 
-    call kernel_main            # enter the kernel (C code entry point)
+  call kernel_main            # enter the kernel (C code entry point)
 
-    # Y U RETURN FROM KERNEL?
+  # Y U RETURN FROM KERNEL?
 
-    cli                         # disable interrupts
-    hlt                         # halt the cpu until the next interrupt arrives
+  cli                         # disable interrupts
+  hlt                         # halt the cpu until the next interrupt arrives
 .Lhang:                         # create a local label rather than a real symbol
-    jmp .Lhang                  # loop endlessly
+  jmp .Lhang                  # loop endlessly
 
 ###
 # lgdt -- Load the Global Descriptor Table
@@ -88,25 +88,25 @@ _start:
 # This function taken from the 15-410 starter code. I only added comments.
 ###
 lgdt:
-    movl 4(%esp), %eax      # 4(%esp) = address of the gdt
-    movl 8(%esp), %ecx      # 8(%esp) = gdt limit (the size of the gdt)
-    pushl %eax              # push 4 bytes (addr of gdt)
-    pushw %cx               # push 2 bytes (size of gdt)
-    lgdt (%esp)             # load the GDT 
+  movl 4(%esp), %eax      # 4(%esp) = address of the gdt
+  movl 8(%esp), %ecx      # 8(%esp) = gdt limit (the size of the gdt)
+  pushl %eax              # push 4 bytes (addr of gdt)
+  pushw %cx               # push 2 bytes (size of gdt)
+  lgdt (%esp)             # load the GDT 
 
-    # Do a longjmp to cause a GDT reload and to set the CS register
-    ljmp $SEGSEL_KERNEL_CS, $lgdt_reload  
+  # Do a longjmp to cause a GDT reload and to set the CS register
+  ljmp $SEGSEL_KERNEL_CS, $lgdt_reload  
 
-    # set the data segment registers
+  # set the data segment registers
 lgdt_reload:
-    movl $SEGSEL_KERNEL_DS, %eax
-    movw %ax, %ds
-    movw %ax, %es
-    movw %ax, %fs
-    movw %ax, %gs
-    movw %ax, %ss
-    addl $6, %esp
-    ret
+  movl $SEGSEL_KERNEL_DS, %eax
+  movw %ax, %ds
+  movw %ax, %es
+  movw %ax, %fs
+  movw %ax, %gs
+  movw %ax, %ss
+  addl $6, %esp
+  ret
 
 ###
 # lidt -- Load the Interrupt Descriptor Table
@@ -114,13 +114,13 @@ lgdt_reload:
 # This function taken from the 15-410 starter code. I only added comments.
 ###
 lidt:
-    movl 4(%esp), %eax    # 4(%esp) is the idt base address
-    movl 8(%esp), %ecx    # 8(%esp) is the idt limit/size
-    pushl %eax            # push 4 bytes for the base address
-    pushw %cx             # push 2 bytes for the limit
-    lidt (%esp)           # load the IDT
-    addl $6, %esp         # clean up our local stack
-    ret
+  movl 4(%esp), %eax    # 4(%esp) is the idt base address
+  movl 8(%esp), %ecx    # 8(%esp) is the idt limit/size
+  pushl %eax            # push 4 bytes for the base address
+  pushw %cx             # push 2 bytes for the limit
+  lidt (%esp)           # load the IDT
+  addl $6, %esp         # clean up our local stack
+  ret
 
 # Set the size of the _start symbol to the current location '.' minus its start.
 # This is useful when debugging or when you implement call tracing.
