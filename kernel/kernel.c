@@ -9,14 +9,19 @@
 #include <x86/io.h>
 #include <dev/vga.h>
 
+#include <kernel/interrupts.h>
+
 void kernel_main() {
 
-  // initialize the Video Graphics Array so we can start printing
-  must_succeed( vga_init() );
+  /* initialize the Video Graphics Array so we can start printing */
+  if (vga_init()) {
+    panic("Unable to initialize the VGA device.\n");
+  }
 
-  // intialize the Programmable Interrupt Controller
-  must_succeed( pic_init(0x20, 0x28) );
-
+  /* intialize interrupt handlers */
+  if (interrupts_init()) {
+    panic("Unable to initialize the interrupts handlers.\n");
+  }
 
   // kernel printing
   kprintf("Hello World!\n");
