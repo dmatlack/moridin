@@ -10,14 +10,14 @@
 #include <fmt/_printf.h>
 
 
-static void _puts(printf_t *p, char *s) {
+static void _puts(struct printf_state *p, char *s) {
   while (*s) {
     p->putchar(*s);
     s++;
   }
 }
 
-static void _flush(printf_t *p) {
+static void _flush(struct printf_state *p) {
 	int i;
 
 	for (i = 0; i < p->index; i++)
@@ -27,7 +27,7 @@ static void _flush(printf_t *p) {
 }
 
 static void _printf_callback(char *arg, int c) {
-  printf_t *p = (printf_t *) arg;
+  struct printf_state *p = (struct printf_state *) arg;
 
 	if (c == '\n') {
 		p->buf[p->index] = 0;
@@ -44,7 +44,7 @@ static void _printf_callback(char *arg, int c) {
 	}
 }
 
-int _vprintf(printf_t *p, const char *fmt, va_list args) {
+int _vprintf(struct printf_state *p, const char *fmt, va_list args) {
 
 	p->index = 0;
 

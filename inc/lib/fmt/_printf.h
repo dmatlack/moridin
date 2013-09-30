@@ -10,7 +10,7 @@
 
 #define	_PRINTF_BUFMAX	128
 
-typedef struct {
+struct printf_state {
   /** @brief internal state used by the print functions */
 	char buf[_PRINTF_BUFMAX];
   /** @brief internal state used by the print functions */
@@ -18,9 +18,9 @@ typedef struct {
 
   /* @brief the putchar method this version of printf will use */
   int (*putchar)(int c);
-} printf_t;
+};
 
-int _vprintf(printf_t *p, const char *fmt, va_list args);
+int vprintf(struct printf_state *p, const char *fmt, va_list args);
 
 #endif /* ___PRINTF_H__ */
 

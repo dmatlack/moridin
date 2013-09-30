@@ -11,7 +11,7 @@
 #include <dev/vga.h>     // for the kernel's putchar method
 
 // statically allocate the state for our kernel's printer
-printf_t kprintf_state;
+struct printf_state kprintf_state;
 
 int kputchar(int c) {
   vga_putbyte((char) c);

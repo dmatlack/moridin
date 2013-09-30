@@ -10,7 +10,7 @@
 #include <debug/bochs.h>
 #include <debug.h>
 
-static printf_t dprintf_state;
+struct printf_state dprintf_state;
 
 static int dputchar(int c) {
   bochs_putchar((char) c); 

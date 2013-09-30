@@ -10,7 +10,7 @@
 #include <kernel.h>      // for the kernel's kprintf stuff
 
 /* aaaand we'll just borrow that kernel printf state. thanks kprintf */
-extern printf_t kprintf_state;
+extern struct printf_state kprintf_state;
 
 int panic(const char *fmt, ...) {
 	va_list	args;
