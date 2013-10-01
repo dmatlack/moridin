@@ -26,6 +26,10 @@
  *    3. Task Gate: Used to switch tasks. Hardware Multitasking is not
  *       used in this kernel, so we can ignore this.
  *
+ * IDT Entries 0 through 32 (0x0 to 0x20) are reserved by Intel for
+ * exceptions. Entries 32 to 255 are available for use by PIC IRQ
+ * handlers and system call handlers.
+ *
  * reference: http://wiki.osdev.org/IDT
  *
  * @author David Matlack
