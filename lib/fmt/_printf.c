@@ -15,6 +15,7 @@ static void _puts(struct printf_state *p, char *s) {
     p->putchar(*s);
     s++;
   }
+  p->putchar('\n');
 }
 
 static void _flush(struct printf_state *p) {
