@@ -13,8 +13,8 @@
  * in the Interrupt Descriptor Table (IDT).
  */
 #define INTERRUPTS_IDT_EXN_OFFSET        0x0    // exception handlers
-#define INTERRUPTS_IDT_PIC_MASTER_OFFSET 0x20   // hardware devices
-#define INTERRUPTS_IDT_PIC_SLAVE_OFFSET  0x28   // hardware devices
+#define INTERRUPTS_IDT_PIC_MASTER_OFFSET 0x20   // hardware devices (PIC 1)
+#define INTERRUPTS_IDT_PIC_SLAVE_OFFSET  0x28   // hardware devices (PIC 2)
 #define INTERRUPTS_IDT_SYSCALL_OFFSET    0x40   // system calls
 
 /**
