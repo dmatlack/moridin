@@ -25,30 +25,15 @@
 #include <stdint.h>
 #include <types.h>
 
+#include <x86/reg.h>
+#include <x86/idt.h>
+
 #define X86_TRAP  0x1
 #define X86_FAULT 0x2
 #define X86_ABORT 0x4
-
 #define X86_IS_TRAP(type)   (type & X86_TRAP)
 #define X86_IS_FAULT(type)  (type & X86_FAULT)
 #define X86_IS_ABORT(type)  (type & X86_ABORT)
-
-void x86_exception_handle_all(
-                  /* exception vector */
-                  uint32_t vector,
-                  /* control registers */
-                  uint32_t cr2, uint32_t cr3,
-                  /* segment selectors */
-                  uint32_t ds, uint32_t es, uint32_t fs, uint32_t gs,
-                  /* pusha registers */
-                  unsigned edi,    unsigned esi, unsigned ebp,
-                  unsigned ignore, unsigned ebx, unsigned edx,
-                  unsigned ecx,    unsigned eax, 
-                  /* error code for exception  */
-                  unsigned error_code,
-                  /* machine generated state information */
-                  unsigned eip,    unsigned cs,  unsigned eflags,
-                  unsigned esp,    unsigned ss);
 
 struct x86_exn {
   uint8_t vector;
@@ -57,9 +42,60 @@ struct x86_exn {
   uint8_t type;
   char    cause[128];
   bool    has_error_code;
+  void (*handler)(void);
 };
 
-extern struct x86_exn x86_exceptions[20];
+#define X86_NUM_EXCEPTIONS 20
+extern struct x86_exn x86_exceptions[X86_NUM_EXCEPTIONS];
 
+// WARNING
+//  If you change this macro, you must also change the macro in
+//  x86/exn_wrappers.S !!!!!!!!!!
+#define EXN_HANDLER_NAME(vector)        x86_exn_handle_##vector
+
+#define EXN_HANDLER_PROTOTYPE(vector)   void EXN_HANDLER_NAME(vector)(void)
+
+/*
+ * Generate the exception handler prototypes
+ */
+EXN_HANDLER_PROTOTYPE(0);
+EXN_HANDLER_PROTOTYPE(1);
+EXN_HANDLER_PROTOTYPE(2);
+EXN_HANDLER_PROTOTYPE(3);
+EXN_HANDLER_PROTOTYPE(4);
+EXN_HANDLER_PROTOTYPE(5);
+EXN_HANDLER_PROTOTYPE(6);
+EXN_HANDLER_PROTOTYPE(7);
+EXN_HANDLER_PROTOTYPE(8);
+EXN_HANDLER_PROTOTYPE(9);
+EXN_HANDLER_PROTOTYPE(10);
+EXN_HANDLER_PROTOTYPE(11);
+EXN_HANDLER_PROTOTYPE(12);
+EXN_HANDLER_PROTOTYPE(13);
+EXN_HANDLER_PROTOTYPE(14);
+EXN_HANDLER_PROTOTYPE(15);
+EXN_HANDLER_PROTOTYPE(16);
+EXN_HANDLER_PROTOTYPE(17);
+EXN_HANDLER_PROTOTYPE(18);
+EXN_HANDLER_PROTOTYPE(19);
+
+/**
+ * @brief Install exception handlers for all x86 exceptions.
+ */
+int x86_exn_install_handlers(void);
+
+void x86_exn_handle_all(
+              /* exception vector */
+              uint32_t vector,
+              /* control registers */
+              uint32_t cr2, uint32_t cr3,
+              /* segment selectors */
+              uint32_t ds, uint32_t es, uint32_t fs, uint32_t gs,
+              /* pusha registers */
+              struct x86_pusha_stack pusha,
+              /* error code for exception  */
+              unsigned error_code,
+              /* machine generated state information */
+              struct x86_iret_stack iret);
 
 #endif /* __X86_EXN_H__ */

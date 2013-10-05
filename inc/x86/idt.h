@@ -56,7 +56,16 @@
 
 /* Gate Type (Trap or Interrupt Gate) */
 #define IDT_GATE_TYPE_TRAP 1
-#define INT_GATE_TYPE_INT  0
+#define IDT_GATE_TYPE_INT  0
+
+/*
+ * The following defines how our interrupt handlers will be layed out 
+ * in the Interrupt Descriptor Table (IDT).
+ */
+#define IDT_EXN_OFFSET        0x0    // exception handlers
+#define IDT_PIC_MASTER_OFFSET 0x20   // hardware devices (PIC 1)
+#define IDT_PIC_SLAVE_OFFSET  0x28   // hardware devices (PIC 2)
+#define IDT_SYSCALL_OFFSET    0x40   // system calls
 
 typedef struct {
   uint32_t segsel;

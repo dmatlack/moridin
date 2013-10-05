@@ -19,7 +19,7 @@ struct __attribute__ ((__packed__)) x86_pusha_stack {
   uint32_t edx;
   uint32_t ecx;
   uint32_t eax;
-}
+};
 
 struct __attribute__ ((__packed__)) x86_iret_stack {
   uint32_t eip;
@@ -27,6 +27,6 @@ struct __attribute__ ((__packed__)) x86_iret_stack {
   uint32_t eflags;
   uint32_t esp;
   uint32_t ss;
-}
+};
 
 #endif /* __X86_REG_H_ */

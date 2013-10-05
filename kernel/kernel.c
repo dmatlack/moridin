@@ -6,28 +6,9 @@
 #include <kernel.h>
 #include <debug.h>
 
-#include <x86/io.h>
 #include <dev/vga.h>
-
-#include <kernel/interrupts.h>
-
-#include <x86/exn.h> //TODO remove me
-
-#define array_size(a) (sizeof(a) / sizeof(a[0]))
-
-void print_exn(void) {
-  int i;
-  int size;
-
-  size = array_size(x86_exceptions);
-  for (i = 0; i < size; i++) {
-    struct x86_exn *exn = x86_exceptions + i;
-
-    dprintf("0x%x [%s]: %s (%s)\n", exn->vector, exn->mnemonic, 
-        exn->description, exn->cause);
-  }
-
-}
+#include <x86/exn.h>
+#include <x86/pic.h>
 
 void kernel_main() {
 
@@ -36,17 +17,24 @@ void kernel_main() {
     panic("Unable to initialize the VGA device.\n");
   }
 
-  /* intialize interrupt handlers */
-  if (interrupts_init()) {
-    panic("Unable to initialize the interrupts handlers.\n");
+  /* Initialize the exception handlers by installing handlers in the IDT */
+  if (x86_exn_install_handlers()) {
+    panic("Unable to install x86 exception handlers.\n");
   }
+
+  /* Initialize hardware interrupts by first telling the PIC where in the IDT it 
+   * can find its interrupts handlers, and then installing the necessary interrupts 
+   * handlers for each device connected to the PIC. */
+  pic_init(IDT_PIC_MASTER_OFFSET, IDT_PIC_SLAVE_OFFSET);
+
 
   // kernel printing
   kprintf("Hello World!\n");
   // debug printing
   dprintf("Hello World!\n");
 
-  print_exn();
+  // check exception handling with divide by 0
+  kprintf("%d", 1/0);
 
   while (1) iodelay();
 }
