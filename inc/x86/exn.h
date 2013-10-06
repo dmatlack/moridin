@@ -113,4 +113,12 @@ int x86_exn_init(void (*handler)(struct x86_exn_args *exn));
  */
 void x86_exn_handle_all(struct x86_exn_args args);
 
+/**
+ * @brief Print basic exception information.
+ *
+ * @param vector The exception vector
+ * @param p The printf function to use to print
+ */
+void x86_exn_print(int vector, printf_f p);
+
 #endif /* __X86_EXN_H__ */

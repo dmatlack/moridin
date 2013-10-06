@@ -172,3 +172,9 @@ int x86_exn_init(void (*handler)(struct x86_exn_args *)) {
   return 0;
 }
 
+void x86_exn_print(int vector, printf_f p) {
+  struct x86_exn *exn = &x86_exceptions[vector];
+
+  p("%d %s %s (caused by %s)\n", exn->vector, exn->mnemonic, 
+    exn->description, exn->cause);
+}

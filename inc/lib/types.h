@@ -23,4 +23,6 @@ typedef char bool;
 
 #define boolean_t bool
 
+typedef int (*printf_f)(const char *fmt, ...);
+
 #endif /* !LIB_TYPES_H */

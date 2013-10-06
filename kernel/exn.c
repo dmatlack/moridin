@@ -14,8 +14,9 @@
  * @brief The kernel's global exception handler for the x86 architecture.
  */
 void kernel_x86_exn_handler(struct x86_exn_args *exn) {
-  kprintf("Exception %d occurred", exn->vector);
-  dprintf("Exception %d occurred", exn->vector);
+
+  x86_exn_print(exn->vector, dprintf);
+  x86_exn_print(exn->vector, kprintf);
 
   while (1);
 }
