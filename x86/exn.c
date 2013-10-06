@@ -145,25 +145,30 @@ struct x86_exn x86_exceptions[] = {
    */
 };
 
-int x86_exn_install_handlers(void) {
+static void (*kernel_exn_handler)(struct x86_exn_args *args);
+
+void x86_exn_handle_all(struct x86_exn_args args) {
+  kernel_exn_handler(&args);
+}
+
+int x86_exn_init(void (*handler)(struct x86_exn_args *)) {
   int vector;
 
+  /*
+   * Install handlers in the IDT for each exception type.
+   */
   for (vector = 0; vector < X86_NUM_EXCEPTIONS; vector++) {
-    /* install an exception handler for each x86 exception type */
     idt_install_default_gate(IDT_EXN_OFFSET + vector,
                              x86_exceptions[vector].handler,
                              IDT_GATE_TYPE_TRAP,
                              IDT_PL0);
   }
 
+  /*
+   * Install the kernel's exception handler
+   */
+  kernel_exn_handler = handler;
+
   return 0;
 }
 
-void x86_exn_handle_all(uint32_t vector, uint32_t cr2, uint32_t cr3,
-                        uint32_t ds, uint32_t es, uint32_t fs, uint32_t gs,
-                        struct x86_pusha_stack pusha, unsigned error_code,
-                        struct x86_iret_stack iret) {
-  dprintf("Exception %d occured! Spinning...\n", vector);
-
-  while (1);
-}

@@ -32,4 +32,7 @@ int panic(const char *fmt, ...);
 	((void)((expression) == 0 ? 0 : (panic("%s:%u: failed assertion `%s'", \
 					  __FILE__, __LINE__, #expression), 0)))
 
+#include <x86/exn.h>
+void kernel_x86_exn_handler(struct x86_exn_args *exn);
+
 #endif /* __KERNEL_H__ */

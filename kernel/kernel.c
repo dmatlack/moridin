@@ -12,19 +12,26 @@
 
 void kernel_main() {
 
-  /* initialize the Video Graphics Array so we can start printing */
+  /* 
+   * initialize the Video Graphics Array so we can start printing
+   */
   if (vga_init()) {
     panic("Unable to initialize the VGA device.\n");
   }
 
-  /* Initialize the exception handlers by installing handlers in the IDT */
-  if (x86_exn_install_handlers()) {
+  /* 
+   * initialize the x86 exception handling facilities and install the kernel's
+   * exception handler
+   */
+  if (x86_exn_init(kernel_x86_exn_handler)) {
     panic("Unable to install x86 exception handlers.\n");
   }
 
-  /* Initialize hardware interrupts by first telling the PIC where in the IDT it 
+  /* 
+   * Initialize hardware interrupts by first telling the PIC where in the IDT it 
    * can find its interrupts handlers, and then installing the necessary interrupts 
-   * handlers for each device connected to the PIC. */
+   * handlers for each device connected to the PIC.
+   */
   pic_init(IDT_PIC_MASTER_OFFSET, IDT_PIC_SLAVE_OFFSET);
 
 

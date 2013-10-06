@@ -79,23 +79,38 @@ EXN_HANDLER_PROTOTYPE(17);
 EXN_HANDLER_PROTOTYPE(18);
 EXN_HANDLER_PROTOTYPE(19);
 
-/**
- * @brief Install exception handlers for all x86 exceptions.
- */
-int x86_exn_install_handlers(void);
+struct __attribute__((__packed__)) x86_exn_args {
+  /* exception vector */
+  uint32_t vector;
+  /* control registers */
+  uint32_t cr2;
+  uint32_t cr3;
+  /* segment selectors */
+  uint32_t ds;
+  uint32_t es;
+  uint32_t fs;
+  uint32_t gs;
+  /* pusha registers */
+  struct x86_pusha_stack pusha;
+  /* error code for exception  */
+  uint32_t error_code;
+  /* machine generated state information */
+  struct x86_iret_stack iret;
+};
 
-void x86_exn_handle_all(
-              /* exception vector */
-              uint32_t vector,
-              /* control registers */
-              uint32_t cr2, uint32_t cr3,
-              /* segment selectors */
-              uint32_t ds, uint32_t es, uint32_t fs, uint32_t gs,
-              /* pusha registers */
-              struct x86_pusha_stack pusha,
-              /* error code for exception  */
-              unsigned error_code,
-              /* machine generated state information */
-              struct x86_iret_stack iret);
+/**
+ * @brief Initialize the x86 exception handling by installing base 
+ * handlers into the IDT.
+ */
+int x86_exn_init(void (*handler)(struct x86_exn_args *exn));
+
+/**
+ * @brief The handler for all exceptions. This is NOT the handler installed
+ * in the IDT for exceptions. Instead, all of those handlers call into this
+ * handler, passing in state such as the pusha stack, and the exception vector.
+ *
+ * DO NOT CALL THIS. This is called by x86/exn_wrappers.S.
+ */
+void x86_exn_handle_all(struct x86_exn_args args);
 
 #endif /* __X86_EXN_H__ */
