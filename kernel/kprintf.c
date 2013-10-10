@@ -12,9 +12,14 @@
 
 // statically allocate the state for our kernel's printer
 struct printf_state kprintf_state;
+void (*__kputchar)(char c);
+
+void kputchar_set(void (*kpc)(char)) {
+  __kputchar = kpc;
+}
 
 int kputchar(int c) {
-  vga_putbyte((char) c);
+  __kputchar((char) c);
   return c;
 }
 

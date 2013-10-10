@@ -13,6 +13,11 @@
 #include <stdint.h>
 
 /**
+ * @brief Set the putchar method used by kprintf
+ */
+void kputchar_set(intc);
+
+/**
  * @brief Print a character to the screen.
  */
 int kputchar(int c);

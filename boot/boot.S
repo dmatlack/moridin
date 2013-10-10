@@ -11,7 +11,9 @@
 #
 # @author David Matlack
 ###############################################################################
+#define ASM_FILE
 
+#include <boot/multiboot.h>
 #include <x86/seg.h>
 
 .global lgdt
@@ -19,20 +21,17 @@
 .global _start
 
 # Declare constants used for creating a multiboot header.
-.set ALIGN,    1<<0             # align loaded modules on page boundaries
-.set MEMINFO,  1<<1             # provide memory map
-.set FLAGS,    ALIGN | MEMINFO  # this is the Multiboot 'flag' field
-.set MAGIC,    0x1BADB002       # 'magic number' lets bootloader find the header
-.set CHECKSUM, -(MAGIC + FLAGS) # checksum of above, to prove we are multiboot
+.set MULTIBOOT_HEADER_FLAGS, MULTIBOOT_PAGE_ALIGN | MULTIBOOT_MEMORY_INFO
+.set MULTIBOOT_HEADER_CHECKSUM, -(MULTIBOOT_HEADER_MAGIC + MULTIBOOT_HEADER_FLAGS)
 
 .include "x86/gdt.S"
 .include "x86/tss.S"
 
 .section .multiboot
   .align 4
-  .long MAGIC
-  .long FLAGS
-  .long CHECKSUM
+  .long MULTIBOOT_HEADER_MAGIC
+  .long MULTIBOOT_HEADER_FLAGS
+  .long MULTIBOOT_HEADER_CHECKSUM
 
 .section .text
 
@@ -53,6 +52,9 @@ init_tss: # see x86/tss.S
 _start:
   cli                         # disable all interrupts 
   movl $boot_stack_top, %esp  # set esp so that we can run on a stack
+  pushl %ebx                  # push the address of the multiboot info struct
+  pushl %eax                  # push the multiboot magic value
+  movl %esp, %ebp             # save this stack address in %ebp
 
   movl $init_tss, %eax        # set up the Global Descriptor Table
   subl $init_gdt, %eax
@@ -73,7 +75,8 @@ _start:
   movl $SEGSEL_TSS, %eax      # set up a hardware task
   ltr %ax
 
-  call kernel_main            # enter the kernel (C code entry point)
+  movl %ebp, %esp             # restore the stack
+  call mb_entry               # mb_entry(multiboot_magic, multiboot_info)
 
   # Y U RETURN FROM KERNEL?
 
@@ -133,3 +136,4 @@ boot_stack_bottom:
   .space 4096
 boot_stack_top:
 
+#undef ASM_FILE

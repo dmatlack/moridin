@@ -10,14 +10,7 @@
 #include <x86/exn.h>
 #include <x86/pic.h>
 
-void kernel_main() {
-
-  /* 
-   * initialize the Video Graphics Array so we can start printing
-   */
-  if (vga_init()) {
-    panic("Unable to initialize the VGA device.\n");
-  }
+void kernel_main(int argc, char **argv) {
 
   /* 
    * initialize the x86 exception handling facilities and install the kernel's
@@ -34,11 +27,8 @@ void kernel_main() {
    */
   pic_init(IDT_PIC_MASTER_OFFSET, IDT_PIC_SLAVE_OFFSET);
 
-
-  // kernel printing
-  kprintf("Hello World!\n");
   // debug printing
-  dprintf("Hello World!\n");
+  dprintf("Hello debug console, this is the kernel!\n");
 
   // check exception handling with divide by 0
   kprintf("%d", 1/0);
