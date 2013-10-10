@@ -23,7 +23,7 @@
  * dump an LMM memory pool and do a thorough sanity check on it.
  */
 
-#include <kernel.h>
+#include <kernel/kprintf.h>
 #include <assert.h>
 
 #include <mm/lmm.h>

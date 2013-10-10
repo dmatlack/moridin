@@ -5,11 +5,15 @@
  *
  * @author David Matlack
  */
+#include <kernel.h>
 #include <boot/multiboot.h>
 #include <dev/vga.h>
 #include <stddef.h>
+#include <x86/page.h>
 
-void mb_entry(unsigned int mb_magic, struct multiboot_info mb_info) {
+unsigned int num_phys_pages;
+
+void mb_entry(unsigned int mb_magic, struct multiboot_info *mb_info) {
 
   /* 
    * Initialize the Video Graphics Array so we can start printing
@@ -27,12 +31,12 @@ void mb_entry(unsigned int mb_magic, struct multiboot_info mb_info) {
    * Check that we are in a multiboot environment.
    */
   if (mb_magic != MULTIBOOT_BOOTLOADER_MAGIC) {
-    panic("Multiboot magic incorrect: expected 0x%08x, 0x%08x\n", mb_magic,
-          MULTIBOOT_BOOTLOADER_MAGIC);
+    panic("Multiboot magic (eax) incorrect: expected 0x%08x, 0x%08x\n", 
+          mb_magic, MULTIBOOT_BOOTLOADER_MAGIC);
   }
 
-  //FIXME remove
-  kprintf("mb_magic = 0x%08x, mb_info = %p\n", mb_magic, mb_info);
+  //FIXME overflow?
+  num_phys_pages = (mb_info->mem_upper * 1024) / PAGE_SIZE;
 
   /*
    * And finally enter the kernel

@@ -7,7 +7,7 @@
  */
 #include <stdarg.h>      // for va_list, va_start, va_end
 #include <fmt/_printf.h> // for _vprintf
-#include <kernel.h>      // for the kernel's kprintf stuff
+#include <kernel/kprintf.h>      // for the kernel's kprintf stuff
 
 /* aaaand we'll just borrow that kernel printf state. thanks kprintf */
 extern struct printf_state kprintf_state;
