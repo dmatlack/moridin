@@ -18,6 +18,8 @@
  * CSL requests users of this software to return to csl-dist@cs.utah.edu any
  * improvements that they make and grant CSL redistribution rights.
  */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsign-compare"
 
 #include <stddef.h>
 #include "malloc_internal.h"
@@ -45,3 +47,4 @@ void *_memalign(size_t alignment, size_t size)
 	return chunk+1;
 }
 
+#pragma GCC diagnostic pop

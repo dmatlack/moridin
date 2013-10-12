@@ -25,10 +25,12 @@ OBJFILES = $(patsubst %.c,%.o,$(CFILES)) $(patsubst %.S,%.o,$(SFILES))
 ###############################################################################
 CC = i586-elf-gcc # compiler
 AS = i586-elf-as  # assembler
-WARNINGS := -Wall -Wextra -pedantic -Wshadow -Wpointer-arith -Wcast-align \
-			-Wwrite-strings -Wmissing-prototypes -Wmissing-declarations \
+WARNINGS := -Wall -Wextra -Wshadow -Wpointer-arith -Wcast-align \
+			-Wwrite-strings \
 			-Wredundant-decls -Wnested-externs -Winline -Wno-long-long \
-			-Wuninitialized -Wconversion -Wstrict-prototypes
+			-Wuninitialized \
+			-Werror
+
 
 CFLAGS := -g -std=c99 -ffreestanding $(WARNINGS)
 INCLUDES := -I$(PWD)/inc/lib -I$(PWD)/inc

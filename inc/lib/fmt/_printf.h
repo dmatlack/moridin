@@ -20,7 +20,7 @@ struct printf_state {
   int (*putchar)(int c);
 };
 
-int vprintf(struct printf_state *p, const char *fmt, va_list args);
+int _vprintf(struct printf_state *p, const char *fmt, va_list args);
 
 #endif /* ___PRINTF_H__ */
 

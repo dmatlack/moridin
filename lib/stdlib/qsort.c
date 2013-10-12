@@ -30,6 +30,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsign-compare"
+#pragma GCC diagnostic ignored "-Wsign-conversion"
+#pragma GCC diagnostic ignored "-Wpointer-arith"
 
 #include <types.h>
 #include <stdlib.h>
@@ -168,3 +172,4 @@ loop:	SWAPINIT(a, es);
 	}
 /*		qsort(pn - r, r / es, es, cmp);*/
 }
+#pragma GCC diagnostic pop

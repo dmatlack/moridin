@@ -18,6 +18,8 @@
  * CSL requests users of this software to return to csl-dist@cs.utah.edu any
  * improvements that they make and grant CSL redistribution rights.
  */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wconversion"
 
 #include <types.h>
 
@@ -32,3 +34,4 @@ memset(void *tov, int c, size_t len)
 	return tov;
 }
 
+#pragma GCC diagnostic pop

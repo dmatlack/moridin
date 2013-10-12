@@ -23,6 +23,10 @@
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
  */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsign-conversion"
+#pragma GCC diagnostic ignored "-Wconversion"
+#pragma GCC diagnostic ignored "-Wsign-compare"
 
 #include <stdarg.h>
 #include <fmt/doprnt.h>
@@ -100,3 +104,4 @@ int snprintf(char *s, int size, const char *fmt, ...)
 	return err;
 }
 
+#pragma GCC diagnostic pop

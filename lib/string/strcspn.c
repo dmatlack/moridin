@@ -33,6 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsign-conversion"
 
 #include <types.h>
 #include <string.h>
@@ -62,3 +64,5 @@ strcspn(s1, s2)
 	}
 	/* NOTREACHED */
 }
+
+#pragma GCC diagnostic pop

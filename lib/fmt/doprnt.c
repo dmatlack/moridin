@@ -23,6 +23,9 @@
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
  */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsign-conversion"
+#pragma GCC diagnostic ignored "-Wconversion"
 
 #include <stdarg.h>
 #include <string.h>
@@ -460,7 +463,7 @@ void _doprnt(fmt, args, radix, putc, putc_arg)
 		    p = va_arg(args, char *);
 
 		    if (p == (char *)0)
-			p = "";
+			p = (char *) "";
 
 		    if (length > 0 && !ladjust) {
 			n = 0;
@@ -582,9 +585,9 @@ void _doprnt(fmt, args, radix, putc, putc_arg)
 
 		    if (u != 0 && altfmt) {
 			if (base == 8)
-			    prefix = "0";
+			    prefix = (char *) "0";
 			else if (base == 16)
-			    prefix = "0x";
+			    prefix = (char *) "0x";
 		    }
 
 		    do {
@@ -633,3 +636,5 @@ void _doprnt(fmt, args, radix, putc, putc_arg)
 	fmt++;
 	}
 }
+
+#pragma GCC diagnostic pop

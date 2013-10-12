@@ -9,8 +9,11 @@
 #include <dev/vga.h>
 #include <x86/exn.h>
 #include <x86/pic.h>
+#include <x86/io.h>
 
 void kernel_main(int argc, char **argv) {
+  (void) argc;
+  (void) argv;
 
   /* 
    * initialize the x86 exception handling facilities and install the kernel's
@@ -29,9 +32,6 @@ void kernel_main(int argc, char **argv) {
 
   // debug printing
   dprintf("Hello debug console, this is the kernel!\n");
-
-  // check exception handling with divide by 0
-  kprintf("%d", 1/0);
 
   while (1) iodelay();
 }

@@ -28,6 +28,8 @@
  * which will create horrendous fragmentation and memory loss.
  * Chunks allocated with this function must be freed with sfree().
  */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsign-compare"
 
 #include <stddef.h>
 #include "malloc_internal.h"
@@ -50,3 +52,4 @@ void *_smemalign(size_t alignment, size_t size)
 	return chunk;
 }
 
+#pragma GCC diagnostic pop

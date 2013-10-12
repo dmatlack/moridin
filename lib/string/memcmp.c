@@ -37,6 +37,8 @@
  *	in s1 than in s2 or if s1 is shorter than s2 and the
  *	contents are identical upto the length of s1.
  */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsign-conversion"
 
 int
 memcmp(const void *s1v, const void *s2v, int size)
@@ -51,3 +53,5 @@ memcmp(const void *s1v, const void *s2v, int size)
 
 	return 0;
 }
+
+#pragma GCC diagnostic push

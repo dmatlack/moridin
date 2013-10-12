@@ -15,6 +15,8 @@
  * CSL requests users of this software to return to csl-dist@cs.utah.edu any
  * improvements that they make and grant CSL redistribution rights.
  */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsign-conversion"
 
 #include <string.h>
 #include <stdlib.h>
@@ -35,3 +37,4 @@ char *strstr(const char *haystack, const char *needle)
 	return 0;
 }
 
+#pragma GCC diagnostic pop

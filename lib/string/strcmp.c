@@ -37,6 +37,8 @@
  *	in s1 than in s2 or if s1 is shorter than s2 and the
  *	contents are identical upto the length of s1.
  */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsign-conversion"
 
 int
 strcmp(s1,s2)
@@ -53,3 +55,5 @@ register unsigned int a, b;
 
 	return a-b;
 }
+
+#pragma GCC diagnostic pop

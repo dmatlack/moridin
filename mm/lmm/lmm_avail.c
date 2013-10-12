@@ -18,6 +18,8 @@
  * CSL requests users of this software to return to csl-dist@cs.utah.edu any
  * improvements that they make and grant CSL redistribution rights.
  */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wtype-limits"
 
 #include <mm/lmm.h>
 #include <mm/lmm_types.h>
@@ -45,3 +47,4 @@ vm_size_t lmm_avail(lmm_t *lmm, lmm_flags_t flags)
 	return count;
 }
 
+#pragma GCC diagnostic pop

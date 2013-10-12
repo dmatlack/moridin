@@ -30,6 +30,8 @@
  *
  *	Parse trivially simple strings
  */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wconversion"
 
 #include <stddef.h>
 #include <stdarg.h>
@@ -174,3 +176,4 @@ _doscan(const char *fmt, va_list vp,
 	return vals;
 }
 
+#pragma GCC diagnostic pop

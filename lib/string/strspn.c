@@ -30,6 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsign-conversion"
 
 #include <types.h>
 #include <string.h>
@@ -55,3 +57,5 @@ cont:
 			goto cont;
 	return (p - 1 - s1);
 }
+
+#pragma GCC diagnostic pop

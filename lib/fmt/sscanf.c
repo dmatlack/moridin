@@ -23,6 +23,8 @@
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
  */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 
 #include <stdarg.h>
 #include <fmt/doscan.h>
@@ -61,3 +63,4 @@ int sscanf(char *s, char *fmt, ...)
 	return 0;/*XXX*/
 }
 
+#pragma GCC diagnostic pop

@@ -19,7 +19,7 @@ static void _puts(struct printf_state *p, char *s) {
 }
 
 static void _flush(struct printf_state *p) {
-	int i;
+	unsigned int i;
 
 	for (i = 0; i < p->index; i++)
 		p->putchar(p->buf[i]);
@@ -40,7 +40,7 @@ static void _printf_callback(char *arg, int c) {
     p->putchar(c);
 	}
 	else {
-		p->buf[p->index] = c;
+		p->buf[p->index] = (char) c;
 		p->index++;
 	}
 }
@@ -49,7 +49,7 @@ int _vprintf(struct printf_state *p, const char *fmt, va_list args) {
 
 	p->index = 0;
 
-	_doprnt(fmt, args, 0, (void (*)())_printf_callback, p);
+	_doprnt(fmt, args, 0, (void (*)())_printf_callback, (char *) p);
 
 	if (p->index != 0) {
     _flush(p);

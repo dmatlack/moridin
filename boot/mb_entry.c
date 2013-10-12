@@ -13,8 +13,11 @@
 #include <stddef.h>
 #include <x86/page.h>
 #include <stdint.h>
+#include <assert.h>
 
 unsigned int num_phys_pages;
+
+extern void kernel_main(int argc, char **argv);
 
 void mb_parse(struct multiboot_info *mb_info) {
   uint32_t flags = mb_info->flags;
@@ -86,7 +89,7 @@ void mb_parse(struct multiboot_info *mb_info) {
     p("  TODO\n");
   }
 
-#undef FLAGS(n)
+#undef FLAGS
 }
 
 /**

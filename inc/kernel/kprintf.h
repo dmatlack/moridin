@@ -9,7 +9,7 @@
 /**
  * @brief Set the putchar method used by kprintf
  */
-void kputchar_set(intc);
+void kputchar_set(void (*pc)(char c));
 
 /**
  * @brief Print a character to the screen.

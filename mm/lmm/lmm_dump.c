@@ -22,6 +22,8 @@
  * Debugging routine:
  * dump an LMM memory pool and do a thorough sanity check on it.
  */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wtype-limits"
 
 #include <kernel/kprintf.h>
 #include <assert.h>
@@ -72,3 +74,4 @@ void lmm_dump(lmm_t *lmm)
 	kprintf("lmm_dump done\n");
 }
 
+#pragma GCC diagnostic pop
