@@ -32,6 +32,7 @@ void kernel_main(int argc, char **argv) {
 
   // debug printing
   dprintf("Hello debug console, this is the kernel!\n");
+  kprintf("Hello vga console, this is the kernel!\n");
 
   while (1) iodelay();
 }

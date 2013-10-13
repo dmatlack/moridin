@@ -82,7 +82,7 @@ _start:
 
   cli                         # disable interrupts
   hlt                         # halt the cpu until the next interrupt arrives
-.Lhang:                         # create a local label rather than a real symbol
+.Lhang:                       # create a local label rather than a real symbol
   jmp .Lhang                  # loop endlessly
 
 ###

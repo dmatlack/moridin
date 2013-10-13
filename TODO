@@ -3,5 +3,4 @@ TODO
 
 - Software Exception Handlers
 - Implement generic list, queue, stack data structure
-- Right now the lib/ directory (3rd party code) generates so many warnings
-  it's hard to see warning with the code written for the kernel. 
+- initialize lmm
