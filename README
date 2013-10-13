@@ -38,6 +38,13 @@ Make sure you compile bochs with the debugging enabled:
             --disable-docbook \
             --with-x --with-x11 --with-term
 
+Qemu
+----
+
+To run the kernel, emulating 1GB of memory, run: 
+
+  qemu-system-i386 myos.iso -m 1024
+
 README TODO
 -----------
     * name project
