@@ -11,6 +11,9 @@
 #include <x86/pic.h>
 #include <x86/io.h>
 
+#include <mm/lmm.h>
+lmm_t kernel_lmm = LMM_INITIALIZER;
+
 void kernel_main() {
 
   /* 

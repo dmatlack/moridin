@@ -12,12 +12,31 @@
 #include <stdint.h>
 #include <assert.h>
 
-/**
- * @brief Using the multiboot_info struct, and the information on the
- * available memory regions in the system, do some initialization on
- * the kernel's dynamic memory manager.
+#include <mm/lmm.h>
+
+/*
+ * the instance of lmm used in the kernel to dynamically allocate memory
  */
+extern lmm_t kernel_lmm;
+
+/*
+ * the start and end address of the kernel image
+ */
+extern char __kernel_image_start[];
+extern char __kernel_image_end[];
+
 int mb_lmm_init(struct multiboot_info *mb_info) {
+  uint32_t mem_lower = mb_info->mem_lower * 1024;
+  uint32_t mem_upper = mb_info->mem_upper * 1024;
+  
+  lmm_init(&kernel_lmm);
+
+  dprintf("__kernel_image_start = %p\n", __kernel_image_start);
+  dprintf("__kernel_image_end = %p\n", __kernel_image_end);
+
+  (void) mem_lower;
+  (void) mem_upper;
+
   return 0;
 }
 
