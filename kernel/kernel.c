@@ -11,9 +11,7 @@
 #include <x86/pic.h>
 #include <x86/io.h>
 
-void kernel_main(int argc, char **argv) {
-  (void) argc;
-  (void) argv;
+void kernel_main() {
 
   /* 
    * initialize the x86 exception handling facilities and install the kernel's

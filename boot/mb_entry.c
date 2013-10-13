@@ -17,10 +17,17 @@
 
 unsigned int num_phys_pages;
 
-extern void kernel_main(int argc, char **argv);
+extern void kernel_main(void);
 
 /**
  * @brief The multiboot, C, entry-point to the kernel.
+ *
+ * This function should set up anything the kernel needs to run that is
+ * dependent on this being a multiboot environment (and thus the presence
+ * of the multiboot_info struct).
+ *
+ * @param mb_magic eax, magic value that confirms we are in multiboot
+ * @param mb_info ebx, the multiboot_info struct 
  */
 void mb_entry(unsigned int mb_magic, struct multiboot_info *mb_info) {
 
@@ -47,7 +54,18 @@ void mb_entry(unsigned int mb_magic, struct multiboot_info *mb_info) {
   mb_dump(dprintf, mb_info);
 
   /*
-   * And finally enter the kernel
+   * Initialize the kernel's dynamic memory manager.
    */
-  kernel_main(0, NULL);
+  if (mb_lmm_init(mb_info)) {
+    panic("Unable to initialize kernel dynamic memory.\n");
+  }
+
+  /*
+   * And finally enter the kernel
+   *
+   * TODO: GRUB/multiboot supports passing in a command line to the kernel
+   * (argv, envp). If we want to support that we should parse the cmdline
+   * field of the multiboot info struct and pass it into the kernel.
+   */
+  kernel_main();
 }

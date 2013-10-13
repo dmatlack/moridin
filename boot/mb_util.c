@@ -13,6 +13,15 @@
 #include <assert.h>
 
 /**
+ * @brief Using the multiboot_info struct, and the information on the
+ * available memory regions in the system, do some initialization on
+ * the kernel's dynamic memory manager.
+ */
+int mb_lmm_init(struct multiboot_info *mb_info) {
+  return 0;
+}
+
+/**
  * @brief Dump the contents of the multiboot_info struct using the given
  * printf function.
  *
