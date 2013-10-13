@@ -11,8 +11,10 @@
 #include <x86/page.h>
 #include <stdint.h>
 #include <assert.h>
+#include <kernel/kprintf.h>
 
 #include <mm/lmm.h>
+#include <mm/lmm_types.h>
 
 /*
  * the instance of lmm used in the kernel to dynamically allocate memory
@@ -22,20 +24,100 @@ extern lmm_t kernel_lmm;
 /*
  * the start and end address of the kernel image
  */
-extern char __kernel_image_start[];
-extern char __kernel_image_end[];
+extern char *kernel_image_start;
+extern char *kernel_image_end;
 
+/*
+ * the start address of physical memory dedicated to users
+ */
+extern char *user_mem_start;
+extern char *user_mem_end;
+
+/*
+ * an "lmm_region_t" that covers the entire address space
+ */
+struct lmm_region global_region;
+
+/**
+ * @brief Initialize the kernel's base dynamic memory mangager, lmm.
+ *
+ * lmm needs to know in what regions of memory it can allocate memory.
+ * We use a very simple scheme for determining what regions lmm can use.
+ * The memory layout looks as follows:
+ *
+ *   +-----------------------------+ 0
+ *   | 1 Megabyte (reserved)       |
+ *   +-----------------------------+ 0x100000, kernel_image_start
+ *   | kernel text/data/bss/etc    |
+ *   +-----------------------------+ kernel_image_end
+ *   |                             |
+ *   | Available physical memory   |
+ *   | for lmm/kernel use          |
+ *   |                             |
+ *   +-----------------------------+ user_mem_start
+ *   |                             |
+ *   | Physical memory reserved    |
+ *   | for user processes          |
+ *   |                             |
+ *  ...                           ...
+ *   |                             |
+ *   |                             |
+ *   +-----------------------------+ 0x100000 + (mb_info->mem_upper * 1024)
+ *   (end of available memory)
+ *
+ * As we can see, there is a chunk of memory above the kernel image and below
+ * user memory that we can give to lmm for use in dynamic memory allocation.
+ *
+ */ 
 int mb_lmm_init(struct multiboot_info *mb_info) {
-  uint32_t mem_lower = mb_info->mem_lower * 1024;
-  uint32_t mem_upper = mb_info->mem_upper * 1024;
-  
+  size_t mem_upper_size = mb_info->mem_upper * 1024;
+  size_t mem_upper_start = MEGABYTE;
+  size_t mem_upper_end = mem_upper_start + mem_upper_size;
+  size_t kimg_start = (size_t) kernel_image_start;
+  size_t kimg_end = (size_t) kernel_image_end;
+  size_t umem_start = (size_t) user_mem_start;
+
+  /*
+   * We will create a region of memory, (min, max), that lmm can use to
+   * do all dynamic memory allocation.
+   */
+  size_t min = (size_t) 0;
+  size_t max = (size_t) -1;
+
+  /*
+   * (min,max) must be within upper memory
+   */
+  if (min < mem_upper_start) {
+    min = mem_upper_start;
+  }
+  if (max > mem_upper_end) {
+    max = mem_upper_end;
+  }
+
+  /* 
+   * (min,max) must not overlap the kernel image
+   */
+  if (min < kimg_end && max > kimg_end) {
+    min = kimg_end;
+  }
+  if (max > kimg_start && min < kimg_start) {
+    max = kimg_start;
+  }
+
+  /*
+   * (min,max) must not overlap user memory
+   */
+  if (max > umem_start) {
+    max = umem_start;
+  }
+
+  max = ALIGN_DOWN(max, PAGE_SIZE);
+  min = ALIGN_UP(min, PAGE_SIZE);
+  assert(max > min);
+
   lmm_init(&kernel_lmm);
-
-  dprintf("__kernel_image_start = %p\n", __kernel_image_start);
-  dprintf("__kernel_image_end = %p\n", __kernel_image_end);
-
-  (void) mem_lower;
-  (void) mem_upper;
+  lmm_add_region(&kernel_lmm, &global_region, (size_t) 0, (size_t) -1, 0, 0);
+  lmm_add_free(&kernel_lmm, (void *) min, (size_t) max - min);
 
   return 0;
 }

@@ -351,7 +351,7 @@ cpu: model=p2_klamath, count=1, reset_on_triple_fault=1, ignore_bad_msrs=1, msrs
 # used all allocated host memory and wants more.
 #
 #=======================================================================
-memory: guest=512, host=256
+memory: guest=1024, host=256
 # }}}
 # {{{ MEGS
 #=======================================================================
@@ -360,7 +360,7 @@ memory: guest=512, host=256
 # The maximum amount of memory supported is 2048Mb.
 # The 'MEGS' option is deprecated. Use 'MEMORY' option instead.
 #=======================================================================
-megs: 256
+#megs: 256
 #megs: 128
 #megs: 64
 #megs: 32
