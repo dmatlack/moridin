@@ -12,30 +12,15 @@
 #include <stdint.h>
 #include <assert.h>
 #include <kernel/kprintf.h>
-
-#include <mm/lmm.h>
-#include <mm/lmm_types.h>
+#include <mm/mem.h>
 
 /*
  * the instance of lmm used in the kernel to dynamically allocate memory
  */
+#include <mm/lmm.h>
+#include <mm/lmm_types.h>
 extern lmm_t kernel_lmm;
 
-/*
- * the start and end address of the kernel image
- */
-extern char *kernel_image_start;
-extern char *kernel_image_end;
-
-/*
- * the start address of physical memory dedicated to users
- */
-extern char *user_mem_start;
-extern char *user_mem_end;
-
-/*
- * an "lmm_region_t" that covers the entire address space
- */
 struct lmm_region global_region;
 
 /**
@@ -73,9 +58,6 @@ int mb_lmm_init(struct multiboot_info *mb_info) {
   size_t mem_upper_size = mb_info->mem_upper * 1024;
   size_t mem_upper_start = MEGABYTE;
   size_t mem_upper_end = mem_upper_start + mem_upper_size;
-  size_t kimg_start = (size_t) kernel_image_start;
-  size_t kimg_end = (size_t) kernel_image_end;
-  size_t umem_start = (size_t) user_mem_start;
 
   /*
    * We will create a region of memory, (min, max), that lmm can use to
@@ -85,7 +67,7 @@ int mb_lmm_init(struct multiboot_info *mb_info) {
   size_t max = (size_t) -1;
 
   /*
-   * (min,max) must be within upper memory
+   * (min,max) must be within the available memory (RAM)
    */
   if (min < mem_upper_start) {
     min = mem_upper_start;
@@ -97,23 +79,29 @@ int mb_lmm_init(struct multiboot_info *mb_info) {
   /* 
    * (min,max) must not overlap the kernel image
    */
-  if (min < kimg_end && max > kimg_end) {
-    min = kimg_end;
+  if (min < kernel_image_end && max > kernel_image_end) {
+    min = kernel_image_end;
   }
-  if (max > kimg_start && min < kimg_start) {
-    max = kimg_start;
+  if (max > kernel_image_start && min < kernel_image_start) {
+    max = kernel_image_start;
   }
 
   /*
    * (min,max) must not overlap user memory
    */
-  if (max > umem_start) {
-    max = umem_start;
+  if (max > user_mem_start) {
+    max = user_mem_start;
   }
 
   max = ALIGN_DOWN(max, PAGE_SIZE);
   min = ALIGN_UP(min, PAGE_SIZE);
   assert(max > min);
+
+  /*
+   * SET THE GLOBAL KERNEL MEM VARS
+   */
+  kernel_mem_start = min;
+  kernel_mem_end = max;
 
   lmm_init(&kernel_lmm);
   lmm_add_region(&kernel_lmm, &global_region, (size_t) 0, (size_t) -1, 0, 0);

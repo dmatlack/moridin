@@ -23,4 +23,22 @@
 #define MEGABYTE 0x100000
 #define GIGABYTE 0x40000000
 
+/**
+ * @brief rounds up to the nearest multiple of size
+ * @param size the size
+ * @param val the value to round up
+ * @return the rounded up value
+ */
+#define CEIL(size, val) \
+  (((((unsigned) (val)) + ((unsigned) (size) - 1)) / (size)) * (size))
+
+/**
+ * @brief floors down to the nearest multiple of size
+ * @param size the size
+ * @param val the value to round down
+ * @return the rounded down value
+ */
+#define FLOOR(size, val) \
+  ((((unsigned) (val)) / (size)) * (size))
+
 #endif /* _STDDEF_H_ */

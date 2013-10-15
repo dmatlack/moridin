@@ -18,9 +18,7 @@
 
 #include <kernel/kprintf.h>
 
-#include <mm/lmm.h>
-extern lmm_t kernel_lmm;
-//TODO kmalloc
+#include <kernel/kmalloc.h>
 
 #include <x86/exn.h>
 void kernel_x86_exn_handler(struct x86_exn_args *exn);

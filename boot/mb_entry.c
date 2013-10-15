@@ -14,16 +14,12 @@
 #include <x86/page.h>
 #include <stdint.h>
 #include <assert.h>
+#include <mm/mem.h>
 
 unsigned int num_phys_pages;
 
 extern char __kernel_image_start[];
 extern char __kernel_image_end[];
-
-char *kernel_image_start;
-char *kernel_image_end;
-char *user_mem_start;
-char *user_mem_end;
 
 extern void kernel_main(void);
 
@@ -62,15 +58,14 @@ void mb_entry(unsigned int mb_magic, struct multiboot_info *mb_info) {
   /*
    * read in information about the kernel image
    */
-  kernel_image_start = __kernel_image_start;
-  kernel_image_end = __kernel_image_end;
+  kernel_image_start = (size_t) __kernel_image_start;
+  kernel_image_end = (size_t) __kernel_image_end;
 
   /*
    * determine where the kernel memory ends, and user memory begins
    */
-  //FIXME maybe choose smarter values
-  user_mem_start = (char *) (512 * MEGABYTE);
-  user_mem_end = (char *) (MEGABYTE + mb_info->mem_upper * KILOBYTE);
+  user_mem_start = 512 * MEGABYTE; //FIXME how to choose the size of user memory
+  user_mem_end = MEGABYTE + mb_info->mem_upper * KILOBYTE;
   assert(user_mem_end > user_mem_start);
 
   /*

@@ -7,12 +7,12 @@
 #include <debug.h>
 
 #include <dev/vga.h>
+
 #include <x86/exn.h>
 #include <x86/pic.h>
 #include <x86/io.h>
 
-#include <mm/lmm.h>
-lmm_t kernel_lmm = LMM_INITIALIZER;
+#include <mm/mem.h>
 
 void kernel_main() {
 
@@ -29,11 +29,19 @@ void kernel_main() {
    * can find its interrupts handlers, and then installing the necessary interrupts 
    * handlers for each device connected to the PIC.
    */
-  pic_init(IDT_PIC_MASTER_OFFSET, IDT_PIC_SLAVE_OFFSET);
+  if (pic_init(IDT_PIC_MASTER_OFFSET, IDT_PIC_SLAVE_OFFSET)) {
+    panic("Unable to initialize the PIC.\n");
+  }
 
   // debug printing
   dprintf("Hello debug console, this is the kernel!\n");
   kprintf("Hello vga console, this is the kernel!\n");
+
+  kprintf("Allocating chunk of size %d: %p\n", 1024, kmalloc(1024));
+  kprintf("Allocating chunk of size %d: %p\n", 1024, kmalloc(1024));
+  kprintf("Allocating chunk of size %d: %p\n", 1024, kmalloc(1024));
+  kprintf("Allocating chunk of size %d: %p\n", 1024, kmalloc(1024));
+  mem_layout_dump(kprintf);
 
   while (1) iodelay();
 }
