@@ -41,4 +41,10 @@
 #define FLOOR(size, val) \
   ((((unsigned) (val)) / (size)) * (size))
 
+#define SET_BIT(word, index, bit) \
+  (bit == 0) ?                    \
+    word & ~(1 << index)          \
+    :                             \
+    word | (1 << index)
+
 #endif /* _STDDEF_H_ */

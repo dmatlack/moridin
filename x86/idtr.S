@@ -6,6 +6,7 @@
 #
 # @author David Matlack
 ###
+#define ASM_FILE
 
 .global idt_get_base
 idt_get_base:
@@ -22,3 +23,5 @@ idt_get_limit:
     movw (%esp), %ax    # return the lower 2 bytes (the limit of the idt) 
     addl $6, %esp       # clean up the stack
     ret
+
+#undef ASM_FILE

@@ -23,6 +23,7 @@
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
  */
+#define ASM_FILE
 
 #include <asm_style.h>
 
@@ -133,3 +134,4 @@ ENTRY(memmove)
 	movl	B_ARG1,%esi
 	jmp	bcopy_common
 
+#undef ASM_FILE

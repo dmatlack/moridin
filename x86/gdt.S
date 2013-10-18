@@ -13,6 +13,7 @@
 # 
 # @author David Matlack
 ###
+#define ASM_FILE
 
 ###
 # SEGMENT DESCRIPTOR
@@ -80,3 +81,5 @@
     .long 0x0000ffff
     .long 0x00cff200
 .endm
+
+#undef ASM_FILE

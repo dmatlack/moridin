@@ -15,6 +15,9 @@
 #include <stdint.h>
 #include <assert.h>
 #include <mm/mem.h>
+#include <x86/cpu.h>
+#include <x86/reg.h>
+
 
 unsigned int num_phys_pages;
 
@@ -74,6 +77,11 @@ void mb_entry(unsigned int mb_magic, struct multiboot_info *mb_info) {
   if (mb_lmm_init(mb_info)) {
     panic("Unable to initialize kernel dynamic memory.\n");
   }
+
+  /*
+   * disable the floating point unit for now
+   */
+  x86_disable_fpu();
 
   /*
    * And finally enter the kernel

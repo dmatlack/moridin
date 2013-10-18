@@ -5,6 +5,8 @@
  *
  * @author David Matlack
  */
+#define ASM_FILE
+
 .global outb
 outb:
 	movw 4(%esp), %dx
@@ -53,3 +55,5 @@ iodelay:
     inb $0x80,%al
     popl %eax
     ret
+
+#undef ASM_FILE

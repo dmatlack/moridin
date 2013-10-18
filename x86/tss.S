@@ -20,6 +20,7 @@
 #
 # @author David Matlack
 ###
+#define ASM_FILE
 
 # NOTE: We won't set esp0 at this point (in the TSS). We don't need to set it
 #       until we have a user process that actually could make system calls.
@@ -31,3 +32,5 @@
   .space 92
   .word 0x0068 # IOBP = sizeof(TSS) = 104 = 0x68
 .endm
+
+#undef ASM_FILE
