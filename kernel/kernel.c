@@ -14,6 +14,8 @@
 
 #include <mm/mem.h>
 
+#include <kernel/proc.h>
+
 void kernel_main() {
 
   /* 
