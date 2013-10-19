@@ -25,6 +25,7 @@
 
 void lmm_free_page(lmm_t *lmm, void *page)
 {
-	return lmm_free(lmm, page, PAGE_SIZE);
+  //FIXME MUST REMOVE THE X86 PAGE_SIZE MACROS HERE!!!!
+	return lmm_free(lmm, page, X86_PAGE_SIZE);
 }
 

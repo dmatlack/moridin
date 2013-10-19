@@ -25,7 +25,8 @@
 
 void *lmm_alloc_page(lmm_t *lmm, lmm_flags_t flags)
 {
-	return lmm_alloc_gen(lmm, PAGE_SIZE, flags, PAGE_SHIFT, 0,
+  //FIXME MUST REMOVE THE X86 DEPENDENT MACROS HERE!!!!!
+	return lmm_alloc_gen(lmm, X86_PAGE_SIZE, flags, X86_PAGE_SHIFT, 0,
 			     (vm_offset_t)0, (vm_size_t)-1);
 }
 

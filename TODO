@@ -2,5 +2,5 @@ TODO
 ----
 
 - Software Exception Handlers
-- Implement generic list, queue, stack data structure
-- initialize lmm
+- virtual memory
+- process and thread structs

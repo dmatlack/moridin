@@ -14,9 +14,23 @@
 #include <assert.h>
 
 #include <mm/lmm.h>
+#include <mm/lmm_types.h>
 lmm_t kernel_lmm = LMM_INITIALIZER;
+lmm_region_t global_region;
+
+#include <mm/mem.h>
 
 int kmalloc_init(void) {
+  lmm_init(&kernel_lmm);
+
+  /*
+   * add an lmm_region that covers the entire possible address space (0, -1)
+   */
+  lmm_add_region(&kernel_lmm, &global_region, (size_t) 0, (size_t) -1, 0, 0);
+
+  lmm_add_free(&kernel_lmm, (void *) __KMEM_START, 
+    (size_t) __KMEM_END - __KMEM_START);
+
   return 0;
 }
 

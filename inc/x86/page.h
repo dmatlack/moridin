@@ -4,12 +4,12 @@
  * Joey Echeverria (jge)
  */
 
-#ifndef _PAGE_H_
-#define _PAGE_H_
+#ifndef _X86_PAGE_H_
+#define _X86_PAGE_H_
 
 
 /* Pages are 4K */
-#define PAGE_SHIFT  12
-#define PAGE_SIZE   (1 << PAGE_SHIFT)
+#define X86_PAGE_SHIFT  12
+#define X86_PAGE_SIZE   (1 << X86_PAGE_SHIFT)
 
-#endif /* _PAGE_H_ */
+#endif /* !_X86_PAGE_H_ */

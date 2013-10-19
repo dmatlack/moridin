@@ -21,6 +21,10 @@ void kernel_main() {
   /* 
    * initialize the x86 exception handling facilities and install the kernel's
    * exception handler
+   *
+   * FIXME somehow implement machine independent exception handlers. this will
+   * have to be put off for a while though (until we know exactly what registers
+   * each handler needs to do what it needs to do.
    */
   if (x86_exn_init(kernel_x86_exn_handler)) {
     panic("Unable to install x86 exception handlers.\n");
@@ -33,6 +37,10 @@ void kernel_main() {
    */
   if (pic_init(IDT_PIC_MASTER_OFFSET, IDT_PIC_SLAVE_OFFSET)) {
     panic("Unable to initialize the PIC.\n");
+  }
+
+  if (kmalloc_init()) {
+    panic("Unable to initialize the kernel dynamic memory allocator.\n");
   }
 
   // debug printing

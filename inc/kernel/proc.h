@@ -7,6 +7,8 @@
 #define __KERNEL_PROC_H__
 
 #include <list.h>
+#include <mm/mem.h>
+
 
 struct thread_struct;
 struct process_struct;
@@ -14,10 +16,13 @@ struct process_struct;
 list_typedef(struct thread_struct) thread_list_t;
 list_typedef(struct process_struct) process_list_t;
 
+#define CURRENT_THREAD \
+  ((struct thread_struct *) FLOOR(get_esp(), __PAGE_SIZE))
+
 #define THREAD_KSTACK_SIZE 2048
 struct thread_struct {
   /*
-   * the kernel stack used by this thread
+   * the kernel stack used by this thread. MUST BE PAGE-ALIGNED.
    */
   char  kstack[THREAD_KSTACK_SIZE];
   char *kstack_hi;

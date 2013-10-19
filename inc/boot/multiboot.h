@@ -220,7 +220,6 @@ typedef struct multiboot_mod_list multiboot_module_t;
 
 #include <types.h>
 void mb_dump(printf_f p, struct multiboot_info *mb_info);
-int  mb_lmm_init(struct multiboot_info *mb_info);
 
 #endif /* ! ASM_FILE */
 
