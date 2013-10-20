@@ -1,10 +1,7 @@
-Kernel README
-=============
 
 This is a kernel for the i536 architecture.
 
-WTF is i586? Learn here:
-  http://myonlineusb.wordpress.com/2011/06/08/what-is-the-difference-between-i386-i486-i586-i686-i786/
+http://myonlineusb.wordpress.com/2011/06/08/what-is-the-difference-between-i386-i486-i586-i686-i786/
 
 Build
 -----
