@@ -38,7 +38,7 @@ WARNINGS := \
 			-Werror \
 
 
-CFLAGS := -g -std=c99 -ffreestanding $(WARNINGS)
+CFLAGS := -g -std=c99 -ffreestanding -DARCH_X86 $(WARNINGS)
 INCLUDES := -I$(PWD)/inc/lib -I$(PWD)/inc
 
 ###############################################################################

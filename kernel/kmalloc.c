@@ -34,90 +34,90 @@ int kmalloc_init(void) {
   return 0;
 }
 
+//void *__kmalloc(size_t size) {
+//	size_t *chunk;
+//
+//	size += sizeof(size_t);
+//
+//	if (!(chunk = lmm_alloc(&kernel_lmm, size, 0)))
+//		return 0;
+//
+//	*chunk = size;
+//	return chunk+1;
+//}
+//
+///* safe versions of malloc functions */
+//void *kmalloc(size_t size) {
+//  return __kmalloc(size);
+//}
+//
+////FIXME
+//#pragma GCC diagnostic push
+//#pragma GCC diagnostic ignored "-Wsign-compare"
+//void *kmemalign(size_t alignment, size_t size) {
+//	unsigned shift;
+//	size_t *chunk;
+//
+//	/* Find the alignment shift in bits.  XXX use proc_ops.h  */
+//	for (shift = 0; (1 << shift) < alignment; shift++);
+//
+//	/*
+//	 * Allocate a chunk of LMM memory with the specified alignment shift
+//	 * and an offset such that the memory block we return will be aligned
+//	 * after we add our size field to the beginning of it.
+//	 */
+//	size += sizeof(size_t);
+//
+//	if (!(chunk = lmm_alloc_aligned(&kernel_lmm, size, 0, shift,
+//					   (1 << shift) - sizeof(size_t))))
+//        return NULL;
+//
+//	*chunk = size;
+//	return chunk+1;
+//}
+//#pragma GCC diagnostic pop
+//
+//void *kcalloc(size_t nelt, size_t eltsize) {
+//	size_t allocsize = nelt * eltsize;
+//
+//	void *ptr = __kmalloc(allocsize);
+//	if (!ptr)
+//		return NULL;
+//
+//	memset(ptr, 0, allocsize);
+//
+//	return ptr;
+//}
+//
+//void *krealloc(void *buf, size_t new_size) {
+//	vm_size_t *op;
+//	vm_size_t old_size;
+//	vm_size_t *np;
+//
+//	if (buf == 0)
+//		return __kmalloc(new_size);
+//
+//	op = (vm_size_t*)buf;
+//	old_size = *--op;
+//
+//	new_size += sizeof(vm_size_t);
+//	if (!(np = lmm_alloc(&kernel_lmm, new_size, 0)))
+//	    return NULL;
+//
+//	memcpy(np, op, old_size < new_size ? old_size : new_size);
+//
+//	lmm_free(&kernel_lmm, op, old_size);
+//	
+//	*np++ = new_size;
+//	return np;
+//}
+//
+//void kfree(void *chunk_ptr) {
+//	size_t *chunk = (size_t*)chunk_ptr - 1;
+//	lmm_free(&kernel_lmm, chunk, *chunk);
+//}
+
 void *__kmalloc(size_t size) {
-	size_t *chunk;
-
-	size += sizeof(size_t);
-
-	if (!(chunk = lmm_alloc(&kernel_lmm, size, 0)))
-		return 0;
-
-	*chunk = size;
-	return chunk+1;
-}
-
-/* safe versions of malloc functions */
-void *kmalloc(size_t size) {
-  return __kmalloc(size);
-}
-
-//FIXME
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wsign-compare"
-void *kmemalign(size_t alignment, size_t size) {
-	unsigned shift;
-	size_t *chunk;
-
-	/* Find the alignment shift in bits.  XXX use proc_ops.h  */
-	for (shift = 0; (1 << shift) < alignment; shift++);
-
-	/*
-	 * Allocate a chunk of LMM memory with the specified alignment shift
-	 * and an offset such that the memory block we return will be aligned
-	 * after we add our size field to the beginning of it.
-	 */
-	size += sizeof(size_t);
-
-	if (!(chunk = lmm_alloc_aligned(&kernel_lmm, size, 0, shift,
-					   (1 << shift) - sizeof(size_t))))
-        return NULL;
-
-	*chunk = size;
-	return chunk+1;
-}
-#pragma GCC diagnostic pop
-
-void *kcalloc(size_t nelt, size_t eltsize) {
-	size_t allocsize = nelt * eltsize;
-
-	void *ptr = __kmalloc(allocsize);
-	if (!ptr)
-		return NULL;
-
-	memset(ptr, 0, allocsize);
-
-	return ptr;
-}
-
-void *krealloc(void *buf, size_t new_size) {
-	vm_size_t *op;
-	vm_size_t old_size;
-	vm_size_t *np;
-
-	if (buf == 0)
-		return __kmalloc(new_size);
-
-	op = (vm_size_t*)buf;
-	old_size = *--op;
-
-	new_size += sizeof(vm_size_t);
-	if (!(np = lmm_alloc(&kernel_lmm, new_size, 0)))
-	    return NULL;
-
-	memcpy(np, op, old_size < new_size ? old_size : new_size);
-
-	lmm_free(&kernel_lmm, op, old_size);
-	
-	*np++ = new_size;
-	return np;
-}
-
-void kfree(void *chunk_ptr) {
-	size_t *chunk = (size_t*)chunk_ptr - 1;
-	lmm_free(&kernel_lmm, chunk, *chunk);
-}
-
-void *__ksmalloc(size_t size) {
 	void *chunk;
 
 	if (!(chunk = lmm_alloc(&kernel_lmm, size, 0)))
@@ -126,13 +126,13 @@ void *__ksmalloc(size_t size) {
 	return chunk;
 }
 
-void *ksmalloc(size_t size) {
-  return __ksmalloc(size);
+void *kmalloc(size_t size) {
+  return __kmalloc(size);
 }
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wsign-compare"
-void *ksmemalign(size_t alignment, size_t size) {
+void *kmemalign(size_t alignment, size_t size) {
 	unsigned shift;
 	void *chunk;
 
@@ -150,13 +150,13 @@ void *ksmemalign(size_t alignment, size_t size) {
 }
 #pragma GCC diagnostic pop
 
-void *kscalloc(size_t size) {
-  void *ret = __ksmalloc(size);
+void *kcalloc(size_t size) {
+  void *ret = __kmalloc(size);
   if (ret != NULL)
     memset(ret, 0, size);
   return ret;
 }
 
-void ksfree(void *buf, size_t size) {
+void kfree(void *buf, size_t size) {
 	lmm_free(&kernel_lmm, buf, size);
 }

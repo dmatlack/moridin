@@ -24,18 +24,18 @@
   Q_GET_TAIL(list_ptr)
 
 #define list_size(list_ptr) \
-  Q_GET_SIZE(Q_HEAD)
+  Q_GET_SIZE(list_ptr)
 
-#define list_elem_next(elem_ptr, link_name) \
+#define list_next(elem_ptr, link_name) \
   Q_GET_NEXT(elem_ptr, link_name)
 
-#define list_elem_prev(elem_ptr, link_name) \
+#define list_prev(elem_ptr, link_name) \
   Q_GET_PREV(elem_ptr, link_name)
 
 #define list_elem_init(elem_ptr, link_name) \
   Q_INIT_ELEM(elem_ptr, link_name)
 
-#define list_insert_front(list_ptr, elem_ptr, link_name) \
+#define list_insert_head(list_ptr, elem_ptr, link_name) \
   Q_INSERT_FRONT(list_ptr, elem_ptr, link_name)
 
 #define list_insert_tail(list_ptr, elem_ptr, link_name) \

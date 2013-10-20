@@ -10,10 +10,9 @@
 
 #include <x86/exn.h>
 #include <x86/pic.h>
-#include <x86/io.h>
-#include <x86/vm.h>
 
 #include <mm/mem.h>
+#include <mm/vm.h>
 
 #include <kernel/proc.h>
 
@@ -45,5 +44,9 @@ void kernel_main() {
     panic("Unable to initialize the kernel dynamic memory allocator.\n");
   }
 
-  while (1) iodelay();
+  if (vm_init()) {
+    panic("Unable to initialize the virtual memory layer.\n");
+  }
+
+  while (1);
 }
