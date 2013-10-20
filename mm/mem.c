@@ -52,7 +52,8 @@ int mem_init(size_t max_mem, size_t page_size,
   mem.kernel_image_start = (size_t) kimg_start;
   mem.kernel_image_end = (size_t) kimg_end;
   
-  mem.user_mem_start = 512 * MEGABYTE;
+  //FIXME how should we choose how much user memory to allocate?
+  mem.user_mem_start = MB(512);
   mem.user_mem_end = max_mem; 
 
   mem.page_size = page_size;
@@ -63,13 +64,16 @@ int mem_init(size_t max_mem, size_t page_size,
 
   assert(mem.user_mem_start < mem.user_mem_end);
   assert(mem.kernel_mem_start < mem.kernel_mem_end);
-  assert(mem.kernel_mem_end - mem.kernel_mem_start > 32 * MEGABYTE);
+  assert(mem.kernel_mem_end - mem.kernel_mem_start > MB(32));
 
   return 0;
 }
 
 void mem_layout_dump(printf_f p) {
-  p("=== Kernel Memory Layout ===\n");
+  p("=== Memory Layout ===\n");
+  p("max_mem:               0x%08x\n", mem.max_mem);
+  p("page_size:             0x%08x\n", mem.page_size);
+  p("\n");
   p("kernel_image_start:    0x%08x\n", mem.kernel_image_start);
   p("kernel_image_end:      0x%08x\n", mem.kernel_image_end);
   p("\n");
@@ -78,8 +82,5 @@ void mem_layout_dump(printf_f p) {
   p("\n");
   p("user_mem_start:        0x%08x\n", mem.user_mem_start);
   p("user_mem_end:          0x%08x\n", mem.user_mem_end);
-  p("\n");
-  p("page_size:             0x%08x\n", mem.page_size);
-  p("max_mem:               0x%08x\n", mem.max_mem);
 }
 

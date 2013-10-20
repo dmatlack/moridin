@@ -23,6 +23,10 @@
 #define MEGABYTE 0x100000
 #define GIGABYTE 0x40000000
 
+#define KB(n) ((n) * KILOBYTE)
+#define MB(n) ((n) * MEGABYTE)
+#define GB(n) ((n) * GIGABYTE)
+
 /**
  * @brief rounds up to the nearest multiple of size
  * @param size the size
@@ -46,5 +50,14 @@
     word & ~(1 << index)          \
     :                             \
     word | (1 << index)
+
+/**
+ * @brief Return the binary number that contains n ones in a row.
+ *
+ * e.g.
+ *  MASK(4) = 15 = 1111_2
+ *  MASK(10) = 1023 = 1111111111_2
+ */
+#define MASK(n) ((1 << n) - 1)
 
 #endif /* _STDDEF_H_ */

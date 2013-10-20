@@ -11,12 +11,14 @@
 #include <x86/exn.h>
 #include <x86/pic.h>
 #include <x86/io.h>
+#include <x86/vm.h>
 
 #include <mm/mem.h>
 
 #include <kernel/proc.h>
 
 void kernel_main() {
+  kprintf("Welcome to kernel_main()!\n");
 
   /* 
    * initialize the x86 exception handling facilities and install the kernel's
@@ -42,16 +44,6 @@ void kernel_main() {
   if (kmalloc_init()) {
     panic("Unable to initialize the kernel dynamic memory allocator.\n");
   }
-
-  // debug printing
-  dprintf("Hello debug console, this is the kernel!\n");
-  kprintf("Hello vga console, this is the kernel!\n");
-
-  kprintf("Allocating chunk of size %d: %p\n", 1024, kmalloc(1024));
-  kprintf("Allocating chunk of size %d: %p\n", 1024, kmalloc(1024));
-  kprintf("Allocating chunk of size %d: %p\n", 1024, kmalloc(1024));
-  kprintf("Allocating chunk of size %d: %p\n", 1024, kmalloc(1024));
-  mem_layout_dump(kprintf);
 
   while (1) iodelay();
 }

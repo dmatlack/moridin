@@ -93,5 +93,64 @@ struct __attribute__ ((__packed__)) x86_iret_stack {
 int32_t get_cr0(void);
 void set_cr0(int32_t);
 
+/*
+ * CR2: Address that caused the page fault.
+ */
+int32_t get_cr2(void);
+void set_cr2(int32_t);
+
+/*
+ * CR3: The physical address of the page directory.
+ *
+ *  Name | Bit | Function when set (1)
+ * ------+-----+----------------------------------------------------------------
+ *  PCD  | 4   | Disable caching (L1 and L2) of the page directory
+ *  PWT  | 3   | Write-through caching is enabled (write-back enabled if not set)
+ *
+ */
+#define CR3_PCD 4
+#define CR3_PWT 3
+int32_t get_cr3(void);
+void set_cr3(int32_t);
+
+/*
+ * CR4: Architecture Control Flags
+ *
+ *  Name | Bit | Function when set (1)
+ * ------+-----+----------------------------------------------------------------
+ *  VME  | 0   | Enables interrupt and exception handling extensions in virtual
+ *               8086 mode
+ *  PVI  | 1   | Enables hardware support for a virtual interrupt flag (VIF) in
+ *               protected mode
+ *  TSD  | 2   | Restricts the RTDSC instruction to procedures running at PL0
+ *  DE   | 3   | References to debug registers DR4 and DR5 cause an unidentified
+ *               opcode exception (#UD) to be generated
+ *  PSE  | 4   | Enables 4MB pages when set. (4KB pages if not set)
+ *  PAE  | 5   | Enables paging mechanism to reference 36-bit addresses 
+ *  MCE  | 6   | Enables the machine-check exception
+ *  PGE  | 7   | Enables the global page feature, which allows frequently used
+ *               or shared pages to be marked as global to all users (must set
+ *               the global flag in page-directory and page-table entries).
+ *               Global pages are not flushed from the TLB.
+ *  PCE  | 8   | Enables execution of the RDPMC instruction for programs running
+ *               at any priveledge level
+ *
+ *  OSFXSR     | 9  | OS support for FXSAVE and FXRSTOR instructions
+ *  OSXMMEXCPT | 10 | OS support unmasked SIMD floating point exceptions
+ *
+ */
+#define CR4_VME       0
+#define CR4_PVI       1
+#define CR4_TSD       2
+#define CR4_DE        3
+#define CR4_PSE       4
+#define CR4_PAE       5
+#define CR4_MCE       6
+#define CR4_PGE       7
+#define CR4_PCE       8
+#define CR4_OSFXSR    9
+#define CR4_OSMMEXCPT 10
+int32_t get_cr4(void);
+void set_cr4(int32_t);
 
 #endif /* !__X86_REG_H__ */
