@@ -25,18 +25,6 @@
 #include <stdint.h>
 #include <types.h>
 
-#define X86_PD_SIZE (X86_PAGE_SIZE / sizeof(int32_t))
-#define X86_PT_SIZE (X86_PAGE_SIZE / sizeof(int32_t))
-
-typedef int32_t x86_vme_t;
-
-struct x86_pg_dir {
-  x86_vme_t entries[X86_PD_SIZE];
-};
-
-struct x86_pg_tbl {
-  x86_vme_t entries[X86_PT_SIZE];
-};
 
 int x86_vm_init(size_t kernel_page_size);
 
@@ -192,5 +180,24 @@ int x86_vm_init(size_t kernel_page_size);
  */
 #define PTE_PP        12
 #define PTE_PP_MASK   MASK(20)
+
+typedef int x86_entry_t;
+
+#define X86_PD_LENGTH (X86_PAGE_SIZE / sizeof(int))
+struct x86_pgmap {
+  x86_entry_t entries[X86_PD_SIZE];
+};
+
+#define X86_PT_LENGTH (X86_PAGE_SIZE / sizeof(int))
+struct x86_pgtbl {
+  x86_entry_t entries[X86_PT_SIZE];
+};
+
+/*
+ * Operations on Page Directories
+ */
+struct x86_pgdir *  x86_pgdir_alloc  (void);
+void                x86_pgdir_free   (struct x86_pgdir *pd);
+int                 x86_pgdir_init   (struct x86_pgdir *pd);
 
 #endif /* !__X86_VM_H__ */

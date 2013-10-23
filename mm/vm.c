@@ -86,7 +86,7 @@ int vm_space_init(struct vm_space *vm) {
  *
  * @warning This region must not overlap with any existing regions in the 
  * vm_space.
-  */
+ */
 struct vm_region *vm_add_region(struct vm_space *vm, size_t address,
                                 size_t size, int flags) {
   struct vm_region *newr = NULL;
@@ -95,6 +95,8 @@ struct vm_region *vm_add_region(struct vm_space *vm, size_t address,
   vm_region_init(newr, address, size, flags);
 
   list_insert_tail(&vm->regions, newr, region_link);
+
+  //TODO call into the machine-dependent code to do the mapping
 
   return newr;
 }
