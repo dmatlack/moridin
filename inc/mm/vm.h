@@ -30,11 +30,13 @@ struct vm_region {
 
 #define VM_FLAGS_RW_SHIFT 0
 #define VM_FLAGS_US_SHIFT 1
+#define VM_FLAGS_K_SHIFT  2
 
 #define VM_FLAGS_READONLY   (0 << VM_FLAGS_RW_SHIFT)
 #define VM_FLAGS_READWRITE  (1 << VM_FLAGS_RW_SHIFT)
 #define VM_FLAGS_USER       (0 << VM_FLAGS_US_SHIFT)
 #define VM_FLAGS_SUPERVISOR (1 << VM_FLAGS_US_SHIFT)
+#define VM_FLAGS_KERNEL_MEM (1 << VM_FLAGS_K_SHIFT)
 
 list_typedef(struct vm_region) vm_region_list_t;
 

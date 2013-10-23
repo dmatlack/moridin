@@ -4,13 +4,14 @@
 # by David Matlack
 ###
 PWD = $(shell pwd)
+NAME = myos
 
 ###############################################################################
 # Project Directory/Files
 ###############################################################################
 
 # directories with source code
-PROJDIR := boot lib dev x86 kernel debug
+PROJDIR := boot lib dev x86 kernel debug mm
 
 # source files by type
 CFILES = $(shell find $(PWD)/$(PROJDIRS) -type f -name "*.c")
@@ -37,7 +38,6 @@ WARNINGS := \
 			-Wuninitialized \
 			-Werror \
 
-
 CFLAGS := -g -std=c99 -ffreestanding -DARCH_X86 $(WARNINGS)
 INCLUDES := -I$(PWD)/inc/lib -I$(PWD)/inc
 
@@ -47,19 +47,19 @@ INCLUDES := -I$(PWD)/inc/lib -I$(PWD)/inc
 .PHONY: all clean 
 
 all: $(OBJFILES) $(HFILES) linker.ld boot/grub.cfg
-	$(CC) -T linker.ld -o myos.bin -ffreestanding -O2 -nostdlib $(OBJFILES) -lgcc
+	$(CC) -T linker.ld -o $(NAME).bin -ffreestanding -O2 -nostdlib $(OBJFILES) -lgcc
 	mkdir -p isodir
 	mkdir -p isodir/boot
-	cp myos.bin isodir/boot/myos.bin
+	cp $(NAME).bin isodir/boot/$(NAME).bin
 	mkdir -p isodir/boot/grub
 	cp boot/grub.cfg isodir/boot/grub/grub.cfg
-	grub-mkrescue -o myos.iso isodir
+	grub-mkrescue -o $(NAME).iso isodir
 
 clean:
 	rm -rf isodir
 	rm -rf $(OBJFILES)
-	rm -rf myos.bin
-	rm -rf myos.iso
+	rm -rf $(NAME).bin
+	rm -rf $(NAME).iso
 
 ###############################################################################
 # General Make Rules for filetypes

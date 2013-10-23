@@ -119,6 +119,7 @@ void x86_exn_handle_all(struct x86_exn_args args);
  * @param vector The exception vector
  * @param p The printf function to use to print
  */
-void x86_exn_print(int vector, printf_f p);
+void x86_exn_type_dump(printf_f p, int vector);
+void x86_exn_dump(printf_f p, struct x86_exn_args *exn);
 
 #endif /* __X86_EXN_H__ */

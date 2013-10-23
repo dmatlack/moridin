@@ -8,11 +8,16 @@
 #include <boot/multiboot.h>
 #include <debug.h>
 #include <stddef.h>
-#include <x86/page.h>
 #include <stdint.h>
 #include <assert.h>
 #include <kernel/kprintf.h>
-#include <mm/mem.h>
+#include <x86/exn.h>
+
+void mb_exn_handler(struct x86_exn_args *args) {
+  x86_exn_dump(kprintf, args);
+  panic("Exception this early in boot is unrecoverable. Aborting.");
+}
+
 
 /**
  * @brief Dump the contents of the multiboot_info struct using the given

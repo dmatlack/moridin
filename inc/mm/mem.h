@@ -27,14 +27,14 @@ struct mem_map {
 };
 
 extern struct mem_map mem;
-#define __KIMG_START   (mem.kernel_image_start)
-#define __KIMG_END     (mem.kernel_image_end)
-#define __KMEM_START   (mem.kernel_mem_start)
-#define __KMEM_END     (mem.kernel_mem_end)
-#define __UMEM_START   (mem.user_mem_start)
-#define __UMEM_END     (mem.user_mem_end)
-#define __PAGE_SIZE    (mem.page_size)
-#define __MAX_MEM      (mem.max_mem)
+#define KIMG_START   (mem.kernel_image_start)
+#define KIMG_END     (mem.kernel_image_end)
+#define KMEM_START   (mem.kernel_mem_start)
+#define KMEM_END     (mem.kernel_mem_end)
+#define UMEM_START   (mem.user_mem_start)
+#define UMEM_END     (mem.user_mem_end)
+#define PAGE_SIZE    (mem.page_size)
+#define MAX_MEM      (mem.max_mem)
 
 #define PAGE_ALIGN_UP(n) \
   CEIL(mem.page_size, n)

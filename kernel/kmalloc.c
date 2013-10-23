@@ -28,8 +28,8 @@ int kmalloc_init(void) {
    */
   lmm_add_region(&kernel_lmm, &global_region, (size_t) 0, (size_t) -1, 0, 0);
 
-  lmm_add_free(&kernel_lmm, (void *) __KMEM_START, 
-    (size_t) __KMEM_END - __KMEM_START);
+  lmm_add_free(&kernel_lmm, (void *) KMEM_START, 
+    (size_t) KMEM_END - KMEM_START);
 
   return 0;
 }

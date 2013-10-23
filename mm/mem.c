@@ -48,19 +48,18 @@ int mem_init(size_t max_mem, size_t page_size,
               char kimg_start[], char kimg_end[]) {
 
   mem.max_mem = max_mem;
+  mem.page_size = page_size;
 
-  mem.kernel_image_start = (size_t) kimg_start;
-  mem.kernel_image_end = (size_t) kimg_end;
+  mem.kernel_image_start = PAGE_ALIGN_DOWN((size_t) kimg_start);
+  mem.kernel_image_end = PAGE_ALIGN_UP((size_t) kimg_end);
   
   //FIXME how should we choose how much user memory to allocate?
   mem.user_mem_start = MB(512);
-  mem.user_mem_end = max_mem; 
-
-  mem.page_size = page_size;
+  mem.user_mem_end = PAGE_ALIGN_DOWN(max_mem);
 
   //FIXME should we move kernel_mem_start to after 16 MB?
-  mem.kernel_mem_start = PAGE_ALIGN_UP(mem.kernel_image_end);
-  mem.kernel_mem_end = PAGE_ALIGN_DOWN(mem.user_mem_start);
+  mem.kernel_mem_start = mem.kernel_image_end;
+  mem.kernel_mem_end = mem.user_mem_start;
 
   assert(mem.user_mem_start < mem.user_mem_end);
   assert(mem.kernel_mem_start < mem.kernel_mem_end);

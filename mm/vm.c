@@ -46,11 +46,29 @@
 #include <x86/vm.h>
 #endif
 
+struct vm_region kimg_region;
+struct vm_region kmem_region;
+
+void vm_region_init(struct vm_region *r, size_t address, size_t size,
+                    int flags) {
+  r->flags = flags;
+  r->address = address;
+  r->size = size;
+  r->object = NULL; //FIXME
+}
+
+
 int vm_init(void) {
 
 #ifdef ARCH_X86
-  x86_vm_init(__PAGE_SIZE);
+  x86_vm_init(PAGE_SIZE);
 #endif
+
+  vm_region_init(&kimg_region, KIMG_START, KIMG_END,
+                 VM_FLAGS_SUPERVISOR | VM_FLAGS_READONLY);
+
+  vm_region_init(&kmem_region, KMEM_START, KMEM_END,
+                 VM_FLAGS_SUPERVISOR | VM_FLAGS_READWRITE);
 
   return 0;
 }
@@ -74,10 +92,7 @@ struct vm_region *vm_add_region(struct vm_space *vm, size_t address,
   struct vm_region *newr = NULL;
 
   newr = kmalloc(sizeof(struct vm_region));
-  newr->flags = flags;
-  newr->address = address;
-  newr->size = size;
-  newr->object = NULL; //FIXME
+  vm_region_init(newr, address, size, flags);
 
   list_insert_tail(&vm->regions, newr, region_link);
 

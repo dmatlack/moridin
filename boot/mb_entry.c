@@ -17,6 +17,7 @@
 #include <mm/mem.h>
 #include <x86/cpu.h>
 #include <x86/reg.h>
+#include <x86/exn.h>
 
 extern char __kernel_image_start[];
 extern char __kernel_image_end[];
@@ -45,7 +46,19 @@ void mb_entry(unsigned int mb_magic, struct multiboot_info *mb_info) {
           MULTIBOOT_BOOTLOADER_MAGIC, mb_magic);
   }
 
-  if (mem_init(MEGABYTE + 1024 * mb_info->mem_upper, X86_PAGE_SIZE,
+  /* 
+   * initialize the x86 exception handling facilities and install the kernel's
+   * exception handler
+   *
+   * FIXME somehow implement machine independent exception handlers. this will
+   * have to be put off for a while though (until we know exactly what registers
+   * each handler needs to do what it needs to do.
+   */
+  if (x86_exn_init(mb_exn_handler)) {
+    panic("Unable to install x86 exception handlers.\n");
+  }
+
+  if (mem_init(MB(1) + (1024 * mb_info->mem_upper), X86_PAGE_SIZE,
                __kernel_image_start, __kernel_image_end)) {
     panic("Unable to initialize memory constructs\n");
   }

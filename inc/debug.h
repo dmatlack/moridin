@@ -16,4 +16,7 @@
  */
 int dprintf(const char *fmt, ...);
 
+#define MAGIC_BREAK \
+  __asm__("xchg %bx, %bx");
+
 #endif /* __DEBUG_H__ */

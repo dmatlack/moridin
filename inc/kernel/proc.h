@@ -17,7 +17,7 @@ list_typedef(struct thread_struct) thread_list_t;
 list_typedef(struct process_struct) process_list_t;
 
 #define CURRENT_THREAD \
-  ((struct thread_struct *) FLOOR(get_esp(), __PAGE_SIZE))
+  ((struct thread_struct *) FLOOR(get_esp(), PAGE_SIZE))
 
 #define THREAD_KSTACK_SIZE 2048
 struct thread_struct {
@@ -58,4 +58,4 @@ struct process_struct {
 };
 
 
-#endif /* !__KERNEL_PROC_H__ */
+#endif /* !_KERNEL_PROC_H__ */
