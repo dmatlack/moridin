@@ -14,7 +14,7 @@
 #define GENERATE_CRX_SET_BIT_FN(_CRX_) \
   void cr##_CRX_##_set_bit(int index, int bit) { \
     int cr = get_cr##_CRX_(); \
-    cr = SET_BIT(cr, index, bit); \
+    SET_BIT(cr, index, bit); \
     set_cr##_CRX_(cr); \
   }
 GENERATE_CRX_SET_BIT_FN(0)

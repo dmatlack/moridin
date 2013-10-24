@@ -11,7 +11,7 @@
 #include <x86/exn.h>
 #include <x86/pic.h>
 
-#include <mm/mem.h>
+#include <mm/physmem.h>
 #include <mm/vm.h>
 
 #include <kernel/proc.h>

@@ -18,7 +18,7 @@
 lmm_t kernel_lmm = LMM_INITIALIZER;
 lmm_region_t global_region;
 
-#include <mm/mem.h>
+#include <mm/physmem.h>
 
 int kmalloc_init(void) {
   lmm_init(&kernel_lmm);
@@ -28,8 +28,10 @@ int kmalloc_init(void) {
    */
   lmm_add_region(&kernel_lmm, &global_region, (size_t) 0, (size_t) -1, 0, 0);
 
-  lmm_add_free(&kernel_lmm, (void *) KMEM_START, 
-    (size_t) KMEM_END - KMEM_START);
+  //FIXME
+  lmm_add_free(&kernel_lmm, 
+    (void *) ZONE_KERNEL->address, 
+    (size_t) ZONE_KERNEL->size);
 
   return 0;
 }

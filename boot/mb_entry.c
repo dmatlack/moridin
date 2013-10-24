@@ -14,7 +14,7 @@
 #include <x86/page.h>
 #include <stdint.h>
 #include <assert.h>
-#include <mm/mem.h>
+#include <mm/physmem.h>
 #include <x86/cpu.h>
 #include <x86/reg.h>
 #include <x86/exn.h>
@@ -62,6 +62,8 @@ void mb_entry(unsigned int mb_magic, struct multiboot_info *mb_info) {
                __kernel_image_start, __kernel_image_end)) {
     panic("Unable to initialize memory constructs\n");
   }
+
+  mem_layout_dump(dprintf);
 
   x86_disable_fpu();
 

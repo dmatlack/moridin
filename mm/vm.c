@@ -37,7 +37,7 @@
  * @author David Matlack
  */
 #include <mm/vm.h>
-#include <mm/mem.h>
+#include <mm/physmem.h>
 
 #include <kernel/kmalloc.h>
 #include <stddef.h>
@@ -63,12 +63,6 @@ int vm_init(void) {
 #ifdef ARCH_X86
   x86_vm_init(PAGE_SIZE);
 #endif
-
-  vm_region_init(&kimg_region, KIMG_START, KIMG_END,
-                 VM_FLAGS_SUPERVISOR | VM_FLAGS_READONLY);
-
-  vm_region_init(&kmem_region, KMEM_START, KMEM_END,
-                 VM_FLAGS_SUPERVISOR | VM_FLAGS_READWRITE);
 
   return 0;
 }

@@ -9,7 +9,7 @@
 #include <x86/page.h>
 #include <x86/reg.h>
 
-#include <mm/mem.h>
+#include <mm/physmem.h>
 #include <kernel/kmalloc.h>
 
 #include <stddef.h>
@@ -33,7 +33,7 @@ int x86_vm_init(size_t kernel_page_size) {
   SET_BIT(e, PDE_PRESENT,   0); // the entry is not present
   SET_BIT(e, PDE_PCD,       1); // disable caching
   SET_BIT(e, PDE_PS,        0); // pages are 4KB
-  initial_entry = e;
+  __initial_entry = e;
 
   return 0;
 }
@@ -58,7 +58,7 @@ void x86_pgdir_free(struct x86_pgdir *pd) {
  */
 int x86_pgdir_init(struct x86_pgdir *pd) {
   int i;
-  for (i = 0; i < X86_PD_LENGTH; i++) {
+  for (i = 0; i < X86_PD_SIZE; i++) {
     pd->entries[i] = __initial_entry;
   }
   return 0;

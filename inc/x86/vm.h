@@ -183,12 +183,12 @@ int x86_vm_init(size_t kernel_page_size);
 
 typedef int x86_entry_t;
 
-#define X86_PD_LENGTH (X86_PAGE_SIZE / sizeof(int))
-struct x86_pgmap {
+#define X86_PD_SIZE ((int) (X86_PAGE_SIZE / sizeof(int)))
+struct x86_pgdir {
   x86_entry_t entries[X86_PD_SIZE];
 };
 
-#define X86_PT_LENGTH (X86_PAGE_SIZE / sizeof(int))
+#define X86_PT_SIZE ((int) (X86_PAGE_SIZE / sizeof(int)))
 struct x86_pgtbl {
   x86_entry_t entries[X86_PT_SIZE];
 };

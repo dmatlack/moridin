@@ -46,10 +46,12 @@
   ((((unsigned) (val)) / (size)) * (size))
 
 #define SET_BIT(word, index, bit) \
-  (bit == 0) ?                    \
-    word & ~(1 << index)          \
-    :                             \
-    word | (1 << index)
+  do {                            \
+    word = (bit == 0) ?           \
+        word & ~(1 << index)      \
+        :                         \
+        word | (1 << index);      \
+  } while (0)
 
 /**
  * @brief Return the binary number that contains n ones in a row.
