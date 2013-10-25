@@ -5,6 +5,7 @@
  */
 #include <mm/physmem.h>
 
+#include <kernel/kmalloc.h>
 #include <kernel/kprintf.h> //remove me
 #include <debug.h>
 
@@ -14,15 +15,19 @@
 struct pmem_map __pmem;
 
 /**
- * @brief Initialize the memory constructs.
+ * @brief Initialize the the pmem_map struct that contains all of the
+ * basic physical memory attributes needed by the kernel.
  *
- * @param mem_max The maximum available memory on the system.
+ * This function does NOT initialize the physical memory allocator, which
+ * requires dynamic memory allocation and therefore virtual memory.
+ * 
+ * @param mem_max The maximum available physical memory on the system.
  * @param page_size The size of memory pages on the system.
  * @param kimg_start The start address of the kernel image in memory.
  * @param kimg_end The end address of the kernel image in memory.
  */
-int mem_init(size_t max_mem, size_t page_size,
-             char kimg_start[], char kimg_end[]) {
+int pmem_bootstrap(size_t max_mem, size_t page_size,
+                   char kimg_start[], char kimg_end[]) {
   size_t kmem_size;
   size_t umem_size;
   size_t mem_avail;
@@ -36,7 +41,6 @@ int mem_init(size_t max_mem, size_t page_size,
   ZONE_BIOS->address = 0;
   ZONE_BIOS->size = MB(1);
   ZONE_BIOS->dbgstr = "ZONE_BIOS";
-  dprintf("ZONE_BIOS: start = 0x%08x, size = 0x%08x\n", ZONE_BIOS->address, ZONE_BIOS->size);
 
   ZONE_DMA->address = MB(1);
   ZONE_DMA->size = MB(15);
@@ -51,7 +55,6 @@ int mem_init(size_t max_mem, size_t page_size,
   mem_avail = max_mem - MB(16);
   assert(mem_avail >= CONFIG_MIN_USER_MEM + CONFIG_MIN_KERNEL_MEM);
 
-  //FIXME hack
   umem_size = PAGE_ALIGN_DOWN(mem_avail / 4 * 3);
   kmem_size = PAGE_ALIGN_DOWN(mem_avail - umem_size);
 
@@ -74,25 +77,107 @@ int mem_init(size_t max_mem, size_t page_size,
   return 0;
 }
 
-void mem_layout_dump(printf_f p) {
+/**
+ * @breif Initialize the physical memory management system.
+ *
+ * @warning Must be called AFTER pmem_bootstrap().
+ * @warning DO NOT CALL THIS FUNCTION BEFORE VIRTUAL MEMORY AND KMALLOC
+ * HAVE BEEN SET UP.
+ */
+int pmem_init(void) {
+  int z;
+  int p;
+
+  /*
+   * kmalloc each zones page list and set the reference counts of each
+   * page to zero
+   */
+  for (z = 0; z < PMEM_NUM_ZONES; z++) {
+    struct pmem_zone *zone = ZONE(z);
+
+    zone->num_pages = zone->size / PAGE_SIZE;
+    zone->num_free = zone->num_pages;
+    zone->page_index = 0;
+    zone->pages = kmalloc(zone->num_pages * sizeof(struct pmem_page));
+
+    /*
+     * zone->address and zone->size should have already been initialize in
+     * pmem_bootstrap()
+     */
+
+    for (p = 0; p < zone->num_pages; p++) {
+      zone->pages[p].refcount = 0;
+    }
+  }
+
+  return 0;
+}
+
+static inline void *__page_paddr(size_t address, int page_index) {
+  return (void *) (address + (page_index * PAGE_SIZE));
+}
+
+/**
+ * @brief Allocate <num_to_alloc> physical pages of memory in the given zone, 
+ * passing back the address of each alloc'ed page back to the caller in the 
+ * <pages> array.
+ *
+ * @warning <pages> must have enough room for num_pages pointers
+ *
+ * @return 0 on success, < 0 on error
+ */
+int pmem_alloc(int num_to_alloc, struct pmem_zone *zone, void **pages) {
+  struct pmem_page *pg;
+  int num_alloced = 0;
+
+  if (zone->num_free < num_to_alloc) {
+    return -1;
+  }
+
+  for (; zone->page_index < zone->num_pages;
+       zone->page_index = (zone->page_index + 1) % zone->num_pages) {
+    pg = &zone->pages[zone->page_index];
+    
+    if (pg->refcount == 0) {
+      pg->refcount = 1;
+      pages[num_alloced] = __page_paddr(zone->address, zone->page_index);
+      num_alloced++;
+    }
+
+    if (num_alloced == num_to_alloc) {
+      break;
+    }
+  }
+
+  return 0;
+} 
+
+/**
+ * @brief Print out the global pmem_map struct using the given print 
+ * function.
+ */
+void pmem_map_dump(printf_f p) {
   int i;
 
-#define PADDR(a) p("0x%08x (%d MB)\n", (a), (a) / MB(1))
-
+#define PRINT_PADDR_MB(a) p("0x%08x (%d MB)\n", (a), (a) / MB(1))
+#define PRINT_PADDR_KB(a) p("0x%08x (%d KB)\n", (a), (a) / KB(1))
   p("=== Physical Memory Layout ===\n");
-  p("max_mem:               "); PADDR(__pmem.max_mem);
-  p("page_size:             0x%08x\n", __pmem.page_size);
+  p("max_mem:   "); PRINT_PADDR_MB(__pmem.max_mem);
+  p("page_size: "); PRINT_PADDR_KB(__pmem.page_size);
   p("\n");
-  p("kernel_image_start:    0x%08x\n", __pmem.kernel_image_start);
-  p("kernel_image_end:      0x%08x\n", __pmem.kernel_image_end);
+  p("kernel_image_start: 0x%08x\n", __pmem.kernel_image_start);
+  p("kernel_image_end:   0x%08x\n", __pmem.kernel_image_end);
   p("\n");
   for (i = 0; i < PMEM_NUM_ZONES; i++) {
     struct pmem_zone *z = __pmem.zones + i;
-    p("  [%d] %s\n", i, z->dbgstr);
-    p("     start = "); PADDR(z->address);
-    p("     end   = "); PADDR(z->address + z->size);
-    p("     size  = "); PADDR(z->size);
+    p("[%d] %s\n", i, z->dbgstr);
+    p("   size  = "); PRINT_PADDR_MB(z->size);
+    p("   end   = "); PRINT_PADDR_MB(z->address + z->size);
+    p("   start = "); PRINT_PADDR_MB(z->address);
     p("\n");
   }
+#undef PRINT_PADDR_MB
+#undef PRINT_PADDR_KB
+
 }
 

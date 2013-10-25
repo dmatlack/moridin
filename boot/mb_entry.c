@@ -58,12 +58,10 @@ void mb_entry(unsigned int mb_magic, struct multiboot_info *mb_info) {
     panic("Unable to install x86 exception handlers.\n");
   }
 
-  if (mem_init(MB(1) + (1024 * mb_info->mem_upper), X86_PAGE_SIZE,
-               __kernel_image_start, __kernel_image_end)) {
+  if (pmem_bootstrap(MB(1) + (1024 * mb_info->mem_upper), X86_PAGE_SIZE,
+                     __kernel_image_start, __kernel_image_end)) {
     panic("Unable to initialize memory constructs\n");
   }
-
-  mem_layout_dump(dprintf);
 
   x86_disable_fpu();
 

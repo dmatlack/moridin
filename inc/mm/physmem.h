@@ -13,6 +13,10 @@
 #include <stddef.h>
 #include <types.h>
 
+struct pmem_page {
+  int refcount;
+};
+
 struct pmem_zone {
   size_t address;
   size_t size;
@@ -23,7 +27,10 @@ struct pmem_zone {
    * available (free). If reference > 0, the page is in use by one or more
    * things (probably processes).
    */
-  int *pages;
+  struct pmem_page *pages;
+  int num_pages;
+  int num_free;
+  int page_index;
 
   /*
    * debugging variables
@@ -83,6 +90,7 @@ extern struct pmem_map __pmem;
 #define ZONE_DMA    (__pmem.zones + ZONE_DMA_IDX)
 #define ZONE_USER   (__pmem.zones + ZONE_USER_IDX)
 #define ZONE_BIOS   (__pmem.zones + ZONE_BIOS_IDX)
+#define ZONE(i)     (__pmem.zones + i)
 
 #define PAGE_ALIGN_UP(n) CEIL(PAGE_SIZE, n)
 #define PAGE_ALIGN_DOWN(n) FLOOR(PAGE_SIZE, n)
@@ -91,9 +99,11 @@ extern struct pmem_map __pmem;
 #define CONFIG_MIN_KERNEL_MEM MB(128)
 #define CONFIG_MIN_USER_MEM   MB(256)
 
-int mem_init(size_t max_mem, size_t page_size,
-              char kimg_start[], char kimg_end[]);
+int pmem_bootstrap(size_t max_mem, size_t page_size,
+                   char kimg_start[], char kimg_end[]);
+int pmem_init(void);
+int pmem_alloc(int num_pages, struct pmem_zone *zone, void **pages);
 
-void mem_layout_dump(printf_f p);
+void pmem_map_dump(printf_f p);
 
 #endif /* !__MM_MEM_H__ */

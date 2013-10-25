@@ -16,6 +16,8 @@
 
 #include <kernel/proc.h>
 
+void *debug_pages[10];
+
 void kernel_main() {
   kprintf("Welcome to kernel_main()!\n");
 
@@ -36,7 +38,26 @@ void kernel_main() {
     panic("Unable to initialize the virtual memory layer.\n");
   }
 
-  mem_layout_dump(kprintf);
+  pmem_map_dump(dprintf);
+
+  if (pmem_init()) {
+    panic("Failed pmem_init\n");
+  }
+
+  {
+    int i;
+
+    assert(0 == pmem_alloc(10, ZONE_USER, debug_pages));
+    dprintf("Alloced 10 pages:\n");
+    for (i = 0; i < 10; i++) {
+      dprintf("    0x%08x\n", debug_pages[i]);
+    }
+    assert(0 == pmem_alloc(10, ZONE_USER, debug_pages));
+    dprintf("Alloced 10 pages:\n");
+    for (i = 0; i < 10; i++) {
+      dprintf("    0x%08x\n", debug_pages[i]);
+    }
+  }
 
   while (1);
 }
