@@ -47,16 +47,20 @@ void kernel_main() {
   {
     int i;
 
-    assert(0 == pmem_alloc(10, ZONE_USER, debug_pages));
+    assert(0 == pmem_alloc(debug_pages, 10, ZONE_USER));
     dprintf("Alloced 10 pages:\n");
     for (i = 0; i < 10; i++) {
       dprintf("    0x%08x\n", debug_pages[i]);
     }
-    assert(0 == pmem_alloc(10, ZONE_USER, debug_pages));
+    assert(0 == pmem_alloc(debug_pages, 10, ZONE_USER));
     dprintf("Alloced 10 pages:\n");
     for (i = 0; i < 10; i++) {
       dprintf("    0x%08x\n", debug_pages[i]);
     }
+
+    debug_pages[0] = 0;
+    pmem_free(debug_pages, 10, ZONE_USER);
+
   }
 
   while (1);

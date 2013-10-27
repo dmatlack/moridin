@@ -117,6 +117,10 @@ static inline void *__page_paddr(size_t address, int page_index) {
   return (void *) (address + (page_index * PAGE_SIZE));
 }
 
+static inline int __page_index(size_t page_addr, size_t zone_addr) {
+  return (int) ((page_addr - zone_addr) / PAGE_SIZE); 
+}
+
 /**
  * @brief Allocate <num_to_alloc> physical pages of memory in the given zone, 
  * passing back the address of each alloc'ed page back to the caller in the 
@@ -126,7 +130,7 @@ static inline void *__page_paddr(size_t address, int page_index) {
  *
  * @return 0 on success, < 0 on error
  */
-int pmem_alloc(int num_to_alloc, struct pmem_zone *zone, void **pages) {
+int pmem_alloc(void **pages, int num_to_alloc, struct pmem_zone *zone) {
   struct pmem_page *pg;
   int num_alloced = 0;
 
@@ -150,7 +154,32 @@ int pmem_alloc(int num_to_alloc, struct pmem_zone *zone, void **pages) {
   }
 
   return 0;
-} 
+}
+
+/**
+ * @brief Decrement the reference count of the given <num_to_free>
+ * pages.
+ */
+void pmem_free(void **pages, int num_to_free, struct pmem_zone *zone) {
+  struct pmem_page *pg;
+  int page_index;
+  int i;
+
+  for (i = 0; i < num_to_free; i++) {
+    page_index = __page_index((size_t) pages[i], (size_t) zone->address);
+    pg = &zone->pages[page_index];
+
+    if (pg->refcount > 0) {
+      pg->refcount--;
+    }
+    else {
+      panic("Trying to free page %d (paddr 0x%08x) in zone %s with "
+            "refcount %d.\n", page_index, pages[i], zone->dbgstr, 
+            pg->refcount);
+    }
+  }
+  
+}
 
 /**
  * @brief Print out the global pmem_map struct using the given print 
