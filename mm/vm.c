@@ -46,8 +46,8 @@
 #include <x86/vm.h>
 #endif
 
-struct vm_region kimg_region;
-struct vm_region kmem_region;
+struct vm_zone __vm_zone_kernel;
+struct vm_zone __vm_zone_user;
 
 void vm_region_init(struct vm_region *r, size_t address, size_t size,
                     int flags) {
@@ -57,13 +57,18 @@ void vm_region_init(struct vm_region *r, size_t address, size_t size,
   r->object = NULL; //FIXME
 }
 
+int vm_bootstrap(void) {
+  VM_ZONE_KERNEL->size = PMEM_ZONE_KERNEL->size;
+  VM_ZONE_KERNEL->address = (size_t) (0 - VM_ZONE_KERNEL->size);
+  VM_ZONE_USER->address = 4*PAGE_SIZE;
+  VM_ZONE_USER->size = VM_ZONE_KERNEL->address - VM_ZONE_USER->address;
+#ifdef ARCH_X86
+  x86_vm_bootstrap(PAGE_SIZE);
+#endif
+  return 0;
+}
 
 int vm_init(void) {
-
-#ifdef ARCH_X86
-  x86_vm_init(PAGE_SIZE);
-#endif
-
   return 0;
 }
 

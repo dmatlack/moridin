@@ -46,6 +46,8 @@ void mb_entry(unsigned int mb_magic, struct multiboot_info *mb_info) {
           MULTIBOOT_BOOTLOADER_MAGIC, mb_magic);
   }
 
+  kprintf("mb_info->mem_upper = %d\n", mb_info->mem_upper);
+
   /* 
    * initialize the x86 exception handling facilities and install the kernel's
    * exception handler

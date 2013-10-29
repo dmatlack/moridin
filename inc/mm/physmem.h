@@ -85,12 +85,12 @@ extern struct pmem_map __pmem;
 /*
  * convenient access macros
  */
-#define PAGE_SIZE   (__pmem.page_size)
-#define ZONE_KERNEL (__pmem.zones + ZONE_KERNEL_IDX)
-#define ZONE_DMA    (__pmem.zones + ZONE_DMA_IDX)
-#define ZONE_USER   (__pmem.zones + ZONE_USER_IDX)
-#define ZONE_BIOS   (__pmem.zones + ZONE_BIOS_IDX)
-#define ZONE(i)     (__pmem.zones + i)
+#define PAGE_SIZE        (__pmem.page_size)
+#define PMEM_ZONE_KERNEL (__pmem.zones + ZONE_KERNEL_IDX)
+#define PMEM_ZONE_DMA    (__pmem.zones + ZONE_DMA_IDX)
+#define PMEM_ZONE_USER   (__pmem.zones + ZONE_USER_IDX)
+#define PMEM_ZONE_BIOS   (__pmem.zones + ZONE_BIOS_IDX)
+#define PMEM_ZONE(i)     (__pmem.zones + i)
 
 #define PAGE_ALIGN_UP(n) CEIL(PAGE_SIZE, n)
 #define PAGE_ALIGN_DOWN(n) FLOOR(PAGE_SIZE, n)
@@ -102,6 +102,7 @@ extern struct pmem_map __pmem;
 int pmem_bootstrap(size_t max_mem, size_t page_size,
                    char kimg_start[], char kimg_end[]);
 int pmem_init(void);
+void pmem_alloc_zone(struct pmem_zone *zone);
 int pmem_alloc(void **pages, int num_to_alloc, struct pmem_zone *zone);
 void pmem_free(void **pages, int num_to_free, struct pmem_zone *zone);
 

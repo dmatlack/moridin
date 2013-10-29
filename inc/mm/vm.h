@@ -9,6 +9,17 @@
 #include <stddef.h>
 #include <list.h>
 
+struct vm_zone {
+  size_t address;
+  size_t size;
+};
+
+extern struct vm_zone __vm_zone_kernel;
+extern struct vm_zone __vm_zone_user;
+
+#define VM_ZONE_KERNEL (&(__vm_zone_kernel))
+#define VM_ZONE_USER   (&(__vm_zone_user))
+
 struct vm_object {
   void (*map)(size_t address, size_t size, int flags);
   void (*unmap)(size_t address, size_t size, int flags);
@@ -48,6 +59,7 @@ struct vm_space {
   vm_region_list_t regions;
 };
 
+int vm_bootstrap(void);
 int vm_init(void);
 int vm_space_init(struct vm_space *vm);
 struct vm_region *vm_add_region(struct vm_space *vm, size_t address,

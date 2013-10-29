@@ -38,13 +38,13 @@ int pmem_bootstrap(size_t max_mem, size_t page_size,
   __pmem.kernel_image_start = PAGE_ALIGN_DOWN((size_t) kimg_start);
   __pmem.kernel_image_end = PAGE_ALIGN_UP((size_t) kimg_end);
   
-  ZONE_BIOS->address = 0;
-  ZONE_BIOS->size = MB(1);
-  ZONE_BIOS->dbgstr = "ZONE_BIOS";
+  PMEM_ZONE_BIOS->address = 0;
+  PMEM_ZONE_BIOS->size = MB(1);
+  PMEM_ZONE_BIOS->dbgstr = "PMEM_ZONE_BIOS";
 
-  ZONE_DMA->address = MB(1);
-  ZONE_DMA->size = MB(15);
-  ZONE_DMA->dbgstr = "ZONE_DMA";
+  PMEM_ZONE_DMA->address = MB(1);
+  PMEM_ZONE_DMA->size = MB(15);
+  PMEM_ZONE_DMA->dbgstr = "PMEM_ZONE_DMA";
 
   /*
    * We need to divide up the remaining memory between the user and the 
@@ -66,13 +66,13 @@ int pmem_bootstrap(size_t max_mem, size_t page_size,
   assert(kmem_size > CONFIG_MIN_KERNEL_MEM);
   assert(umem_size > CONFIG_MIN_USER_MEM);
 
-  ZONE_USER->address = MB(16);
-  ZONE_USER->size = umem_size;
-  ZONE_USER->dbgstr = "ZONE_USER";
+  PMEM_ZONE_USER->address = MB(16);
+  PMEM_ZONE_USER->size = umem_size;
+  PMEM_ZONE_USER->dbgstr = "PMEM_ZONE_USER";
 
-  ZONE_KERNEL->address = ZONE_USER->address + ZONE_USER->size;
-  ZONE_KERNEL->size = kmem_size;
-  ZONE_KERNEL->dbgstr = "ZONE_KERNEL";
+  PMEM_ZONE_KERNEL->address = PMEM_ZONE_USER->address + PMEM_ZONE_USER->size;
+  PMEM_ZONE_KERNEL->size = kmem_size;
+  PMEM_ZONE_KERNEL->dbgstr = "PMEM_ZONE_KERNEL";
 
   return 0;
 }
@@ -93,7 +93,7 @@ int pmem_init(void) {
    * page to zero
    */
   for (z = 0; z < PMEM_NUM_ZONES; z++) {
-    struct pmem_zone *zone = ZONE(z);
+    struct pmem_zone *zone = PMEM_ZONE(z);
 
     zone->num_pages = zone->size / PAGE_SIZE;
     zone->num_free = zone->num_pages;
@@ -119,6 +119,19 @@ static inline void *__page_paddr(size_t address, int page_index) {
 
 static inline int __page_index(size_t page_addr, size_t zone_addr) {
   return (int) ((page_addr - zone_addr) / PAGE_SIZE); 
+}
+
+/**
+ * @brief Allocate (reserve) an entire zone of memory. This is used by 
+ * the kernel vm bootstrap code to reserve the entire kernel zone.
+ */
+void pmem_alloc_zone(struct pmem_zone *zone) {
+  int i;
+
+  for (i = 0; i < zone->num_pages; i++) {
+    assert(zone->pages[i].refcount == 0);
+    zone->pages[i].refcount = 1;
+  }
 }
 
 /**

@@ -13,12 +13,13 @@
 #include <string.h>
 #include <assert.h>
 
+#include <mm/physmem.h> //FIXME remove me once vm bootstrap works
+#include <mm/vm.h>
 #include <mm/lmm.h>
 #include <mm/lmm_types.h>
+
 lmm_t kernel_lmm = LMM_INITIALIZER;
 lmm_region_t global_region;
-
-#include <mm/physmem.h>
 
 int kmalloc_init(void) {
   lmm_init(&kernel_lmm);
@@ -28,10 +29,10 @@ int kmalloc_init(void) {
    */
   lmm_add_region(&kernel_lmm, &global_region, (size_t) 0, (size_t) -1, 0, 0);
 
-  //FIXME
+  //FIXME use VM_ZONE_KERNEL once vm bootstrap works
   lmm_add_free(&kernel_lmm, 
-    (void *) ZONE_KERNEL->address, 
-    (size_t) ZONE_KERNEL->size);
+    (void *) PMEM_ZONE_KERNEL->address, 
+    (size_t) PMEM_ZONE_KERNEL->size);
 
   return 0;
 }
