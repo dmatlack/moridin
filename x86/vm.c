@@ -18,7 +18,6 @@
 
 x86_entry_t __initial_entry;
 
-
 /*
  * The bootstrap page directory and page table(s) are needed because we need
  * some virtual memory to exist before we can use kmalloc. This means we
@@ -75,25 +74,23 @@ int x86_vm_bootstrap(size_t kernel_page_size) {
   /*
    * Bootstrap in Virtual Memory:
    * 
-   * 1. Initialize all the virtual memory data structures.
+   * 1. Initialize the page directory
    */
   x86_pgdir_init(&bootstrap_pgdir);
-  for (i = 0; i < NUM_BOOTSTRAP_PGTBLS; i++) {
-    x86_pgtbl_init(&bootstrap_pgtbls[i]);
-  }
 
   /*
    * 2. Map the Page Directory to the Page Tables so that VM_ZONE_KERNEL is
    *    covered.
-   * 
-   * vpage is the virtual address of the first page of mapped by the
-   * page table.
    */
   i = 0;
   for (vpage = FLOOR(X86_PAGE_SIZE * X86_PT_SIZE, VM_ZONE_KERNEL->address);
        vpage < VM_ZONE_KERNEL->address + VM_ZONE_KERNEL->size;
        vpage += X86_PAGE_SIZE * X86_PT_SIZE) {
 
+    /* 
+     * vpage is the virtual address of the first page of mapped by the page 
+     * table
+     */
     size_t pd_index = PD_INDEX(vpage);
     x86_entry_t *pde = bootstrap_pgdir.entries + pd_index;
     struct x86_pgtbl *pgtbl = bootstrap_pgtbls + i;
@@ -103,10 +100,10 @@ int x86_vm_bootstrap(size_t kernel_page_size) {
      */
     __entry_set_addr(pde, (size_t) pgtbl);
     __entry_set_present(pde);
+    x86_pgtbl_init(pgtbl);
 
     i++;
   }
-
 
   return 0;
 }
