@@ -5,6 +5,8 @@
  *
  * @author David Matlack
  */
+#include <debug/log.h>
+
 #ifndef __DEBUG_H__
 #define __DEBUG_H__
 
@@ -15,6 +17,8 @@
  * being used in debug/dprintf.c.
  */
 int dprintf(const char *fmt, ...);
+
+int dputchar(int c);
 
 #define MAGIC_BREAK \
   __asm__("xchg %bx, %bx");

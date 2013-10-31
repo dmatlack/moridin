@@ -8,6 +8,8 @@
 #ifndef ___PRINTF_H__
 #define ___PRINTF_H__
 
+#include <stdarg.h>
+
 #define	_PRINTF_BUFMAX	128
 
 struct printf_state {

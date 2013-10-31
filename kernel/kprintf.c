@@ -8,7 +8,6 @@
  */
 #include <stdarg.h>      // for va_list, va_start, va_end
 #include <fmt/_printf.h> // for _vprintf
-#include <dev/vga.h>     // for the kernel's putchar method
 
 // statically allocate the state for our kernel's printer
 struct printf_state kprintf_state;

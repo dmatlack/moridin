@@ -12,7 +12,7 @@
 
 struct printf_state dprintf_state;
 
-static int dputchar(int c) {
+int dputchar(int c) {
   bochs_putchar((char) c); 
   return c;
 }

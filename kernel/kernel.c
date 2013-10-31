@@ -19,7 +19,10 @@
 void *debug_pages[10];
 
 void kernel_main() {
-  kprintf("Welcome to kernel_main()!\n");
+
+  log_init(dputchar, LOG_LEVEL_DEBUG);
+
+  INFO("Welcome to kernel_main()!\n");
 
   /* 
    * Initialize hardware interrupts by first telling the PIC where in the IDT it 
