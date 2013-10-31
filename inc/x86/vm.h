@@ -47,8 +47,8 @@
  *       holds the address of the Page Directory).
  *
  */
-#define PDE_OFFSET(la)  (((la) >> 22) & MASK(10))
-#define PTE_OFFSET(la)  (((la) >> 12) & MASK(10))
+#define PD_OFFSET(la)  (((la) >> 22) & MASK(10))
+#define PT_OFFSET(la)  (((la) >> 12) & MASK(10))
 #define PHYS_OFFSET(la) ((la) & MASK(12))
 
 /*
@@ -170,6 +170,13 @@
 #define PDE_PT        12
 #define PDE_PT_MASK   MASK(20)
 
+#define PDE_SET_PT(pde_ptr, pgtbl) \
+  do { \
+    assert(PAGE_ALIGN_DOWN((size_t) (pgtbl)) == ((size_t)(pgtbl))); \
+    *(pde_ptr) = *(pde_ptr) & ~(PDE_PT_MASK << PDE_PT); \
+    *(pde_ptr) = *(pde_ptr) & ((size_t) (pgtbl)); \
+  } while (0)
+
 /*
  * Physical Page Address (PP), bits 12-31 (PTE ONLY)
  *   The address of the physical page in memory. Since pages are page-aligned,
@@ -185,6 +192,9 @@ struct x86_pgdir {
   x86_entry_t entries[X86_PD_SIZE];
 };
 
+#define PD_INDEX(vaddr) (PD_OFFSET(vaddr) / sizeof(x86_entry_t))
+#define PT_INDEX(vaddr) (PT_OFFSET(vaddr) / sizeof(x86_entry_t))
+
 #define X86_PT_SIZE ((int) (X86_PAGE_SIZE / sizeof(int)))
 struct x86_pgtbl {
   x86_entry_t entries[X86_PT_SIZE];
@@ -196,16 +206,17 @@ int x86_vm_bootstrap(size_t kernel_page_size);
 /*
  * Operations on Page Directories
  */
+int                 x86_pgdir_init   (struct x86_pgdir *pd);
 struct x86_pgdir *  x86_pgdir_alloc  (void);
 void                x86_pgdir_free   (struct x86_pgdir *pd);
-int                 x86_pgdir_init   (struct x86_pgdir *pd);
 
 /*
  * Operations on Page Tables
  */
-int x86_pgtbl_init(struct x86_pgtbl *pt);
-struct x86_pgtbl *x86_pgtbl_alloc(void);
-void x86_pgtbl_free(struct x86_pgtbl *pt);
+int                 x86_pgtbl_init   (struct x86_pgtbl *pt);
+struct x86_pgtbl *  x86_pgtbl_alloc  (void);
+void                x86_pgtbl_free   (struct x86_pgtbl *pt);
+
 
 
 #endif /* !__X86_VM_H__ */

@@ -45,13 +45,14 @@
 #define FLOOR(size, val) \
   ((((unsigned) (val)) / (size)) * (size))
 
-#define SET_BIT(word, index, bit) \
-  do {                            \
-    word = (bit == 0) ?           \
-        word & ~(1 << index)      \
-        :                         \
-        word | (1 << index);      \
-  } while (0)
+static inline void __set_bit(int *word, int index, int bit) {
+  *word = (bit == 0) ?
+      (*word) & ~(1 << index)
+      :
+      (*word) | (1 << index);
+}
+
+#define set_bit(w, i, b) __set_bit((int *) w, (int) i, (int) b)
 
 /**
  * @brief Return the binary number that contains n ones in a row.

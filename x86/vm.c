@@ -10,6 +10,7 @@
 #include <x86/reg.h>
 
 #include <mm/physmem.h>
+#include <mm/vm.h>
 #include <kernel/kmalloc.h>
 
 #include <stddef.h>
@@ -33,28 +34,42 @@ struct x86_pgdir bootstrap_pgdir;
 #define NUM_BOOTSTRAP_PGTBLS NUM_PAGES_IN_ZONE_KERNEL / X86_PT_SIZE
 struct x86_pgtbl bootstrap_pgtbls[NUM_BOOTSTRAP_PGTBLS];
 
+static inline void __entry_set_addr(x86_entry_t *entry, size_t addr) {
+  assert(PAGE_ALIGN_DOWN(addr) == addr);
+  *entry = (*entry) & ~(PDE_PT_MASK << PDE_PT);
+  *entry = (*entry) & addr;
+}
+
+static inline void __entry_set_present(x86_entry_t *entry) {
+  set_bit(entry, PDE_PRESENT, 1); 
+}
+
 /**
  * @brief Bootrap into virtual memory using some static page dir/tables.
  *
- * This function does some basic x86 virtual memory checks and initializations
- * but also initializes the static bootstrap page directory and page tables, 
- * mapping all addresses in high memory to the kernel's pmem zone.
+ * This function is expected to initialize the virtual memory data structures
+ * to map VM_ZONE_KERNEL to PMEM_ZONE_KERNEL, where the size of each is
+ * maximally CONFIG_MAX_KERNEL_MEM.
  */
 int x86_vm_bootstrap(size_t kernel_page_size) {
   int e;
   int i;
+  size_t vpage;
 
   assert(sizeof(int) == 4);
   assert(X86_PAGE_SIZE == KB(4));
   assert(X86_PAGE_SIZE == kernel_page_size);
 
+  assert(VM_ZONE_KERNEL->size = PMEM_ZONE_KERNEL->size);
+  assert(VM_ZONE_KERNEL->size < CONFIG_MAX_KERNEL_MEM);
+
   /*
    * The default setting of flags for page directory/table entries.
    */
   e = 0;
-  SET_BIT(e, PDE_PRESENT,   0); // the entry is not present
-  SET_BIT(e, PDE_PCD,       1); // disable caching
-  SET_BIT(e, PDE_PS,        0); // pages are 4KB
+  set_bit(&e, PDE_PRESENT,   0); // the entry is not present
+  set_bit(&e, PDE_PCD,       1); // disable caching
+  set_bit(&e, PDE_PS,        0); // pages are 4KB
   __initial_entry = e;
 
   /*
@@ -68,13 +83,29 @@ int x86_vm_bootstrap(size_t kernel_page_size) {
   }
 
   /*
-   * 2. Reserve the kernel's memory zone since we will be taking it.
+   * 2. Map the Page Directory to the Page Tables so that VM_ZONE_KERNEL is
+   *    covered.
+   * 
+   * vpage is the virtual address of the first page of mapped by the
+   * page table.
    */
-  pmem_alloc_zone(PMEM_ZONE_KERNEL);
+  i = 0;
+  for (vpage = FLOOR(X86_PAGE_SIZE * X86_PT_SIZE, VM_ZONE_KERNEL->address);
+       vpage < VM_ZONE_KERNEL->address + VM_ZONE_KERNEL->size;
+       vpage += X86_PAGE_SIZE * X86_PT_SIZE) {
 
-  /*
-   * 3. Map the VM_ZONE_KERNEL to the physical pages in PMEM_ZONE_KERNEL.
-   */
+    size_t pd_index = PD_INDEX(vpage);
+    x86_entry_t *pde = bootstrap_pgdir.entries + pd_index;
+    struct x86_pgtbl *pgtbl = bootstrap_pgtbls + i;
+
+    /*
+     * set the page directory entry to use one of the bootrap page tables
+     */
+    __entry_set_addr(pde, (size_t) pgtbl);
+    __entry_set_present(pde);
+
+    i++;
+  }
 
 
   return 0;
@@ -117,4 +148,3 @@ struct x86_pgtbl *x86_pgtbl_alloc(void) {
 void x86_pgtbl_free(struct x86_pgtbl *pt) {
   kfree(pt, sizeof(struct x86_pgtbl));
 }
-
