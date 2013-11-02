@@ -77,6 +77,11 @@ int pmem_bootstrap(size_t max_mem, size_t page_size,
   return 0;
 }
 
+#define LOG_PMEM_ZONE( zone_macro )\
+  INFO(#zone_macro": address=0x%08x, size=0x%08x (%d MB)",\
+       zone_macro->address, zone_macro->size, zone_macro->size / MB(1));
+
+
 /**
  * @breif Initialize the physical memory management system.
  *
@@ -88,8 +93,14 @@ int pmem_init(void) {
   int z;
   int p;
 
+  TRACE("void");
+  LOG_PMEM_ZONE(PMEM_ZONE_BIOS);
+  LOG_PMEM_ZONE(PMEM_ZONE_DMA);
+  LOG_PMEM_ZONE(PMEM_ZONE_KERNEL);
+  LOG_PMEM_ZONE(PMEM_ZONE_USER);
+
   /*
-   * kmalloc each zones page list and set the reference counts of each
+   * kmalloc each zone's page list and set the reference counts of each
    * page to zero
    */
   for (z = 0; z < PMEM_NUM_ZONES; z++) {

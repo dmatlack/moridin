@@ -48,15 +48,16 @@ int log(int log_level, const char *prefix,  const char *fmt, ...) {
   return err;
 }
 
-int trace(const char *prefix, const char *fmt, ...) {
+int trace(const char *fmt, ...) {
   va_list args;
   int err;
 
   if (__log.trace_on > 0) {
-    __log_putstring(prefix);
+    //__log_putstring(prefix);
     va_start(args, fmt);
     err = _vprintf(&__log.pstate, fmt, args);
     va_end(args);
+    //__log_putstring(suffix);
   }
 
   return err;

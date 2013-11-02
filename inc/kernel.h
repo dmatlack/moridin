@@ -23,4 +23,13 @@
 #include <x86/exn.h>
 void kernel_x86_exn_handler(struct x86_exn_args *exn);
 
+#define SUCCEED_OR_DIE( function_call ) \
+  do {\
+    if (0 != function_call) {\
+      panic("Failure in %s:%s:%d\n"\
+            "    %s\n",\
+             __FILE__, __func__, __LINE__, #function_call);\
+    }\
+  } while (0)
+
 #endif /* __KERNEL_H__ */

@@ -7,6 +7,7 @@
  * @bug No known bugs
  */
 #include <kernel/kmalloc.h>
+#include <debug.h>
 
 #include <stddef.h>
 #include <stdlib.h>
@@ -22,6 +23,8 @@ lmm_t kernel_lmm = LMM_INITIALIZER;
 lmm_region_t global_region;
 
 int kmalloc_init(void) {
+  TRACE("void");
+
   lmm_init(&kernel_lmm);
 
   /*

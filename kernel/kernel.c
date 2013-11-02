@@ -20,9 +20,9 @@ void *debug_pages[10];
 
 void kernel_main() {
 
-  log_init(dputchar, LOG_LEVEL_DEBUG);
-
-  INFO("Welcome to kernel_main()!\n");
+  SUCCEED_OR_DIE(log_init(dputchar, LOG_LEVEL_DEBUG));
+  TRACE_ON;
+  TRACE("void");
 
   /* 
    * Initialize hardware interrupts by first telling the PIC where in the IDT it 
@@ -30,40 +30,13 @@ void kernel_main() {
    * handlers for each device connected to the PIC.
    * FIXME: move this machine dependent code elsewhere (interrupts_init?)
    */
-  if (pic_init(IDT_PIC_MASTER_OFFSET, IDT_PIC_SLAVE_OFFSET)) {
-    panic("Unable to initialize the PIC.\n");
-  }
+  SUCCEED_OR_DIE(pic_init(IDT_PIC_MASTER_OFFSET, IDT_PIC_SLAVE_OFFSET));
 
-  vm_bootstrap();
+  SUCCEED_OR_DIE(vm_bootstrap());
 
-  kmalloc_init();
+  SUCCEED_OR_DIE(kmalloc_init());
 
-  pmem_map_dump(dprintf);
-  dprintf("VM_ZONE_KERNEL:\n");
-  dprintf("   address: 0x%08x\n", VM_ZONE_KERNEL->address);
-  dprintf("   size:    0x%08x\n", VM_ZONE_KERNEL->size);
-  dprintf("VM_ZONE_USER:\n");
-  dprintf("   address: 0x%08x\n", VM_ZONE_USER->address);
-  dprintf("   size:    0x%08x\n", VM_ZONE_USER->size);
-
-  pmem_init();
-
-  {
-    int i;
-
-    assert(0 == pmem_alloc(debug_pages, 10, PMEM_ZONE_USER));
-    dprintf("Alloced 10 pages:\n");
-    for (i = 0; i < 10; i++) {
-      dprintf("    0x%08x\n", debug_pages[i]);
-    }
-    assert(0 == pmem_alloc(debug_pages, 10, PMEM_ZONE_USER));
-    dprintf("Alloced 10 pages:\n");
-    for (i = 0; i < 10; i++) {
-      dprintf("    0x%08x\n", debug_pages[i]);
-    }
-
-    pmem_free(debug_pages, 10, PMEM_ZONE_USER);
-  }
+  SUCCEED_OR_DIE(pmem_init());
 
   while (1) continue;
 }

@@ -38,6 +38,7 @@
  */
 #include <mm/vm.h>
 #include <mm/physmem.h>
+#include <debug.h>
 
 #include <kernel/kmalloc.h>
 #include <stddef.h>
@@ -57,11 +58,21 @@ void vm_region_init(struct vm_region *r, size_t address, size_t size,
   r->object = NULL; //FIXME
 }
 
+#define LOG_VM_ZONE( zone_macro )\
+  INFO(#zone_macro": address=0x%0x, size=0x%08x",\
+       zone_macro->address, zone_macro->size)
+
 int vm_bootstrap(void) {
+  TRACE("void");
+
   VM_ZONE_KERNEL->size = PMEM_ZONE_KERNEL->size;
   VM_ZONE_KERNEL->address = (size_t) (0 - VM_ZONE_KERNEL->size);
+  LOG_VM_ZONE(VM_ZONE_KERNEL);
+
   VM_ZONE_USER->address = 4*PAGE_SIZE;
   VM_ZONE_USER->size = VM_ZONE_KERNEL->address - VM_ZONE_USER->address;
+  LOG_VM_ZONE(VM_ZONE_USER);
+
 #ifdef ARCH_X86
   x86_vm_bootstrap(PAGE_SIZE);
 #endif

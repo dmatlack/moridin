@@ -5,8 +5,12 @@
  */
 #include <x86/pic.h>
 #include <x86/io.h>
+#include <debug.h>
 
 int pic_init(uint32_t master_offset, uint32_t slave_offset) {
+  TRACE("master_offset=0x%08x, slave_offset=0x%08x",
+        master_offset, slave_offset);
+
   pic_remap(master_offset, slave_offset);
   return 0;
 }
