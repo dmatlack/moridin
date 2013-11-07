@@ -24,7 +24,180 @@
 #include <x86/page.h>
 #include <stdint.h>
 #include <types.h>
+#include <stddef.h>
+#include <assert.h>
 
+typedef int32_t entry_t;
+
+/*
+ * Page Directory & Page Table Entries for 4 KB pages
+ * ----------------------------------------------------------------------------
+ *
+ * Page Directory Entries (PDEs) and Page Table Entries (PTEs) share a common
+ * structure. They are both 32 bits, with the highest 20 bits indicating the
+ * physical address of a page on the system. They also share the following
+ * bit flags:
+ */
+
+/*  
+ * Present (P) flag, bit 0
+ *   Indicates whether the page table entry or physical page indicated by
+ *   the upper 20 bits is loaded in memory. If this flag is set to 0 and
+ *   an attempt is made to access the page, then a page fault (#PF) occurs.
+ */
+#define ENTRY_PRESENT 0
+static inline void entry_set_present(entry_t *entry) { 
+  set_bit(entry, ENTRY_PRESENT, 1);
+}
+static inline void entry_set_absent(entry_t *entry) {
+  set_bit(entry, ENTRY_PRESENT, 0);
+}
+static inline bool entry_is_present(entry_t *entry) {
+  return get_bit(*entry, ENTRY_PRESENT);
+}
+
+/*
+ * Read/Write (RW) flag, bit 1
+ *   When this flag is clear the page is read-only, when the flag is set
+ *   the page can be read and written into.
+ */
+#define ENTRY_READWRITE 1
+static inline void entry_set_readwrite(entry_t *entry) {
+  set_bit(entry, ENTRY_READWRITE, 1);
+}
+static inline void entry_set_readonly(entry_t *entry) {
+  set_bit(entry, ENTRY_READWRITE, 0);
+}
+static inline int entry_is_readwrite(entry_t *entry) {
+  return get_bit(*entry, ENTRY_READWRITE);
+}
+
+/*
+ * User/Supervisor (US) flag, bit 2
+ *   Specifies the priveledge level of a page (PTE) or a group of pages
+ *   (PDE). When the flag is clear, the page(s) are assigned the supervisor
+ *   priveledge level. When the flag is set, the page(s) are assigned the
+ *   user priveledge level.
+ */
+#define ENTRY_SUPERVISOR 2
+static inline void entry_set_supervisor(entry_t *entry) {
+  set_bit(entry, ENTRY_SUPERVISOR, 1);
+}
+static inline void entry_set_user(entry_t *entry) {
+  set_bit(entry, ENTRY_SUPERVISOR, 0);
+}
+static inline int entry_is_supervisor(entry_t *entry) {
+  return get_bit(*entry, ENTRY_SUPERVISOR);
+}
+
+/*
+ * Page-level write-through (PWT) flag, bit 3
+ *   Controls the write-through and write-back caching policy of individual
+ *   pages or page tables. When the flag is set, write-through is enabled.
+ *   When the flag is clear, write-back is enabled. The processor ignores
+ *   this flag if the cache disable (CD) flag of CR0 is set.
+ */
+#define ENTRY_WRITETHROUGH 3
+
+/*
+ * Page-level cache disable (PCD) flag, bit 4
+ *   Controls the caching of individual pages or page tables. When the
+ *   flag is set, caching is disabled. This flag can be used to prevent
+ *   caching of pages that contain memory mapped I/O ports.
+ */
+#define ENTRY_CACHEDISABLED 4
+static inline void entry_disable_cache(entry_t *entry) {
+  set_bit(entry, ENTRY_CACHEDISABLED, 1);
+}
+static inline void entry_enable_cache(entry_t *entry) {
+  set_bit(entry, ENTRY_CACHEDISABLED, 0);
+}
+
+/*
+ * Accessed (A) flag, bit 5
+ *   Indicates whether the page or page table has been accessed (read from
+ *   or written to). Once this flag has been set by the processor, it is
+ *   up to the software to clear it.
+ */
+#define ENTRY_ACCESSED 5
+
+/*
+ * Dirty (D) flag, bit 6 (Page Table only)
+ *   Indicates that the page has been written to. Like the Accessed (A) flag,
+ *   it is up to the software to clear this flag after it has been set by
+ *   the processor.
+ */
+#define ENTRY_DIRTY 6
+static inline void entry_clear_dirty(entry_t *entry) {
+  set_bit(entry, ENTRY_DIRTY, 0);
+}
+static inline int entry_is_dirty(entry_t *entry) {
+  return get_bit(*entry, ENTRY_DIRTY);
+}
+
+/*
+ * Page size (PS) flag, bit 7 (Page Directory Only)
+ *   Determines the page size. When the flag is clear, pages are 4KB and the
+ *   PDE points to a Page Table.
+ */
+#define ENTRY_PAGESIZE4MB 7
+
+/* 
+ * Page attribute index table (PAT) flag, bit 7 (Page Table only)
+ *   This flag is used along with the PCD and PWT flags to select an entry in 
+ *   the Page Attribute Table (PAT).
+ *
+ *   ONLY FOR > PENTIUM III PROCESSORS
+ */
+#define ENTRY_ATTRIBUTEINDEXTABLE 7
+
+/*
+ * Global (G) flag, bit 8
+ *   Indicates a global page when set. When a page is marked global and the PGE
+ *   flag of CR4 is set, the PTE or PDE is not invalidated in the TLB on a
+ *   task switch or write to CR3.
+ *
+ *   ONLY FOR > PENTIUM PRO PROCESSORS
+ */
+#define ENTRY_GLOBAL 8
+
+/*
+ * Available, bits 9, 10, 11
+ *   These bits are available for use by the system programmer.
+ */
+#define ENTRY_AVAIL 9
+#define ENTRY_AVAIL_MASK MASK(3)
+
+/*
+ * Page Table Base Address (PT) or Physical Page Address (PP)
+ *   bits 12-31
+ */
+#define ENTRY_ADDR 12
+#define ENTRY_ADDR_MASK MASK(20)
+static inline void entry_set_addr(entry_t *entry_ptr, size_t addr) {
+  assert(FLOOR(X86_PAGE_SIZE, (size_t) (addr)) == ((size_t)(addr)));
+  /*
+   * Set the lower bits of the address to 1's so we don't overwrite
+   * any of the flags in the entry
+   */
+  addr = (addr) | ~ENTRY_ADDR_MASK;
+  *(entry_ptr) = *(entry_ptr) & ((size_t) (addr));
+}
+static inline size_t entry_get_addr(entry_t *entry) {
+  return (size_t) ( *entry & ~(MASK(ENTRY_ADDR)) );
+}
+
+/*
+ * Page Directories and Page Tables are really two of the same
+ * thing: an array of entries. Thus we will represent each with
+ * the same data structure.
+ */
+#define ENTRY_TABLE_SIZE ((X86_PAGE_SIZE) / sizeof(entry_t))
+struct entry_table {
+  entry_t entries[ENTRY_TABLE_SIZE];
+};
+
+int entry_table_init(struct entry_table *tbl);
 
 /*
  * Linear Address translation for 4 KB pages
@@ -51,172 +224,14 @@
 #define PT_OFFSET(la)  (((la) >> 12) & MASK(10))
 #define PHYS_OFFSET(la) ((la) & MASK(12))
 
-/*
- * Page Directory & Page Table Entries for 4 KB pages
- * ----------------------------------------------------------------------------
- *
- * Page Directory Entries (PDEs) and Page Table Entries (PTEs) share a common
- * structure. They are both 32 bits, with the highest 20 bits indicating the
- * physical address of a page on the system. They also share the following
- * bit flags:
- */
+static inline entry_t* get_pagedir_entry(struct entry_table *pd, size_t vaddr) {
+  return &(pd->entries[PD_OFFSET(vaddr) / sizeof(entry_t)]);
+}
 
-/*  
- * Present (P) flag, bit 0
- *   Indicates whether the page table entry or physical page indicated by
- *   the upper 20 bits is loaded in memory. If this flag is set to 0 and
- *   an attempt is made to access the page, then a page fault (#PF) occurs.
- */
-#define PDE_PRESENT   0
-#define PTE_PRESENT   0
-
-/*
- * Read/Write (RW) flag, bit 1
- *   When this flag is clear the page is read-only, when the flag is set
- *   the page can be read and written into.
- */
-#define PDE_RW        1
-#define PTE_RW        1
-
-/*
- * User/Supervisor (US) flag, bit 2
- *   Specifies the priveledge level of a page (PTE) or a group of pages
- *   (PDE). When the flag is clear, the page(s) are assigned the supervisor
- *   priveledge level. When the flag is set, the page(s) are assigned the
- *   user priveledge level.
- */
-#define PDE_US        2
-#define PTE_US        2
-
-/*
- * Page-level write-through (PWT) flag, bit 3
- *   Controls the write-through and write-back caching policy of individual
- *   pages or page tables. When the flag is set, write-through is enabled.
- *   When the flag is clear, write-back is enabled. The processor ignores
- *   this flag if the cache disable (CD) flag of CR0 is set.
- */
-#define PTE_PTW       3
-#define PDE_PTW       3
-
-/*
- * Page-level cache disable (PCD) flag, bit 4
- *   Controls the caching of individual pages or page tables. When the
- *   flag is set, caching is disabled. This flag can be used to prevent
- *   caching of pages that contain memory mapped I/O ports.
- */
-#define PDE_PCD       4
-#define PTE_PCD       4
-
-/*
- * Accessed (A) flag, bit 5
- *   Indicates whether the page or page table has been accessed (read from
- *   or written to). Once this flag has been set by the processor, it is
- *   up to the software to clear it.
- */
-#define PDE_A         5
-#define PTE_A         5
-
-/*
- * Dirty (D) flag, bit 6 (PTE ONLY)
- *   Indicates that the page has been written to. Like the Accessed (A) flag,
- *   it is up to the software to clear this flag after it has been set by
- *   the processor.
- */
-#define PDE_RESERVED  6
-#define PTE_D         6
-
-/*
- * Page size (PS) flag, bit 7 (PDE ONLY)
- *   Determines the page size. When the flag is clear, pages are 4KB and the
- *   PDE points to a Page Table.
- */
-#define PDE_PS        7
-
-/* 
- * Page attribute index table (PAT) flag, bit 7 (PTE ONLY)
- *   This flag is used along with the PCD and PWT flags to select an entry in 
- *   the Page Attribute Table (PAT).
- *
- *   ONLY FOR > PENTIUM III PROCESSORS
- */
-#define PTE_PAT       7
-
-/*
- * Global (G) flag, bit 8
- *   Indicates a global page when set. When a page is marked global and the PGE
- *   flag of CR4 is set, the PTE or PDE is not invalidated in the TLB on a
- *   task switch or write to CR3.
- *
- *   ONLY FOR > PENTIUM PRO PROCESSORS
- */
-#define PDE_G         8
-#define PTE_G         8
-
-/*
- * Available, bits 9, 10, 11
- *   These bits are available for use by the system programmer.
- */
-#define PDE_AVAIL     9
-#define PDE_AVAIL_MASK MASK(3)
-#define PTE_AVAIL     9
-#define PTE_AVAIL_MASK MASK(3)
-
-/*
- * Page Table Base Address (PT), bits 12-31 (PDE ONLY)
- *   The address of the Page Table for this PDE. Since Page Tables are page 
- *   aligned, we know that the lower 12 bits are 0, and we only needed to 
- *   upper 20 bits to address the Page Table.
- */
-#define PDE_PT        12
-#define PDE_PT_MASK   MASK(20)
-
-#define PDE_SET_PT(pde_ptr, pgtbl) \
-  do { \
-    assert(PAGE_ALIGN_DOWN((size_t) (pgtbl)) == ((size_t)(pgtbl))); \
-    *(pde_ptr) = *(pde_ptr) & ~(PDE_PT_MASK << PDE_PT); \
-    *(pde_ptr) = *(pde_ptr) & ((size_t) (pgtbl)); \
-  } while (0)
-
-/*
- * Physical Page Address (PP), bits 12-31 (PTE ONLY)
- *   The address of the physical page in memory. Since pages are page-aligned,
- *   the lower 12 bits are 0 for this address.
- */
-#define PTE_PP        12
-#define PTE_PP_MASK   MASK(20)
-
-typedef int x86_entry_t;
-
-#define X86_PD_SIZE ((int) (X86_PAGE_SIZE / sizeof(int)))
-struct x86_pgdir {
-  x86_entry_t entries[X86_PD_SIZE];
-};
-
-#define PD_INDEX(vaddr) (PD_OFFSET(vaddr) / sizeof(x86_entry_t))
-#define PT_INDEX(vaddr) (PT_OFFSET(vaddr) / sizeof(x86_entry_t))
-
-#define X86_PT_SIZE ((int) (X86_PAGE_SIZE / sizeof(int)))
-struct x86_pgtbl {
-  x86_entry_t entries[X86_PT_SIZE];
-};
+static inline entry_t* get_pagetbl_entry(struct entry_table *pt, size_t vaddr) {
+  return &(pt->entries[PT_OFFSET(vaddr) / sizeof(entry_t)]);
+}
 
 int x86_vm_bootstrap(size_t kernel_page_size);
-
-
-/*
- * Operations on Page Directories
- */
-int                 x86_pgdir_init   (struct x86_pgdir *pd);
-struct x86_pgdir *  x86_pgdir_alloc  (void);
-void                x86_pgdir_free   (struct x86_pgdir *pd);
-
-/*
- * Operations on Page Tables
- */
-int                 x86_pgtbl_init   (struct x86_pgtbl *pt);
-struct x86_pgtbl *  x86_pgtbl_alloc  (void);
-void                x86_pgtbl_free   (struct x86_pgtbl *pt);
-
-
 
 #endif /* !__X86_VM_H__ */

@@ -51,8 +51,12 @@ static inline void __set_bit(int *word, int index, int bit) {
       :
       (*word) | (1 << index);
 }
+static inline int __get_bit(int word, int index) {
+  return (word >> index) & 0x1;
+}
 
 #define set_bit(w, i, b) __set_bit((int *) w, (int) i, (int) b)
+#define get_bit(w, i)    __get_bit((int) w, (int) i)
 
 /**
  * @brief Return the binary number that contains n ones in a row.

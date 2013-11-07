@@ -34,8 +34,8 @@ int kmalloc_init(void) {
 
   //FIXME use VM_ZONE_KERNEL once vm bootstrap works
   lmm_add_free(&kernel_lmm, 
-    (void *) PMEM_ZONE_KERNEL->address, 
-    (size_t) PMEM_ZONE_KERNEL->size);
+    (void *) VM_ZONE_KERNEL->address, 
+    (size_t) VM_ZONE_KERNEL->size);
 
   return 0;
 }

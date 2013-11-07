@@ -22,12 +22,16 @@
 #include <mm/lmm.h>
 #include <mm/lmm_types.h>
 #include <assert.h>
+#include <debug.h>
 
 void lmm_add_free(lmm_t *lmm, void *block, vm_size_t size)
 {
 	struct lmm_region *reg;
 	vm_offset_t min = (vm_offset_t)block;
 	vm_offset_t max = min + size;
+
+  TRACE("lmm_t *lmm=%p, void *block=%p, vm_size_t size=0x%08x\n",
+        lmm, block, size);
 
 	/* Restrict the min and max further to be properly aligned.
 	   Note that this is the opposite of what lmm_free() does,

@@ -22,7 +22,7 @@ void kernel_main() {
 
   SUCCEED_OR_DIE(log_init(dputchar, LOG_LEVEL_DEBUG));
   TRACE_ON;
-  TRACE("void");
+  TRACE();
 
   /* 
    * Initialize hardware interrupts by first telling the PIC where in the IDT it 

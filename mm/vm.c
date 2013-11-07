@@ -69,7 +69,7 @@ int vm_bootstrap(void) {
   VM_ZONE_KERNEL->address = (size_t) (0 - VM_ZONE_KERNEL->size);
   LOG_VM_ZONE(VM_ZONE_KERNEL);
 
-  VM_ZONE_USER->address = 4*PAGE_SIZE;
+  VM_ZONE_USER->address = MB(16);
   VM_ZONE_USER->size = VM_ZONE_KERNEL->address - VM_ZONE_USER->address;
   LOG_VM_ZONE(VM_ZONE_USER);
 
