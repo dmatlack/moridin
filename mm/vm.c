@@ -76,6 +76,7 @@ int vm_bootstrap(void) {
 #ifdef ARCH_X86
   x86_vm_bootstrap(PAGE_SIZE);
 #endif
+
   return 0;
 }
 

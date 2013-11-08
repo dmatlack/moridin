@@ -56,3 +56,7 @@ void x86_enable_global_pages(void) {
   cr4_set_bit(CR4_PGE, 1);
 }
 
+void x86_enable_write_protect(void) {
+  TRACE();
+  cr0_set_bit(CR0_WP, 1);
+}

@@ -82,7 +82,7 @@ static void x86_bootstrap_region(struct entry_table *pd,
 
   for (i = 0; i < num_pgtbls; i++) {
     entry_t *pde = get_pagedir_entry(pd, vpage);
-    size_t pgtbl_addr = (size_t) (pts + i);
+    size_t pgtbl_addr = (size_t) &pts[i];
     
     /*
      * initialize the actual page table
@@ -93,11 +93,10 @@ static void x86_bootstrap_region(struct entry_table *pd,
      * map the address of the page table in this page directory entry
      */
     entry_set_addr(pde, pgtbl_addr);
+
     entry_set_present(pde);
     entry_set_readwrite(pde);
     
-    //DEBUG("Set pde(0x%08x): 0x%08x", pde, *pde);
-
     vpage += X86_PAGE_SIZE * ENTRY_TABLE_SIZE;
   }
 
@@ -109,7 +108,6 @@ static void x86_bootstrap_region(struct entry_table *pd,
     ppage = pstart + i*X86_PAGE_SIZE;
 
     pde = get_pagedir_entry(pd, vpage);
-    //DEBUG("Mapping page 0x%08x -> pde(0x%08x): 0x%08x", vpage, pde, *pde);
 
     assert(entry_is_present(pde));
 
@@ -120,6 +118,8 @@ static void x86_bootstrap_region(struct entry_table *pd,
     entry_set_supervisor(pte);
     entry_set_readwrite(pte);
     entry_set_addr(pte, ppage);
+
+    assert(ppage == vtop(pd, vpage));
   }
 }
 /**
@@ -166,8 +166,26 @@ int x86_vm_bootstrap(size_t kernel_page_size) {
                        PMEM_ZONE_KERNEL->address);
 
 
+  DEBUG("Setting pagedir (cr3)...");
+  DEBUG("cr3 (before) = 0x%08x", get_cr3());
   x86_set_pagedir((int) bootstrap_pgdir);
+  DEBUG("cr3 (after)  = 0x%08x", get_cr3());
+  
+  DEBUG("Enable global pages (setting bit %d of cr4)...", CR4_PGE);
+  DEBUG("cr4 (before) = 0x%08x", get_cr4());
   x86_enable_global_pages();
+  DEBUG("cr4 (after)  = 0x%08x", get_cr4());
+
+  DEBUG("Enable write protect (setting bit %d of cr0)...", CR0_WP);
+  DEBUG("cr0 (before) = 0x%08x", get_cr0());
+  x86_enable_write_protect();
+  DEBUG("cr0 (after)  = 0x%08x", get_cr0());
+
+  /*
+   * officially turn the virtual memory system "on"
+   */
+  DEBUG("About to enable paging... (setting bit %d of cr0)", CR0_PG);
+  DEBUG("cr0 (before) = 0x%08x", get_cr0());
   x86_enable_paging();
 
   return 0;

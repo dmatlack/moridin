@@ -180,7 +180,7 @@ static inline void entry_set_addr(entry_t *entry_ptr, size_t addr) {
    * Set the lower bits of the address to 1's so we don't overwrite
    * any of the flags in the entry
    */
-  addr = (addr) | ~ENTRY_ADDR_MASK;
+  addr = (addr) | MASK(ENTRY_ADDR);
   *(entry_ptr) = *(entry_ptr) & ((size_t) (addr));
 }
 static inline size_t entry_get_addr(entry_t *entry) {
@@ -233,5 +233,7 @@ static inline entry_t* get_pagetbl_entry(struct entry_table *pt, size_t vaddr) {
 }
 
 int x86_vm_bootstrap(size_t kernel_page_size);
+
+size_t vtop(struct entry_table *pd, size_t vaddr);
 
 #endif /* !__X86_VM_H__ */
