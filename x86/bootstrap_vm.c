@@ -93,6 +93,7 @@ static void x86_bootstrap_region(struct entry_table *pd,
      * map the address of the page table in this page directory entry
      */
     entry_set_addr(pde, pgtbl_addr);
+    ASSERT(entry_get_addr(pde) == pgtbl_addr);
 
     entry_set_present(pde);
     entry_set_readwrite(pde);
@@ -109,7 +110,7 @@ static void x86_bootstrap_region(struct entry_table *pd,
 
     pde = get_pagedir_entry(pd, vpage);
 
-    assert(entry_is_present(pde));
+    ASSERT(entry_is_present(pde));
 
     pt = (struct entry_table *) entry_get_addr(pde);
     pte = get_pagetbl_entry(pt, vpage);
@@ -119,7 +120,8 @@ static void x86_bootstrap_region(struct entry_table *pd,
     entry_set_readwrite(pte);
     entry_set_addr(pte, ppage);
 
-    assert(ppage == vtop(pd, vpage));
+    ASSERT(ppage == entry_get_addr(pte));
+    ASSERT(ppage == vtop(pd, vpage));
   }
 }
 /**
@@ -132,12 +134,12 @@ static void x86_bootstrap_region(struct entry_table *pd,
 int x86_vm_bootstrap(size_t kernel_page_size) {
   TRACE("kernel_page_size=0x%08x", kernel_page_size);
 
-  assert(sizeof(entry_t) == 4);
-  assert(X86_PAGE_SIZE == KB(4));
-  assert(X86_PAGE_SIZE == kernel_page_size);
-  assert(VM_ZONE_KERNEL->size == PMEM_ZONE_KERNEL->size);
-  assert(VM_ZONE_KERNEL->size < CONFIG_MAX_KERNEL_MEM);
-  assert(FLOOR(X86_PAGE_SIZE, (size_t) bootstrap_pgdir) == 
+  ASSERT(sizeof(entry_t) == 4);
+  ASSERT(X86_PAGE_SIZE == KB(4));
+  ASSERT(X86_PAGE_SIZE == kernel_page_size);
+  ASSERT(VM_ZONE_KERNEL->size == PMEM_ZONE_KERNEL->size);
+  ASSERT(VM_ZONE_KERNEL->size < CONFIG_MAX_KERNEL_MEM);
+  ASSERT(FLOOR(X86_PAGE_SIZE, (size_t) bootstrap_pgdir) == 
          (size_t) bootstrap_pgdir);
 
   DEBUG("bootstrap_pgdir=0x%08x", bootstrap_pgdir);

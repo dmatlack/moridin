@@ -39,8 +39,6 @@ size_t vtop(struct entry_table *pd,  size_t vaddr) {
   struct entry_table *pt;
   entry_t *pde, *pte;
   
-  TRACE("pd=%p, vaddr=0x%08x", pd, vaddr);
-
   pde = get_pagedir_entry(pd, vaddr);
 
   if (!entry_is_present(pde)) { 

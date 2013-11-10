@@ -16,4 +16,6 @@ int panic(const char *fmt, ...);
 	((void)((expression) ? 0 : (panic("%s:%u: failed assertion `%s'", \
 					  __FILE__, __LINE__, #expression), 0)))
 
+#define ASSERT(expression) assert(expression)
+
 #endif /* _ASSERT_H_ */

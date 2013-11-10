@@ -172,19 +172,14 @@ static inline int entry_is_dirty(entry_t *entry) {
  * Page Table Base Address (PT) or Physical Page Address (PP)
  *   bits 12-31
  */
-#define ENTRY_ADDR 12
-#define ENTRY_ADDR_MASK MASK(20)
+#define ENTRY_ADDR_MASK (~MASK(11))
 static inline void entry_set_addr(entry_t *entry_ptr, size_t addr) {
-  assert(FLOOR(X86_PAGE_SIZE, (size_t) (addr)) == ((size_t)(addr)));
-  /*
-   * Set the lower bits of the address to 1's so we don't overwrite
-   * any of the flags in the entry
-   */
-  addr = (addr) | MASK(ENTRY_ADDR);
-  *(entry_ptr) = *(entry_ptr) & ((size_t) (addr));
+  ASSERT(FLOOR(X86_PAGE_SIZE, (size_t) (addr)) == ((size_t)(addr)));
+  *(entry_ptr) &= ~ENTRY_ADDR_MASK;
+  *(entry_ptr) |= addr;
 }
 static inline size_t entry_get_addr(entry_t *entry) {
-  return (size_t) ( *entry & ~(MASK(ENTRY_ADDR)) );
+  return (size_t) ((*entry) & ENTRY_ADDR_MASK);
 }
 
 /*
