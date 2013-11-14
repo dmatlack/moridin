@@ -6,6 +6,8 @@
 PWD = $(shell pwd)
 NAME = myos
 
+AUTOSTART := $(shell rm -f $(NAME).S)
+
 ###############################################################################
 # Project Directory/Files
 ###############################################################################
@@ -54,8 +56,10 @@ all: $(OBJFILES) $(HFILES) linker.ld boot/grub.cfg
 	mkdir -p isodir/boot/grub
 	cp boot/grub.cfg isodir/boot/grub/grub.cfg
 	grub-mkrescue -o $(NAME).iso isodir
+	objdump -D $(NAME).bin > $(NAME).S
 
 clean:
+	rm -rf $(NAME).S
 	rm -rf isodir
 	rm -rf $(OBJFILES)
 	rm -rf $(NAME).bin

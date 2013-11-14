@@ -30,7 +30,7 @@ void lmm_add_free(lmm_t *lmm, void *block, vm_size_t size)
 	vm_offset_t min = (vm_offset_t)block;
 	vm_offset_t max = min + size;
 
-  TRACE("lmm_t *lmm=%p, void *block=%p, vm_size_t size=0x%08x\n",
+  TRACE("lmm_t *lmm=%p, void *block=%p, vm_size_t size=0x%08x",
         lmm, block, size);
 
 	/* Restrict the min and max further to be properly aligned.

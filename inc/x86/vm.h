@@ -220,11 +220,11 @@ int entry_table_init(struct entry_table *tbl);
 #define PHYS_OFFSET(la) ((la) & MASK(12))
 
 static inline entry_t* get_pagedir_entry(struct entry_table *pd, size_t vaddr) {
-  return &(pd->entries[PD_OFFSET(vaddr) / sizeof(entry_t)]);
+  return &(pd->entries[PD_OFFSET(vaddr) / 1/*sizeof(entry_t)*/]);
 }
 
 static inline entry_t* get_pagetbl_entry(struct entry_table *pt, size_t vaddr) {
-  return &(pt->entries[PT_OFFSET(vaddr) / sizeof(entry_t)]);
+  return &(pt->entries[PT_OFFSET(vaddr) / 1/*sizeof(entry_t)*/]);
 }
 
 int x86_vm_bootstrap(size_t kernel_page_size);

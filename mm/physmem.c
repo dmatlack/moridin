@@ -77,10 +77,6 @@ int pmem_bootstrap(size_t max_mem, size_t page_size,
   return 0;
 }
 
-#define LOG_PMEM_ZONE( zone_macro )\
-  INFO(#zone_macro": address=0x%08x, size=0x%08x (%d MB)",\
-       zone_macro->address, zone_macro->size, zone_macro->size / MB(1));
-
 
 /**
  * @breif Initialize the physical memory management system.

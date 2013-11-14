@@ -27,10 +27,10 @@
   ((NUM_PAGES_IN_ZONE_KERNEL / ENTRY_TABLE_SIZE) + 1)
 
 /*
- * Low memory includes the BIOS region, the kernel image. 2 MB should be
+ * Low memory includes the BIOS region, the kernel image. should be
  * enough... FIXME
  */
-#define BOOTSTRAP_LOWMEM_SIZE MB(2)
+#define BOOTSTRAP_LOWMEM_SIZE MB(4)
 #define NUM_BOOTSTRAP_LOWMEM_PGTBLS\
   ((BOOTSTRAP_LOWMEM_SIZE / X86_PAGE_SIZE / ENTRY_TABLE_SIZE + 1))
 
@@ -76,9 +76,13 @@ static void x86_bootstrap_region(struct entry_table *pd,
    * vpage is the virtual address of the first page of each page table
    */
   vpage = FLOOR(X86_PAGE_SIZE * ENTRY_TABLE_SIZE, vstart);
+  DEBUG("    vpage=0x%08x", vpage);
 
   vend = CEIL(X86_PAGE_SIZE * ENTRY_TABLE_SIZE, vstart + vsize);
+  DEBUG("    vend=0x%08x", vend);
+
   num_pgtbls = (vend - vpage) / X86_PAGE_SIZE / ENTRY_TABLE_SIZE;
+  DEBUG("    num_pgtbls=%d", num_pgtbls);
 
   for (i = 0; i < num_pgtbls; i++) {
     entry_t *pde = get_pagedir_entry(pd, vpage);
@@ -93,14 +97,19 @@ static void x86_bootstrap_region(struct entry_table *pd,
      * map the address of the page table in this page directory entry
      */
     entry_set_addr(pde, pgtbl_addr);
-    ASSERT(entry_get_addr(pde) == pgtbl_addr);
 
     entry_set_present(pde);
     entry_set_readwrite(pde);
-    
+
+    ASSERT(entry_get_addr(pde) == pgtbl_addr);
+
     vpage += X86_PAGE_SIZE * ENTRY_TABLE_SIZE;
   }
 
+  /*
+   * map each virtual page address to its corresponding, direct mapped,
+   * physical page
+   */
   for (i = 0; i < vsize / X86_PAGE_SIZE; i++) {
     struct entry_table *pt;
     entry_t *pde, *pte;
@@ -109,11 +118,11 @@ static void x86_bootstrap_region(struct entry_table *pd,
     ppage = pstart + i*X86_PAGE_SIZE;
 
     pde = get_pagedir_entry(pd, vpage);
-
     ASSERT(entry_is_present(pde));
 
     pt = (struct entry_table *) entry_get_addr(pde);
     pte = get_pagetbl_entry(pt, vpage);
+    ASSERT(!entry_is_present(pte));
 
     entry_set_present(pte);
     entry_set_supervisor(pte);
@@ -123,7 +132,9 @@ static void x86_bootstrap_region(struct entry_table *pd,
     ASSERT(ppage == entry_get_addr(pte));
     ASSERT(ppage == vtop(pd, vpage));
   }
+
 }
+
 /**
  * @brief Bootrap into virtual memory using some static page dir/tables.
  *
@@ -137,14 +148,10 @@ int x86_vm_bootstrap(size_t kernel_page_size) {
   ASSERT(sizeof(entry_t) == 4);
   ASSERT(X86_PAGE_SIZE == KB(4));
   ASSERT(X86_PAGE_SIZE == kernel_page_size);
-  ASSERT(VM_ZONE_KERNEL->size == PMEM_ZONE_KERNEL->size);
+  ASSERT(VM_ZONE_KERNEL->size <= PMEM_ZONE_KERNEL->size);
   ASSERT(VM_ZONE_KERNEL->size < CONFIG_MAX_KERNEL_MEM);
   ASSERT(FLOOR(X86_PAGE_SIZE, (size_t) bootstrap_pgdir) == 
          (size_t) bootstrap_pgdir);
-
-  DEBUG("bootstrap_pgdir=0x%08x", bootstrap_pgdir);
-  DEBUG("bootstrap_kernel_pgtbls=0x%08x", bootstrap_kernel_pgtbls);
-  DEBUG("bootstrap_lowmem_pgtbls=0x%08x", bootstrap_lowmem_pgtbls);
 
   entry_table_init(bootstrap_pgdir);
   
@@ -157,7 +164,6 @@ int x86_vm_bootstrap(size_t kernel_page_size) {
                        0, 
                        BOOTSTRAP_LOWMEM_SIZE,
                        0);
-
   /*
    * map the kernel's virtual address space to a zone in physical memory
    */
@@ -167,27 +173,13 @@ int x86_vm_bootstrap(size_t kernel_page_size) {
                        VM_ZONE_KERNEL->size,
                        PMEM_ZONE_KERNEL->address);
 
-
-  DEBUG("Setting pagedir (cr3)...");
-  DEBUG("cr3 (before) = 0x%08x", get_cr3());
   x86_set_pagedir((int) bootstrap_pgdir);
-  DEBUG("cr3 (after)  = 0x%08x", get_cr3());
-  
-  DEBUG("Enable global pages (setting bit %d of cr4)...", CR4_PGE);
-  DEBUG("cr4 (before) = 0x%08x", get_cr4());
   x86_enable_global_pages();
-  DEBUG("cr4 (after)  = 0x%08x", get_cr4());
-
-  DEBUG("Enable write protect (setting bit %d of cr0)...", CR0_WP);
-  DEBUG("cr0 (before) = 0x%08x", get_cr0());
   x86_enable_write_protect();
-  DEBUG("cr0 (after)  = 0x%08x", get_cr0());
 
   /*
    * officially turn the virtual memory system "on"
    */
-  DEBUG("About to enable paging... (setting bit %d of cr0)", CR0_PG);
-  DEBUG("cr0 (before) = 0x%08x", get_cr0());
   x86_enable_paging();
 
   return 0;

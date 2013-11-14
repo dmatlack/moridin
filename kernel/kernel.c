@@ -24,6 +24,9 @@ void kernel_main() {
   TRACE_ON;
   TRACE();
 
+  LOG_PMEM_ZONE(PMEM_ZONE_KERNEL);
+  LOG_PMEM_ZONE(PMEM_ZONE_USER);
+
   /* 
    * Initialize hardware interrupts by first telling the PIC where in the IDT it 
    * can find its interrupts handlers, and then installing the necessary interrupts 
@@ -38,5 +41,6 @@ void kernel_main() {
 
   SUCCEED_OR_DIE(pmem_init());
 
+  kprintf("huzzah! :)\n");
   while (1) continue;
 }

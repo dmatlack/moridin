@@ -12,6 +12,7 @@
 
 #include <stddef.h>
 #include <types.h>
+#include <kernel/config.h>
 
 struct pmem_page {
   int refcount;
@@ -95,9 +96,9 @@ extern struct pmem_map __pmem;
 #define PAGE_ALIGN_UP(n) CEIL(PAGE_SIZE, n)
 #define PAGE_ALIGN_DOWN(n) FLOOR(PAGE_SIZE, n)
 
-#define CONFIG_MAX_KERNEL_MEM GB(1)
-#define CONFIG_MIN_KERNEL_MEM MB(128)
-#define CONFIG_MIN_USER_MEM   MB(256)
+#define LOG_PMEM_ZONE( zone_macro )\
+  INFO(#zone_macro": address=0x%08x, size=0x%08x (%d MB)",\
+       zone_macro->address, zone_macro->size, zone_macro->size / MB(1));
 
 int pmem_bootstrap(size_t max_mem, size_t page_size,
                    char kimg_start[], char kimg_end[]);

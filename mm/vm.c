@@ -67,6 +67,14 @@ int vm_bootstrap(void) {
 
   VM_ZONE_KERNEL->size = PMEM_ZONE_KERNEL->size;
   VM_ZONE_KERNEL->address = (size_t) (0 - VM_ZONE_KERNEL->size);
+  /* 
+   * If the kernel is mapped to the top of the address space (which it 
+   * probably is), then steal the top page from it, otherwise we run into 
+   * overflow issues.
+   */
+  if (0 == VM_ZONE_KERNEL->address + VM_ZONE_KERNEL->size) {
+    VM_ZONE_KERNEL->size -= PAGE_SIZE;
+  }
   LOG_VM_ZONE(VM_ZONE_KERNEL);
 
   VM_ZONE_USER->address = MB(16);
