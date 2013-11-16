@@ -85,7 +85,7 @@ static void x86_bootstrap_region(struct entry_table *pd,
   DEBUG("    num_pgtbls=%d", num_pgtbls);
 
   for (i = 0; i < num_pgtbls; i++) {
-    entry_t *pde = get_pagedir_entry(pd, vpage);
+    entry_t *pde = get_pde(pd, vpage);
     size_t pgtbl_addr = (size_t) &pts[i];
     
     /*
@@ -117,11 +117,11 @@ static void x86_bootstrap_region(struct entry_table *pd,
     vpage = vstart + i*X86_PAGE_SIZE;
     ppage = pstart + i*X86_PAGE_SIZE;
 
-    pde = get_pagedir_entry(pd, vpage);
+    pde = get_pde(pd, vpage);
     ASSERT(entry_is_present(pde));
 
     pt = (struct entry_table *) entry_get_addr(pde);
-    pte = get_pagetbl_entry(pt, vpage);
+    pte = get_pte(pt, vpage);
     ASSERT(!entry_is_present(pte));
 
     entry_set_present(pte);
@@ -130,7 +130,7 @@ static void x86_bootstrap_region(struct entry_table *pd,
     entry_set_addr(pte, ppage);
 
     ASSERT(ppage == entry_get_addr(pte));
-    ASSERT(ppage == vtop(pd, vpage));
+    ASSERT(ppage == __x86_vtop(pd, vpage));
   }
 
 }

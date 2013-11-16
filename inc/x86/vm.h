@@ -219,16 +219,22 @@ int entry_table_init(struct entry_table *tbl);
 #define PT_OFFSET(la)  (((la) >> 12) & MASK(10))
 #define PHYS_OFFSET(la) ((la) & MASK(12))
 
-static inline entry_t* get_pagedir_entry(struct entry_table *pd, size_t vaddr) {
-  return &(pd->entries[PD_OFFSET(vaddr) / 1/*sizeof(entry_t)*/]);
+static inline entry_t* get_pde(struct entry_table *pd, size_t vaddr) {
+  return &(pd->entries[PD_OFFSET(vaddr)]);
 }
 
-static inline entry_t* get_pagetbl_entry(struct entry_table *pt, size_t vaddr) {
-  return &(pt->entries[PT_OFFSET(vaddr) / 1/*sizeof(entry_t)*/]);
+static inline entry_t* get_pte(struct entry_table *pt, size_t vaddr) {
+  return &(pt->entries[PT_OFFSET(vaddr)]);
 }
 
 int x86_vm_bootstrap(size_t kernel_page_size);
 
-size_t vtop(struct entry_table *pd, size_t vaddr);
+size_t __x86_vtop(struct entry_table *pd, size_t vaddr);
+size_t   x86_vtop(size_t vaddr);
+
+int __x86_map_page(struct entry_table *pd, size_t vpage, size_t ppage);
+int   x86_map_page(size_t vpage, size_t ppage);
+
+#define ALLOC_FAILED 1
 
 #endif /* !__X86_VM_H__ */

@@ -27,6 +27,12 @@ void kernel_main() {
   LOG_PMEM_ZONE(PMEM_ZONE_KERNEL);
   LOG_PMEM_ZONE(PMEM_ZONE_USER);
 
+  {
+    size_t size = KERNEL_IMAGE_END - KERNEL_IMAGE_START;
+    INFO("Kernel Image: start=0x%08x, end=0x0x%08x, size=0x%08x (%d MB, %d KB)",
+       KERNEL_IMAGE_START, KERNEL_IMAGE_END, size, size / MB(1), size % MB(1) / KB(1));
+  }
+
   /* 
    * Initialize hardware interrupts by first telling the PIC where in the IDT it 
    * can find its interrupts handlers, and then installing the necessary interrupts 

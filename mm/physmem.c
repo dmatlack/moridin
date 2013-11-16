@@ -53,7 +53,7 @@ int pmem_bootstrap(size_t max_mem, size_t page_size,
    * few processes can run.
    */
   mem_avail = max_mem - MB(16);
-  assert(mem_avail >= CONFIG_MIN_USER_MEM + CONFIG_MIN_KERNEL_MEM);
+  ASSERT(mem_avail >= CONFIG_MIN_USER_MEM + CONFIG_MIN_KERNEL_MEM);
 
   umem_size = PAGE_ALIGN_DOWN(mem_avail / 4 * 3);
   kmem_size = PAGE_ALIGN_DOWN(mem_avail - umem_size);
@@ -63,8 +63,8 @@ int pmem_bootstrap(size_t max_mem, size_t page_size,
     umem_size = mem_avail - kmem_size;
   }
 
-  assert(kmem_size > CONFIG_MIN_KERNEL_MEM);
-  assert(umem_size > CONFIG_MIN_USER_MEM);
+  ASSERT(kmem_size > CONFIG_MIN_KERNEL_MEM);
+  ASSERT(umem_size > CONFIG_MIN_USER_MEM);
 
   PMEM_ZONE_USER->address = MB(16);
   PMEM_ZONE_USER->size = umem_size;
@@ -136,7 +136,7 @@ void pmem_alloc_zone(struct pmem_zone *zone) {
   int i;
 
   for (i = 0; i < zone->num_pages; i++) {
-    assert(zone->pages[i].refcount == 0);
+    ASSERT(zone->pages[i].refcount == 0);
     zone->pages[i].refcount = 1;
   }
 }

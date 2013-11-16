@@ -93,6 +93,9 @@ extern struct pmem_map __pmem;
 #define PMEM_ZONE_BIOS   (__pmem.zones + ZONE_BIOS_IDX)
 #define PMEM_ZONE(i)     (__pmem.zones + i)
 
+#define KERNEL_IMAGE_START (__pmem.kernel_image_start)
+#define KERNEL_IMAGE_END   (__pmem.kernel_image_end)
+
 #define PAGE_ALIGN_UP(n) CEIL(PAGE_SIZE, n)
 #define PAGE_ALIGN_DOWN(n) FLOOR(PAGE_SIZE, n)
 
