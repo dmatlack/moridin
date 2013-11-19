@@ -50,6 +50,10 @@
 struct vm_zone __vm_zone_kernel;
 struct vm_zone __vm_zone_user;
 
+#ifdef ARCH_X86
+struct vm_machine_interface *machine = &x86_vm_machine_interface;
+#endif
+
 void vm_region_init(struct vm_region *r, size_t address, size_t size,
                     int flags) {
   r->flags = flags;
@@ -70,7 +74,7 @@ int vm_bootstrap(void) {
   /* 
    * If the kernel is mapped to the top of the address space (which it 
    * probably is), then steal the top page from it, otherwise we run into 
-   * overflow issues.
+   * overflow issues (FIXME hack)
    */
   if (0 == VM_ZONE_KERNEL->address + VM_ZONE_KERNEL->size) {
     VM_ZONE_KERNEL->size -= PAGE_SIZE;
@@ -81,14 +85,15 @@ int vm_bootstrap(void) {
   VM_ZONE_USER->size = VM_ZONE_KERNEL->address - VM_ZONE_USER->address;
   LOG_VM_ZONE(VM_ZONE_USER);
 
-#ifdef ARCH_X86
-  x86_vm_bootstrap(PAGE_SIZE);
-#endif
+  if (0 != machine->bootstrap(PAGE_SIZE)) {
+    return -1;
+  }
 
   return 0;
 }
 
 int vm_init(void) {
+  machine->init();
   return 0;
 }
 

@@ -21,6 +21,7 @@
 #ifndef __X86_VM_H__
 #define __X86_VM_H__
 
+#include <mm/vm.h>
 #include <x86/page.h>
 #include <stdint.h>
 #include <types.h>
@@ -193,6 +194,8 @@ struct entry_table {
 };
 
 int entry_table_init(struct entry_table *tbl);
+struct entry_table *entry_table_alloc(void);
+void entry_table_free(struct entry_table *ptr);
 
 /*
  * Linear Address translation for 4 KB pages
@@ -227,13 +230,24 @@ static inline entry_t* get_pte(struct entry_table *pt, size_t vaddr) {
   return &(pt->entries[PT_OFFSET(vaddr)]);
 }
 
+/*
+ * x86 implementation of the vm_machine_interface.
+ */
 int x86_vm_bootstrap(size_t kernel_page_size);
+int x86_vm_init(void);
+int x86_vm_init_object(struct vm_machine_object **object);
+int x86_vm_map(struct vm_machine_object *object, size_t *vpages,
+            size_t *ppages, int num_pages, vm_flags_t flags);
+//TODO unmap
+extern struct vm_machine_interface x86_vm_machine_interface;
 
-size_t __x86_vtop(struct entry_table *pd, size_t vaddr);
-size_t   x86_vtop(size_t vaddr);
+size_t x86_vtop(struct entry_table *pd, size_t vaddr);
 
-int __x86_map_page(struct entry_table *pd, size_t vpage, size_t ppage);
-int   x86_map_page(size_t vpage, size_t ppage);
+int x86_map_page(struct entry_table *pd, size_t vpage, size_t ppage, 
+                 vm_flags_t flags);
+
+int x86_map_pages(struct entry_table *pd, size_t *vpages, size_t *ppages,
+                  int num_pages, vm_flags_t flags);
 
 #define ALLOC_FAILED 1
 

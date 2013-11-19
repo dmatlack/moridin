@@ -130,7 +130,7 @@ static void x86_bootstrap_region(struct entry_table *pd,
     entry_set_addr(pte, ppage);
 
     ASSERT(ppage == entry_get_addr(pte));
-    ASSERT(ppage == __x86_vtop(pd, vpage));
+    ASSERT(ppage == x86_vtop(pd, vpage));
   }
 
 }
