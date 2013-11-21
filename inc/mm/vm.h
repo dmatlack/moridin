@@ -89,37 +89,6 @@ struct vm_machine_interface {
 
 };
 
-/**
- * @brief The vm_region struct represents a contiguous, page-aligned, region
- * of virtual memory that shares the same set of flags (read/write, permissions,
- * etc.).
- */
-struct vm_region {
-  vm_flags_t flags;
-  size_t address;
-  size_t size;
-  struct vm_object *object;
-
-  list_link(struct vm_region) region_link;
-};
-
-list_typedef(struct vm_region) vm_region_list_t;
-
-/**
- * @brief There is one vm_space per user process, and it represents the 
- * virtual address space of that process.
- */
-struct vm_space {
-  vm_region_list_t regions;
-};
-
 int vm_bootstrap(void);
-int vm_init(void);
-int vm_space_init(struct vm_space *vm);
-struct vm_region *vm_add_region(struct vm_space *vm, size_t address,
-                                size_t size, int flags);
-
-
-
 
 #endif /* !__MM_VM_H__ */

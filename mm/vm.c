@@ -19,21 +19,6 @@
  * occurs. We write a routine that handles a page fault by providing a
  * page to back the requested address and resuming execution in the process.
  *
- * 
- * We break up the user's virtual address space into regions, based on 
- * different properties we whish to assign these regions. Region flags
- * include:
- *   - Read or Write access
- *   - Priveledge level
- * A region is a contiguous range of the virtual address that have the same
- * backing store (e.g. main memory or hard disk) and the same flags.
- *
- *
- * The virtual memory system does have the concept of pages, but they do
- * not have to be the same sized pages as the backing store's pages. The
- * page size must, of course, be a multiple of the hardware page size
- * though.
- *
  * @author David Matlack
  */
 #include <mm/vm.h>
@@ -50,22 +35,30 @@
 struct vm_zone __vm_zone_kernel;
 struct vm_zone __vm_zone_user;
 
+/*
+ * struct vm_machine_interface machine
+ *  
+ *  This is the interface to the machine dependent virtual memory
+ *  implementation. It is determined at compile-time.
+ */ 
 #ifdef ARCH_X86
 struct vm_machine_interface *machine = &x86_vm_machine_interface;
 #endif
-
-void vm_region_init(struct vm_region *r, size_t address, size_t size,
-                    int flags) {
-  r->flags = flags;
-  r->address = address;
-  r->size = size;
-  r->object = NULL; //FIXME
-}
 
 #define LOG_VM_ZONE( zone_macro )\
   INFO(#zone_macro": address=0x%0x, size=0x%08x",\
        zone_macro->address, zone_macro->size)
 
+/**
+ * @brief Initialize the virtual memory zone structs, call the machine 
+ * dependent vm bootstrap code, and return.
+ *
+ * After this function returns successfully, virtual memory is enabled
+ * and the VM_ZONE_KERNEL will be direct mapped to PMEM_ZONE_KERNEL with
+ * pages marked as read/write and PL 0.
+ *
+ * @return 0 on success, non-0 on error
+ */
 int vm_bootstrap(void) {
   TRACE("void");
 
@@ -90,37 +83,4 @@ int vm_bootstrap(void) {
   }
 
   return 0;
-}
-
-int vm_init(void) {
-  machine->init();
-  return 0;
-}
-
-int vm_space_init(struct vm_space *vm) {
-
-  list_init(&vm->regions);
-
-  return 0;
-}
-
-/**
- * @brief Add a new region to the virtual address space and return a reference
- * to the vm_region it was added to.
- *
- * @warning This region must not overlap with any existing regions in the 
- * vm_space.
- */
-struct vm_region *vm_add_region(struct vm_space *vm, size_t address,
-                                size_t size, int flags) {
-  struct vm_region *newr = NULL;
-
-  newr = kmalloc(sizeof(struct vm_region));
-  vm_region_init(newr, address, size, flags);
-
-  list_insert_tail(&vm->regions, newr, region_link);
-
-  //TODO call into the machine-dependent code to do the mapping
-
-  return newr;
 }

@@ -21,9 +21,13 @@
 #define IS_PAGE_ALIGNED(addr)\
   (FLOOR(X86_PAGE_SIZE, addr) == addr)
 
-int x86_vm_init(void) {
-  return 0;
-}
+struct vm_machine_interface x86_vm_machine_interface = {
+  .bootstrap   = x86_vm_bootstrap,
+  .init        = NULL,
+  .init_object = x86_vm_init_object,
+  .map         = x86_vm_map,
+  .unmap       = NULL,
+};
 
 int x86_vm_init_object(struct vm_machine_object **object) {
   struct entry_table *page_directory;
@@ -49,14 +53,6 @@ int x86_vm_map(struct vm_machine_object *object, size_t *vpages,
   return x86_map_pages((struct entry_table *) object, vpages, ppages,
                        num_pages, flags);
 }
-
-struct vm_machine_interface x86_vm_machine_interface = {
-  .bootstrap   = x86_vm_bootstrap,
-  .init        = x86_vm_init,
-  .init_object = x86_vm_init_object,
-  .map         = x86_vm_map,
-  .unmap       = NULL,
-};
 
 /**
  * @brief Initialize a page table or page directory (struct entry_table).

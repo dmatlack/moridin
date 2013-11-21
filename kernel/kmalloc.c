@@ -40,6 +40,10 @@ int kmalloc_init(void) {
   return 0;
 }
 
+void kmalloc_heap_dump(void) {
+  lmm_dump(&kernel_lmm);
+}
+
 //void *__kmalloc(size_t size) {
 //	size_t *chunk;
 //
@@ -133,7 +137,7 @@ void *__kmalloc(size_t size) {
 }
 
 void *kmalloc(size_t size) {
-  TRACE("size=0x%08x");
+  TRACE("size=0x%08x", size);
   return __kmalloc(size);
 }
 
