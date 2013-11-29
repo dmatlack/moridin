@@ -30,53 +30,44 @@ int pmem_bootstrap(size_t max_mem, size_t page_size,
                    char kimg_start[], char kimg_end[]) {
   size_t kmem_size;
   size_t umem_size;
-  size_t mem_avail;
+  
+  max_mem = FLOOR(page_size, max_mem);
 
   __pmem.max_mem = max_mem;
   __pmem.page_size = page_size;
 
   __pmem.kernel_image_start = PAGE_ALIGN_DOWN((size_t) kimg_start);
   __pmem.kernel_image_end = PAGE_ALIGN_UP((size_t) kimg_end);
+
+  ASSERT(max_mem >= CONFIG_MIN_PHYSMEM_USER + CONFIG_MIN_PHYSMEM_KERNEL);
   
-  PMEM_ZONE_BIOS->address = 0;
-  PMEM_ZONE_BIOS->size = MB(1);
-  PMEM_ZONE_BIOS->dbgstr = "PMEM_ZONE_BIOS";
-
-  PMEM_ZONE_DMA->address = MB(1);
-  PMEM_ZONE_DMA->size = MB(15);
-  PMEM_ZONE_DMA->dbgstr = "PMEM_ZONE_DMA";
-
   /*
    * We need to divide up the remaining memory between the user and the 
    * kernel without giving too much memory to the user such that the kernel
    * can't do very much and not giving too much to the kernel such that only
    * few processes can run.
    */
-  mem_avail = max_mem - MB(16);
-  ASSERT(mem_avail >= CONFIG_MIN_USER_MEM + CONFIG_MIN_KERNEL_MEM);
+  umem_size = PAGE_ALIGN_DOWN(max_mem / 4 * 3);
+  kmem_size = PAGE_ALIGN_DOWN(max_mem - umem_size);
 
-  umem_size = PAGE_ALIGN_DOWN(mem_avail / 4 * 3);
-  kmem_size = PAGE_ALIGN_DOWN(mem_avail - umem_size);
-
-  if (kmem_size > CONFIG_MAX_KERNEL_MEM) {
-    kmem_size = CONFIG_MAX_KERNEL_MEM;
-    umem_size = mem_avail - kmem_size;
+  if (kmem_size > CONFIG_KERNEL_VM_SIZE) {
+    kmem_size = CONFIG_KERNEL_VM_SIZE;
+    umem_size = max_mem - kmem_size;
   }
 
-  ASSERT(kmem_size > CONFIG_MIN_KERNEL_MEM);
-  ASSERT(umem_size > CONFIG_MIN_USER_MEM);
+  ASSERT(kmem_size > CONFIG_MIN_PHYSMEM_KERNEL);
+  ASSERT(umem_size > CONFIG_MIN_PHYSMEM_USER);
 
-  PMEM_ZONE_USER->address = MB(16);
-  PMEM_ZONE_USER->size = umem_size;
-  PMEM_ZONE_USER->dbgstr = "PMEM_ZONE_USER";
-
-  PMEM_ZONE_KERNEL->address = PMEM_ZONE_USER->address + PMEM_ZONE_USER->size;
+  PMEM_ZONE_KERNEL->address = 0;
   PMEM_ZONE_KERNEL->size = kmem_size;
   PMEM_ZONE_KERNEL->dbgstr = "PMEM_ZONE_KERNEL";
 
+  PMEM_ZONE_USER->address = PMEM_ZONE_KERNEL->address + PMEM_ZONE_KERNEL->size;
+  PMEM_ZONE_USER->size = umem_size;
+  PMEM_ZONE_USER->dbgstr = "PMEM_ZONE_USER";
+
   return 0;
 }
-
 
 /**
  * @breif Initialize the physical memory management system.
@@ -87,11 +78,8 @@ int pmem_bootstrap(size_t max_mem, size_t page_size,
  */
 int pmem_init(void) {
   int z;
-  int p;
 
   TRACE("void");
-  LOG_PMEM_ZONE(PMEM_ZONE_BIOS);
-  LOG_PMEM_ZONE(PMEM_ZONE_DMA);
   LOG_PMEM_ZONE(PMEM_ZONE_KERNEL);
   LOG_PMEM_ZONE(PMEM_ZONE_USER);
 
@@ -101,16 +89,13 @@ int pmem_init(void) {
    */
   for (z = 0; z < PMEM_NUM_ZONES; z++) {
     struct pmem_zone *zone = PMEM_ZONE(z);
+    int p;
 
     zone->num_pages = zone->size / PAGE_SIZE;
     zone->num_free = zone->num_pages;
     zone->page_index = 0;
-    zone->pages = kmalloc(zone->num_pages * sizeof(struct pmem_page));
 
-    /*
-     * zone->address and zone->size should have already been initialize in
-     * pmem_bootstrap()
-     */
+    zone->pages = kmalloc(zone->num_pages * sizeof(struct pmem_page));
 
     for (p = 0; p < zone->num_pages; p++) {
       zone->pages[p].refcount = 0;

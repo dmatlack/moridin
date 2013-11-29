@@ -24,6 +24,7 @@
 #   the prototypes in inc/x86/exn.h !!!!!!!!!!!!!!
 .global x86_exn_handle_\vector
 x86_exn_handle_\vector: 
+  xchg %bx, %bx # MAGIC BREAK
 
   #
   # Note that we don't generate the iret stack even though it is passed

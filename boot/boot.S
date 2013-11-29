@@ -26,6 +26,7 @@
 
 .include "x86/gdt.S"
 .include "x86/tss.S"
+.include "debug/debug.S"
 
 .section .multiboot
   .align 4

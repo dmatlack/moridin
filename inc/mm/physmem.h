@@ -53,20 +53,7 @@ struct pmem_zone {
  */
 #define ZONE_USER_IDX   1
 
-/*
- * This zone is reserved for Direct Memory Access devices. It typically covers
- * memory up to 16 MB. The kernel image (text and data) may also be in this
- * zone.
- */
-#define ZONE_DMA_IDX    2
-
-/*
- * The BIOS reserves the first 1 MB of memory. Technically we could reclaim it
- * but we will give it it's own zone and leave it alone.
- */
-#define ZONE_BIOS_IDX   3
-
-#define PMEM_NUM_ZONES 4
+#define PMEM_NUM_ZONES 2
 
 
 struct pmem_map {
@@ -88,13 +75,12 @@ extern struct pmem_map __pmem;
  */
 #define PAGE_SIZE        (__pmem.page_size)
 #define PMEM_ZONE_KERNEL (__pmem.zones + ZONE_KERNEL_IDX)
-#define PMEM_ZONE_DMA    (__pmem.zones + ZONE_DMA_IDX)
 #define PMEM_ZONE_USER   (__pmem.zones + ZONE_USER_IDX)
-#define PMEM_ZONE_BIOS   (__pmem.zones + ZONE_BIOS_IDX)
 #define PMEM_ZONE(i)     (__pmem.zones + i)
 
 #define KERNEL_IMAGE_START (__pmem.kernel_image_start)
 #define KERNEL_IMAGE_END   (__pmem.kernel_image_end)
+#define KERNEL_IMAGE_SIZE  (KERNEL_IMAGE_END - KERNEL_IMAGE_START)
 
 #define PAGE_ALIGN_UP(n) CEIL(PAGE_SIZE, n)
 #define PAGE_ALIGN_DOWN(n) FLOOR(PAGE_SIZE, n)

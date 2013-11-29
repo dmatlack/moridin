@@ -23,6 +23,8 @@ lmm_t kernel_lmm = LMM_INITIALIZER;
 lmm_region_t global_region;
 
 int kmalloc_init(void) {
+  size_t kmalloc_start, kmalloc_size;
+
   TRACE("void");
 
   lmm_init(&kernel_lmm);
@@ -32,10 +34,24 @@ int kmalloc_init(void) {
    */
   lmm_add_region(&kernel_lmm, &global_region, (size_t) 0, (size_t) -1, 0, 0);
 
-  //FIXME use VM_ZONE_KERNEL once vm bootstrap works
-  lmm_add_free(&kernel_lmm, 
-    (void *) VM_ZONE_KERNEL->address, 
-    (size_t) VM_ZONE_KERNEL->size);
+  /*
+   * We can do dynamic memory allocation in region of memory starting right 
+   * after the kernel image.
+   *
+   * FIXME: this only works if the address of the kernel image in physical
+   * memory is the same as its address in virtual memory!!!!
+   */
+  kmalloc_start = VM_ZONE_KERNEL->address + 
+    (KERNEL_IMAGE_END - PMEM_ZONE_KERNEL->address);
+
+  kmalloc_size = PMEM_ZONE_KERNEL->size -
+    (KERNEL_IMAGE_END - PMEM_ZONE_KERNEL->address);
+
+  DEBUG("    kmalloc_start=0x%08x", kmalloc_start);
+  DEBUG("    kmalloc_size=0x%08x", kmalloc_size);
+  DEBUG("    kmalloc_end=0x%08x", kmalloc_start + kmalloc_size);
+
+  lmm_add_free(&kernel_lmm, (void*) kmalloc_start, kmalloc_size);
 
   return 0;
 }
@@ -137,8 +153,14 @@ void *__kmalloc(size_t size) {
 }
 
 void *kmalloc(size_t size) {
+  void* addr;
+
   TRACE("size=0x%08x", size);
-  return __kmalloc(size);
+
+  addr = __kmalloc(size);
+
+  DEBUG("    return %p", addr);
+  return addr;
 }
 
 #pragma GCC diagnostic push

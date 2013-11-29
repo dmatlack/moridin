@@ -55,8 +55,6 @@ void kernel_main() {
     "\n"
     "          J.R.R. Tolkien");
 
-
-
   /* 
    * it's ok to return from kernel. it will get us back to boot/boot.S where 
    * we just twidle our thumbs

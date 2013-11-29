@@ -16,7 +16,7 @@
 #include <assert.h>
 #include <debug.h>
 
-#define NUM_PAGES_IN_ZONE_KERNEL (CONFIG_MAX_KERNEL_MEM / X86_PAGE_SIZE)
+#define NUM_PAGES_IN_ZONE_KERNEL (CONFIG_KERNEL_VM_SIZE / X86_PAGE_SIZE)
 
 /*
  * We must +1 the number of tables in case the kernel's virtual memory
@@ -26,20 +26,8 @@
 #define NUM_BOOTSTRAP_KERNEL_PGTBLS\
   ((NUM_PAGES_IN_ZONE_KERNEL / ENTRY_TABLE_SIZE) + 1)
 
-/*
- * Low memory includes the BIOS region, the kernel image. should be
- * enough... FIXME
- */
-#define BOOTSTRAP_LOWMEM_SIZE MB(4)
-#define NUM_BOOTSTRAP_LOWMEM_PGTBLS\
-  ((BOOTSTRAP_LOWMEM_SIZE / X86_PAGE_SIZE / ENTRY_TABLE_SIZE + 1))
-
 static struct entry_table 
   bootstrap_kernel_pgtbls[NUM_BOOTSTRAP_KERNEL_PGTBLS]
-  __attribute__((aligned(X86_PAGE_SIZE)));
-
-static struct entry_table
-  bootstrap_lowmem_pgtbls[NUM_BOOTSTRAP_LOWMEM_PGTBLS]
   __attribute__((aligned(X86_PAGE_SIZE)));
 
 static struct entry_table 
@@ -47,11 +35,14 @@ static struct entry_table
   __attribute__((aligned(X86_PAGE_SIZE)));
 
 /**
- * @brief Bootstrap a region of memory to be mapped by mapping page directory
- * entries to page tables so that the real VM mapping code does not try to 
- * "malloc" a new page table.
+ * @brief Map up to <psize> of the virtual region starting at <vstart> into
+ * the physical region starting at <pstart>, marking the rest of the pages
+ * in the virtual region as NOT PRESENT.
+ *
+ * Present pages will be marked read write, and with supervisor priveledges.
  *
  * @param pd the page directory 
+ *
  * @param pts an array of page tables to use for the bootstrapping
  *
  * @param vstart the start address of the virtual region to bootstrap
@@ -59,9 +50,11 @@ static struct entry_table
  *
  * @param pstart the start address of the physical memory we will use
  * to back this virtual memory
+ * @param psize the size of the physical region backing the virtual region
  */
 static void x86_bootstrap_region(struct entry_table *pd,
-    struct entry_table *pts, size_t vstart, size_t vsize, size_t pstart) {
+    struct entry_table *pts, size_t vstart, size_t vsize, 
+    size_t pstart, size_t psize) {
 
   unsigned int num_pgtbls;
   unsigned int i;
@@ -69,8 +62,8 @@ static void x86_bootstrap_region(struct entry_table *pd,
   size_t ppage;
   size_t vend;
 
-  TRACE("pd=%p, pts=%p, vstart=0x%08x, vsize=0x%08x, pstart=0x%08x",
-        pd, pts, vstart, vsize, pstart);
+  TRACE("pd=%p, pts=%p, vstart=0x%08x, vsize=0x%08x, pstart=0x%08x, psize=0x%08x",
+        pd, pts, vstart, vsize, pstart, psize);
 
   /* 
    * vpage is the virtual address of the first page of each page table
@@ -110,7 +103,7 @@ static void x86_bootstrap_region(struct entry_table *pd,
    * map each virtual page address to its corresponding, direct mapped,
    * physical page
    */
-  for (i = 0; i < vsize / X86_PAGE_SIZE; i++) {
+  for (i = 0; i < psize / X86_PAGE_SIZE; i++) {
     struct entry_table *pt;
     entry_t *pde, *pte;
 
@@ -122,7 +115,6 @@ static void x86_bootstrap_region(struct entry_table *pd,
 
     pt = (struct entry_table *) entry_get_addr(pde);
     pte = get_pte(pt, vpage);
-    ASSERT(!entry_is_present(pte));
 
     entry_set_present(pte);
     entry_set_supervisor(pte);
@@ -133,14 +125,16 @@ static void x86_bootstrap_region(struct entry_table *pd,
     ASSERT(ppage == x86_vtop(pd, vpage));
   }
 
+  DEBUG("    MAPPED: 0x%08x through 0x%08x", vstart, vstart + psize);
+  DEBUG("    NOT MAPPED: 0x%08x thorugh 0x%08x", vstart + psize, vend);
+
 }
 
 /**
  * @brief Bootrap into virtual memory using some static page dir/tables.
  *
  * This function is expected to initialize the virtual memory data structures
- * to map VM_ZONE_KERNEL to PMEM_ZONE_KERNEL, where the size of each is
- * maximally CONFIG_MAX_KERNEL_MEM.
+ * to map VM_ZONE_KERNEL to PMEM_ZONE_KERNEL.
  */
 int x86_vm_bootstrap(size_t kernel_page_size) {
   TRACE("kernel_page_size=0x%08x", kernel_page_size);
@@ -148,30 +142,17 @@ int x86_vm_bootstrap(size_t kernel_page_size) {
   ASSERT(sizeof(entry_t) == 4);
   ASSERT(X86_PAGE_SIZE == KB(4));
   ASSERT(X86_PAGE_SIZE == kernel_page_size);
-  ASSERT(VM_ZONE_KERNEL->size <= PMEM_ZONE_KERNEL->size);
-  ASSERT(VM_ZONE_KERNEL->size < CONFIG_MAX_KERNEL_MEM);
   ASSERT(FLOOR(X86_PAGE_SIZE, (size_t) bootstrap_pgdir) == 
          (size_t) bootstrap_pgdir);
 
   entry_table_init(bootstrap_pgdir);
-  
-  /*
-   * direct map low memory so that our kernel can still run after we enable
-   * paging
-   */
-  x86_bootstrap_region(bootstrap_pgdir, 
-                       bootstrap_lowmem_pgtbls,
-                       0, 
-                       BOOTSTRAP_LOWMEM_SIZE,
-                       0);
-  /*
-   * map the kernel's virtual address space to a zone in physical memory
-   */
+
   x86_bootstrap_region(bootstrap_pgdir, 
                        bootstrap_kernel_pgtbls,
                        VM_ZONE_KERNEL->address, 
                        VM_ZONE_KERNEL->size,
-                       PMEM_ZONE_KERNEL->address);
+                       PMEM_ZONE_KERNEL->address,
+                       PMEM_ZONE_KERNEL->size);
 
   x86_set_pagedir((int) bootstrap_pgdir);
   x86_enable_global_pages();

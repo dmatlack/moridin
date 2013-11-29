@@ -8,8 +8,15 @@
 
 #include <stddef.h>
 
-#define CONFIG_MAX_KERNEL_MEM GB(1)
-#define CONFIG_MIN_KERNEL_MEM MB(128)
-#define CONFIG_MIN_USER_MEM   MB(256)
+/*
+ * The size of the kernel in the VIRTUAL address space.
+ */
+#define CONFIG_KERNEL_VM_SIZE           GB(1)
+
+/*
+ * The minimum amount of PHYSICAL memory needed for to boot.
+ */
+#define CONFIG_MIN_PHYSMEM_KERNEL       MB(32)
+#define CONFIG_MIN_PHYSMEM_USER         MB(32)
 
 #endif /* !__KERNEL_CONFIG_H__ */

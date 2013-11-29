@@ -12,5 +12,4 @@
 
 void bochs_putchar(char c);
 
-
 #endif /* __BOCHS_H__ */

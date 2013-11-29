@@ -62,20 +62,16 @@ struct vm_machine_interface *machine = &x86_vm_machine_interface;
 int vm_bootstrap(void) {
   TRACE("void");
 
-  VM_ZONE_KERNEL->size = PMEM_ZONE_KERNEL->size;
-  VM_ZONE_KERNEL->address = (size_t) (0 - VM_ZONE_KERNEL->size);
-  /* 
-   * If the kernel is mapped to the top of the address space (which it 
-   * probably is), then steal the top page from it, otherwise we run into 
-   * overflow issues (FIXME hack)
+  /*
+   * Map the kernel into the lower half of the address space and the user into
+   * the higher half of the address space.
    */
-  if (0 == VM_ZONE_KERNEL->address + VM_ZONE_KERNEL->size) {
-    VM_ZONE_KERNEL->size -= PAGE_SIZE;
-  }
-  LOG_VM_ZONE(VM_ZONE_KERNEL);
+  VM_ZONE_KERNEL->address  = 0;
+  VM_ZONE_KERNEL->size     = CONFIG_KERNEL_VM_SIZE;
+  VM_ZONE_USER->address    = CONFIG_KERNEL_VM_SIZE;
+  VM_ZONE_USER->size       = (size_t) 0 - PAGE_SIZE - VM_ZONE_USER->size;
 
-  VM_ZONE_USER->address = MB(16);
-  VM_ZONE_USER->size = VM_ZONE_KERNEL->address - VM_ZONE_USER->address;
+  LOG_VM_ZONE(VM_ZONE_KERNEL);
   LOG_VM_ZONE(VM_ZONE_USER);
 
   if (0 != machine->bootstrap(PAGE_SIZE)) {
