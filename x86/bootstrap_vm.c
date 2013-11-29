@@ -16,20 +16,6 @@
 #include <assert.h>
 #include <debug.h>
 
-#define NUM_PAGES_IN_ZONE_KERNEL (CONFIG_KERNEL_VM_SIZE / X86_PAGE_SIZE)
-
-/*
- * We must +1 the number of tables in case the kernel's virtual memory
- * zone is layed out such that it starts near the end of one page
- * table and ends at the beginning of the last page table.
- */
-#define NUM_BOOTSTRAP_KERNEL_PGTBLS\
-  ((NUM_PAGES_IN_ZONE_KERNEL / ENTRY_TABLE_SIZE) + 1)
-
-static struct entry_table 
-  bootstrap_kernel_pgtbls[NUM_BOOTSTRAP_KERNEL_PGTBLS]
-  __attribute__((aligned(X86_PAGE_SIZE)));
-
 static struct entry_table 
   bootstrap_pgdir[1] 
   __attribute__((aligned(X86_PAGE_SIZE)));
@@ -148,7 +134,7 @@ int x86_vm_bootstrap(size_t kernel_page_size) {
   entry_table_init(bootstrap_pgdir);
 
   x86_bootstrap_region(bootstrap_pgdir, 
-                       bootstrap_kernel_pgtbls,
+                       kernel_pgtbls,
                        VM_ZONE_KERNEL->address, 
                        VM_ZONE_KERNEL->size,
                        PMEM_ZONE_KERNEL->address,

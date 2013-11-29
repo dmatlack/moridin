@@ -21,6 +21,16 @@
 #define IS_PAGE_ALIGNED(addr)\
   (FLOOR(X86_PAGE_SIZE, addr) == addr)
 
+/*
+ * The kernel page tables are used to map the kernel's virtual address
+ * space. They are statically allocated because we need to initialize
+ * virtual memory before we can use dynamic memory allocation. It is ok
+ * that they are statically allocated because all processes will reuse
+ * these page tables when mapping the kernel into their address space.
+ */
+struct entry_table kernel_pgtbls[NUM_KERNEL_PGTBLS]
+  __attribute__((aligned(X86_PAGE_SIZE)));
+
 struct vm_machine_interface x86_vm_machine_interface = {
   .bootstrap   = x86_vm_bootstrap,
   .init        = NULL,

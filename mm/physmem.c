@@ -95,11 +95,21 @@ int pmem_init(void) {
     zone->num_free = zone->num_pages;
     zone->page_index = 0;
 
-    zone->pages = kmalloc(zone->num_pages * sizeof(struct pmem_page));
-
-    for (p = 0; p < zone->num_pages; p++) {
-      zone->pages[p].refcount = 0;
+    /*
+     * We don't need to create a page list for the kernel's physical memory
+     * zone because that is just direct mapped.
+     */
+    if (PMEM_ZONE_KERNEL == zone) {
+      zone->pages = NULL;
+      zone->num_free = 0;
     }
+    else {
+      zone->pages = kmalloc(zone->num_pages * sizeof(struct pmem_page));
+      for (p = 0; p < zone->num_pages; p++) {
+        zone->pages[p].refcount = 0;
+      }
+    }
+
   }
 
   return 0;

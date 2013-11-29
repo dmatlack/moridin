@@ -21,6 +21,7 @@
 #ifndef __X86_VM_H__
 #define __X86_VM_H__
 
+#include <kernel/config.h>
 #include <mm/vm.h>
 #include <x86/page.h>
 #include <stdint.h>
@@ -196,6 +197,12 @@ struct entry_table {
 int entry_table_init(struct entry_table *tbl);
 struct entry_table *entry_table_alloc(void);
 void entry_table_free(struct entry_table *ptr);
+
+#define NUM_KERNEL_PGTBLS \
+  (CONFIG_KERNEL_VM_SIZE / X86_PAGE_SIZE / ENTRY_TABLE_SIZE)
+
+extern struct entry_table kernel_pgtbls[NUM_KERNEL_PGTBLS];
+
 
 /*
  * Linear Address translation for 4 KB pages
