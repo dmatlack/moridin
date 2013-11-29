@@ -115,25 +115,12 @@ int pmem_init(void) {
   return 0;
 }
 
-static inline void *__page_paddr(size_t address, int page_index) {
-  return (void *) (address + (page_index * PAGE_SIZE));
+static inline size_t __page_paddr(size_t address, int page_index) {
+  return (address + (page_index * PAGE_SIZE));
 }
 
 static inline int __page_index(size_t page_addr, size_t zone_addr) {
   return (int) ((page_addr - zone_addr) / PAGE_SIZE); 
-}
-
-/**
- * @brief Allocate (reserve) an entire zone of memory. This is used by 
- * the kernel vm bootstrap code to reserve the entire kernel zone.
- */
-void pmem_alloc_zone(struct pmem_zone *zone) {
-  int i;
-
-  for (i = 0; i < zone->num_pages; i++) {
-    ASSERT(zone->pages[i].refcount == 0);
-    zone->pages[i].refcount = 1;
-  }
 }
 
 /**
@@ -145,7 +132,7 @@ void pmem_alloc_zone(struct pmem_zone *zone) {
  *
  * @return 0 on success, < 0 on error
  */
-int pmem_alloc(void **pages, int num_to_alloc, struct pmem_zone *zone) {
+int pmem_alloc(size_t *pages, int num_to_alloc, struct pmem_zone *zone) {
   struct pmem_page *pg;
   int num_alloced = 0;
 
@@ -175,13 +162,13 @@ int pmem_alloc(void **pages, int num_to_alloc, struct pmem_zone *zone) {
  * @brief Decrement the reference count of the given <num_to_free>
  * pages.
  */
-void pmem_free(void **pages, int num_to_free, struct pmem_zone *zone) {
+void pmem_free(size_t *pages, int num_to_free, struct pmem_zone *zone) {
   struct pmem_page *pg;
   int page_index;
   int i;
 
   for (i = 0; i < num_to_free; i++) {
-    page_index = __page_index((size_t) pages[i], (size_t) zone->address);
+    page_index = __page_index(pages[i], zone->address);
     pg = &zone->pages[page_index];
 
     if (pg->refcount > 0) {

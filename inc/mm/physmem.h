@@ -93,8 +93,8 @@ int pmem_bootstrap(size_t max_mem, size_t page_size,
                    char kimg_start[], char kimg_end[]);
 int pmem_init(void);
 void pmem_alloc_zone(struct pmem_zone *zone);
-int pmem_alloc(void **pages, int num_to_alloc, struct pmem_zone *zone);
-void pmem_free(void **pages, int num_to_free, struct pmem_zone *zone);
+int pmem_alloc(size_t *pages, int num_to_alloc, struct pmem_zone *zone);
+void pmem_free(size_t *pages, int num_to_free, struct pmem_zone *zone);
 
 void pmem_map_dump(printf_f p);
 

@@ -89,6 +89,35 @@ struct vm_machine_interface {
 
 };
 
+struct vm_region {
+  size_t address;
+  size_t size;
+  vm_flags_t flags;
+  list_link(struct vm_region) link;
+  const char *name;
+};
+
+#define INITIALIZE_VM_REGION(region_ptr, address, size, flags, name) \
+  do { \
+    ASSERT(NULL != (region_ptr)); \
+    ASSERT(FLOOR(PAGE_SIZE, (size)) == size); \
+    (region_ptr)->address = (address); \
+    (region_ptr)->size    = (size); \
+    (region_ptr)->flags   = (flags); \
+    (region_ptr)->name    = name; \
+    list_elem_init(region_ptr, link); \
+  } while (0)
+
+list_typedef(struct vm_region) vm_region_list_t;
+
+struct vm_address_space {
+  vm_region_list_t            region_list;
+  struct vm_machine_object   *object;
+};
+
 int vm_bootstrap(void);
+
+int vm_address_space_init(struct vm_address_space *vm);
+int vm_map_region(struct vm_address_space *vm, struct vm_region *new_region);
 
 #endif /* !__MM_VM_H__ */

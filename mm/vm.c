@@ -27,6 +27,7 @@
 
 #include <kernel/kmalloc.h>
 #include <stddef.h>
+#include <math.h>
 
 #ifdef ARCH_X86
 #include <x86/vm.h>
@@ -79,4 +80,70 @@ int vm_bootstrap(void) {
   }
 
   return 0;
+}
+
+int vm_address_space_init(struct vm_address_space *vm) {
+  list_init(&vm->region_list);
+  
+  if (!machine->init_object(&vm->object)) {
+    return -1;
+  }
+
+  return 0;
+}
+
+/**
+ * @brief Map the provided region into the given address space.
+ *
+ * If this function returns successfully, then the provided region _will_ be
+ * addressable (mapped) within the given address space.
+ */
+int vm_map_region(struct vm_address_space *vm, struct vm_region *new_region) {
+  struct vm_region *r;
+  size_t num_pages;
+  bool inserted = false;
+  int ret = 0;
+  unsigned int i;
+
+  ASSERT(NULL != vm);
+  ASSERT(NULL != new_region);
+  ASSERT(FLOOR(PAGE_SIZE, new_region->size) == new_region->size);
+
+  num_pages = new_region->size / PAGE_SIZE;
+
+  /*
+   * Added the region list to the vm_address_space struct
+   */
+  list_foreach(r, &vm->region_list, link) {
+    ASSERT(!check_overlap(r->address, r->size,
+                          new_region->address, new_region->size));
+    if (new_region->address < r->address) {
+      list_insert_before(&vm->region_list, r, new_region, link);
+      inserted = true;
+    }
+  }
+  if (!inserted) {
+    list_insert_tail(&vm->region_list, new_region, link);
+  }
+
+  /*
+   * Map the pages into the machine dependent data structures.
+   */
+  for (i = 0; i < num_pages; i++) {
+    size_t vpage = new_region->address + (i * PAGE_SIZE);
+    size_t ppage;
+    
+    if (!pmem_alloc(&ppage, 1, PMEM_ZONE_USER)) {
+      ret = -1;
+      goto vm_region_map_cleanup;
+    }
+
+    if (!machine->map(vm->object, &vpage, &ppage, 1, new_region->flags)) {
+      ret = -1;
+      goto vm_region_map_cleanup;
+    }
+  }
+
+vm_region_map_cleanup:
+  return ret;
 }
