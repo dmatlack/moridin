@@ -163,10 +163,7 @@ int x86_exn_init(void (*handler)(struct x86_exn_args *)) {
    * Install handlers in the IDT for each exception type.
    */
   for (vector = 0; vector < X86_NUM_EXCEPTIONS; vector++) {
-    idt_install_default_gate(IDT_EXN_OFFSET + vector,
-                             x86_exceptions[vector].handler,
-                             IDT_GATE_TYPE_TRAP,
-                             IDT_PL0);
+    idt_exn_gate(vector, x86_exceptions[vector].handler);
   }
 
   /*

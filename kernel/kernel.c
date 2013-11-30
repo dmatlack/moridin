@@ -5,18 +5,22 @@
  */
 #include <kernel.h>
 #include <debug.h>
-
 #include <dev/vga.h>
-
 #include <x86/exn.h>
 #include <x86/pic.h>
-
 #include <mm/physmem.h>
 #include <mm/vm.h>
 
-#include <kernel/proc.h>
+#include <x86/irq.h>
+#include <x86/idt.h>
 
-void *debug_pages[10];
+static int __ticks = 0;
+
+void tick(void) {
+  __ticks++;
+}
+
+extern void __generate_irq(uint8_t irq);
 
 void kernel_main() {
 
@@ -53,18 +57,22 @@ void kernel_main() {
     "  Renewed shall be blade that was broken,\n"
     "  The crownless again shall be king\n"
     "\n"
-    "          J.R.R. Tolkien");
+    "          J.R.R. Tolkien\n"
+    "\n");
 
   /*
-   * Test that we set up memory management correctly
+   * Look at our fancy irq routines...
    */
-  {
-#define p(addr) kprintf("Reading "#addr": %d\n", *((int*) addr))
-    p(0x100300); // should succeed
-    p(0x40003000); // in user space, should page fault
-#undef p
-  }
-  
+  idt_irq_gate(IRQ_TIMER, tick);
+
+  generate_irq(IRQ_TIMER); // 1
+  generate_irq(IRQ_TIMER); // 2
+  generate_irq(IRQ_TIMER); // 3
+  generate_irq(IRQ_TIMER); // 4
+  generate_irq(IRQ_TIMER); // 5
+
+  kprintf("num ticks: %d\n", __ticks);
+
 
   /* 
    * it's ok to return from kernel. it will get us back to boot/boot.S where 

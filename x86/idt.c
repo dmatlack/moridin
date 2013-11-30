@@ -106,4 +106,26 @@ void idt_install_default_gate(uint16_t index, void (*handler)(), uint8_t type,
                               uint8_t dpl) {
   idt_install_gate(index, SEGSEL_KERNEL_CS, (uint32_t) handler, 
                    IDT_GATE_PRESENT, dpl, IDT_D_32, type);
-} 
+}
+
+void idt_exn_gate(int vector, void (*handler)()) {
+  idt_install_gate(
+      (uint16_t) IDT_EXN_OFFSET + vector,
+      SEGSEL_KERNEL_CS,
+      (uint32_t) handler,
+      IDT_GATE_PRESENT,
+      IDT_PL0,
+      IDT_D_32,
+      IDT_GATE_TYPE_TRAP);
+}
+
+void idt_irq_gate(int irq, void (*handler)()) {
+  idt_install_gate(
+      irq,
+      SEGSEL_KERNEL_CS,
+      (uint32_t) handler,
+      IDT_GATE_PRESENT,
+      IDT_PL0,
+      IDT_D_32,
+      IDT_GATE_TYPE_INT);
+}
