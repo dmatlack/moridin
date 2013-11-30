@@ -24,8 +24,6 @@
 #   the prototypes in inc/x86/exn.h !!!!!!!!!!!!!!
 .global x86_exn_handle_\vector
 x86_exn_handle_\vector: 
-  xchg %bx, %bx # MAGIC BREAK
-
   #
   # Note that we don't generate the iret stack even though it is passed
   # to the global handler. This is because the iret stack is provided 
@@ -45,9 +43,13 @@ x86_exn_handle_\vector:
   pushl %es
   pushl %ds
 
-  movl %cr3, %eax       # push the control registers onto the stack
+  movl %cr4, %eax       # push the control registers onto the stack
+  pushl %eax  
+  movl %cr3, %eax
   pushl %eax
   movl %cr2, %eax
+  pushl %eax
+  movl %cr0, %eax
   pushl %eax
 
   pushl $\vector        # push the exception vector onto the stack
@@ -57,6 +59,8 @@ x86_exn_handle_\vector:
   popl %eax             # pop the vector off the stack
   
   popl %eax             # pop the contol registers off the stack
+  popl %eax
+  popl %eax
   popl %eax
   
   popl %eax             # pop the data segment registers off the stack

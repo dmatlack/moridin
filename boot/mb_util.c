@@ -14,8 +14,35 @@
 #include <x86/exn.h>
 
 void mb_exn_handler(struct x86_exn_args *args) {
-  x86_exn_dump(kprintf, args);
-  panic("Exception this early in boot is unrecoverable. Aborting.");
+  struct x86_iret_stack *iret = &args->iret;
+  struct x86_pusha_stack *pusha = &args->pusha;
+  struct x86_exn *exn = &x86_exceptions[args->vector];
+
+  INFO("-------------------------------------------------------------------");
+  INFO("%d %s %s (cause: %s)", exn->vector, exn->mnemonic, exn->description, exn->cause);
+  INFO("-------------------------------------------------------------------");
+  INFO("eip: 0x%08x", iret->eip);
+  INFO("esp: 0x%08x", iret->esp);
+  INFO("ebp: 0x%08x", pusha->ebp);
+  INFO("");
+  INFO("edi: 0x%08x esi: 0x%08x", pusha->edi, pusha->esi);
+  INFO("eax: 0x%08x ebx: 0x%08x", pusha->eax, pusha->ebx);
+  INFO("ecx: 0x%08x edx: 0x%08x", pusha->ecx, pusha->edx);
+  INFO("");
+  INFO("cr0: 0x%08x", args->cr0);
+  INFO("cr2: 0x%08x", args->cr2);
+  INFO("cr3: 0x%08x", args->cr3);
+  INFO("cr4: 0x%08x", args->cr4);
+  INFO("");
+  INFO("ds: 0x%08x", args->ds);
+  INFO("es: 0x%08x", args->es);
+  INFO("fs: 0x%08x", args->fs);
+  INFO("gs: 0x%08x", args->gs);
+  INFO("");
+  INFO("error: %d", args->error_code);
+  INFO("-------------------------------------------------------------------");
+
+  panic("Exception %d during boot. Aborting.", exn->vector);
 }
 
 

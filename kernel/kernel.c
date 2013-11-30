@@ -55,6 +55,17 @@ void kernel_main() {
     "\n"
     "          J.R.R. Tolkien");
 
+  /*
+   * Test that we set up memory management correctly
+   */
+  {
+#define p(addr) kprintf("Reading "#addr": %d\n", *((int*) addr))
+    p(0x100300); // should succeed
+    p(0x40003000); // in user space, should page fault
+#undef p
+  }
+  
+
   /* 
    * it's ok to return from kernel. it will get us back to boot/boot.S where 
    * we just twidle our thumbs

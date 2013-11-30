@@ -135,7 +135,7 @@ struct x86_exn x86_exceptions[] = {
                EXN_HANDLER_NAME(18)
   },
   { 19, "#XF", "SIMD Floating-Point Exception", 
-               X86_FAULT, 
+               X86_FAULT,
                "SSE and SSE2 floating-point instructions", 
                false,
                EXN_HANDLER_NAME(19)
@@ -151,32 +151,6 @@ struct x86_exn x86_exceptions[] = {
 };
 
 static void (*exn_handler)(struct x86_exn_args *args);
-
-void x86_exn_type_dump(printf_f p, int vector) {
-  struct x86_exn *exn = &x86_exceptions[vector];
-
-  p("%d %s %s (caused by %s)\n", exn->vector, exn->mnemonic, 
-    exn->description, exn->cause);
-}
-
-void x86_exn_dump(printf_f p, struct x86_exn_args *exn) {
-  struct x86_pusha_stack *pusha = &exn->pusha;
-  struct x86_iret_stack *iret = &exn->iret;
-
-  p("-------------------------------------------------------------------\n");
-  x86_exn_type_dump(p, exn->vector);
-  p("-------------------------------------------------------------------\n");
-#define REG_FMT "0x%08x"
-  p("eip: "REG_FMT"\n", iret->eip);
-  p("esp: "REG_FMT"\n", iret->esp);
-  p("ebp: "REG_FMT"\n", pusha->ebp);
-  p("\n");
-  p("edi: "REG_FMT" esi: "REG_FMT"\n", pusha->edi, pusha->esi);
-  p("eax: "REG_FMT" ebx: "REG_FMT"\n", pusha->eax, pusha->ebx);
-  p("ecx: "REG_FMT" edx: "REG_FMT"\n", pusha->ecx, pusha->edx);
-#undef REG_FMT
-  p("-------------------------------------------------------------------\n");
-}
 
 void x86_exn_handle_all(struct x86_exn_args args) {
   exn_handler(&args);

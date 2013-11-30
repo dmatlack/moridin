@@ -83,8 +83,10 @@ struct __attribute__((__packed__)) x86_exn_args {
   /* exception vector */
   uint32_t vector;
   /* control registers */
+  uint32_t cr0;
   uint32_t cr2;
   uint32_t cr3;
+  uint32_t cr4;
   /* segment selectors */
   uint32_t ds;
   uint32_t es;
