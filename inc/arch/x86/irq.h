@@ -32,9 +32,10 @@
  * IRQ15/IRQ7       0x77              Reserved
  *
  */
-#define IRQ_TIMER         (IDT_PIC_MASTER_OFFSET + 0x0)
-#define IRQ_KEYBOARD      (IDT_PIC_MASTER_OFFSET + 0x1)
+#define IRQ_TIMER         0x0
+#define IRQ_KEYBOARD      0x1
 
+void __int(uint8_t n);
 void generate_irq(uint8_t irq);
 
 #endif /* !__X86_IRQ_H__ */

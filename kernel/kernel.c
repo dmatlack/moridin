@@ -6,11 +6,11 @@
 #include <kernel.h>
 #include <debug.h>
 #include <dev/vga.h>
-#include <arch/x86/exn.h>
-#include <arch/x86/pic.h>
 #include <mm/physmem.h>
 #include <mm/vm.h>
 
+#include <arch/x86/exn.h>
+#include <arch/x86/pic.h>
 #include <arch/x86/irq.h>
 #include <arch/x86/idt.h>
 
@@ -19,8 +19,6 @@ static int __ticks = 0;
 void tick(void) {
   __ticks++;
 }
-
-extern void __generate_irq(uint8_t irq);
 
 void kernel_main() {
 
@@ -63,7 +61,7 @@ void kernel_main() {
   /*
    * Look at our fancy irq routines...
    */
-  idt_irq_gate(IRQ_TIMER, tick);
+  idt_irq_gate(IDT_PIC_MASTER_OFFSET + IRQ_TIMER, tick);
 
   generate_irq(IRQ_TIMER); // 1
   generate_irq(IRQ_TIMER); // 2
