@@ -1,19 +1,14 @@
-
-This is a kernel for the i536 architecture.
-
-http://myonlineusb.wordpress.com/2011/06/08/what-is-the-difference-between-i386-i486-i586-i686-i786/
-
 Build
------
+-------------------------------------------------------------------------------
 
-The kernel is build using gcc and binutils, and being compiled for the
-i536 architecture. A good tutorial for building a cross compiler that
-will build this kernel is on osdev: http://wiki.osdev.org/GCC_Cross-Compiler.
+  The kernel is built using gcc and binutils, and being compiled for the
+  i536 architecture. A good tutorial for building a cross compiler that
+  will build this kernel is on osdev: http://wiki.osdev.org/GCC_Cross-Compiler.
 
-You will also need to install the GRUB utility programs and possibly xorisso.
+  You will also need to install the GRUB utility programs and possibly xorisso.
 
-Bochs
------
+Run
+-------------------------------------------------------------------------------
 
 I am using bochs to test and run the kernel. You can download bochs from the
 bochs sourceforge page: https://sourceforge.net/projects/bochs/files/bochs/.
@@ -35,17 +30,6 @@ Make sure you compile bochs with the debugging enabled:
             --disable-docbook \
             --with-x --with-x11 --with-term
 
-Qemu
-----
+To run the kernel with qemu, emulating 1GB of memory, run: 
 
-To run the kernel, emulating 1GB of memory, run: 
-
-  qemu-system-i386 myos.iso -m 1024
-
-README TODO
------------
-    * name project
-    * describe build system
-    * how to use bochs
-    * how bochs debugging is implemented
-    * how to use qemu
+  $ qemu-system-i386 myos.iso -m 1024
