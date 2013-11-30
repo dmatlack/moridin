@@ -21,7 +21,7 @@
 
 #include <mm/lmm.h>
 #include <mm/lmm_types.h>
-#include <x86/page.h>
+#include <arch/x86/page.h>
 
 void *lmm_alloc_page(lmm_t *lmm, lmm_flags_t flags)
 {

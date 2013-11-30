@@ -14,7 +14,7 @@
 #define ASM_FILE
 
 #include <boot/multiboot.h>
-#include <x86/seg.h>
+#include <arch/x86/seg.h>
 
 .global lgdt
 .global lidt
@@ -24,8 +24,8 @@
 .set MULTIBOOT_HEADER_FLAGS, MULTIBOOT_PAGE_ALIGN | MULTIBOOT_MEMORY_INFO
 .set MULTIBOOT_HEADER_CHECKSUM, -(MULTIBOOT_HEADER_MAGIC + MULTIBOOT_HEADER_FLAGS)
 
-.include "x86/gdt.S"
-.include "x86/tss.S"
+.include "arch/x86/gdt.S"
+.include "arch/x86/tss.S"
 .include "debug/debug.S"
 
 .section .multiboot

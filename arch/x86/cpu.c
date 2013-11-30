@@ -6,8 +6,8 @@
  *
  * @author David Matlack
  */
-#include <x86/cpu.h>
-#include <x86/reg.h>
+#include <arch/x86/cpu.h>
+#include <arch/x86/reg.h>
 #include <stdint.h>
 #include <stddef.h>
 #include <debug.h>

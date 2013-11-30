@@ -11,7 +11,7 @@
 #include <stdint.h>
 #include <assert.h>
 #include <kernel/kprintf.h>
-#include <x86/exn.h>
+#include <arch/x86/exn.h>
 
 void mb_exn_handler(struct x86_exn_args *args) {
   struct x86_iret_stack *iret = &args->iret;

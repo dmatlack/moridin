@@ -3,10 +3,10 @@
  *
  * @author David Matlack
  */
-#include <x86/vm.h>
-#include <x86/page.h>
-#include <x86/reg.h>
-#include <x86/cpu.h>
+#include <arch/x86/vm.h>
+#include <arch/x86/page.h>
+#include <arch/x86/reg.h>
+#include <arch/x86/cpu.h>
 
 #include <mm/physmem.h>
 #include <mm/vm.h>

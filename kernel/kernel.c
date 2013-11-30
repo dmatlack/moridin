@@ -6,13 +6,13 @@
 #include <kernel.h>
 #include <debug.h>
 #include <dev/vga.h>
-#include <x86/exn.h>
-#include <x86/pic.h>
+#include <arch/x86/exn.h>
+#include <arch/x86/pic.h>
 #include <mm/physmem.h>
 #include <mm/vm.h>
 
-#include <x86/irq.h>
-#include <x86/idt.h>
+#include <arch/x86/irq.h>
+#include <arch/x86/idt.h>
 
 static int __ticks = 0;
 

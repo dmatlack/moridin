@@ -13,7 +13,7 @@ AUTOSTART := $(shell rm -f $(NAME).S)
 ###############################################################################
 
 # directories with source code
-PROJDIR := boot lib dev x86 kernel debug mm
+PROJDIRS := arch boot lib dev kernel debug mm
 
 # source files by type
 CFILES = $(shell find $(PWD)/$(PROJDIRS) -type f -name "*.c")

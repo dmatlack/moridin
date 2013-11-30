@@ -11,13 +11,13 @@
 #include <debug.h>
 #include <dev/vga.h>
 #include <stddef.h>
-#include <x86/page.h>
+#include <arch/x86/page.h>
 #include <stdint.h>
 #include <assert.h>
 #include <mm/physmem.h>
-#include <x86/cpu.h>
-#include <x86/reg.h>
-#include <x86/exn.h>
+#include <arch/x86/cpu.h>
+#include <arch/x86/reg.h>
+#include <arch/x86/exn.h>
 
 extern char __kernel_image_start[];
 extern char __kernel_image_end[];

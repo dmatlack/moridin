@@ -7,5 +7,5 @@
  */
 #include <kernel.h>
 #include <debug.h>
-#include <x86/exn.h>
+#include <arch/x86/exn.h>
 

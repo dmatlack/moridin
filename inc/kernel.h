@@ -20,7 +20,7 @@
 
 #include <kernel/kmalloc.h>
 
-#include <x86/exn.h>
+#include <arch/x86/exn.h>
 void kernel_x86_exn_handler(struct x86_exn_args *exn);
 
 #define SUCCEED_OR_DIE( function_call ) \

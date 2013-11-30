@@ -3,8 +3,8 @@
  *
  * @author David Matlack
  */
-#include <x86/pic.h>
-#include <x86/io.h>
+#include <arch/x86/pic.h>
+#include <arch/x86/io.h>
 #include <debug.h>
 
 int pic_init(uint32_t master_offset, uint32_t slave_offset) {

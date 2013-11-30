@@ -30,7 +30,7 @@
 #include <math.h>
 
 #ifdef ARCH_X86
-#include <x86/vm.h>
+#include <arch/x86/vm.h>
 #endif
 
 struct vm_zone __vm_zone_kernel;

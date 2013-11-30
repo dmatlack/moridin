@@ -5,9 +5,9 @@
  *
  * @author David Matlack (dmatlack)
  **/
-#include <x86/idt.h>
-#include <x86/idtr.h>
-#include <x86/seg.h>
+#include <arch/x86/idt.h>
+#include <arch/x86/idtr.h>
+#include <arch/x86/seg.h>
 
 /* Used for creating the IDT gate descriptors */
 #define LS_2_BYTES 0x0000FFFF

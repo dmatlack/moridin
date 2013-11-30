@@ -28,7 +28,7 @@
 # there's some little endian magic going on in here...
 .macro TSS_SINGLE_TASK
   .space 8
-  .word 0x0018 # ss0 = SEGSEL_KERNEL_DS in <x86/seg.h>
+  .word 0x0018 # ss0 = SEGSEL_KERNEL_DS in <arch/x86/seg.h>
   .space 92
   .word 0x0068 # IOBP = sizeof(TSS) = 104 = 0x68
 .endm

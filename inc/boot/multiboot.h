@@ -218,7 +218,7 @@ struct multiboot_mod_list
 };
 typedef struct multiboot_mod_list multiboot_module_t;
 
-#include <x86/exn.h>
+#include <arch/x86/exn.h>
 #include <types.h>
 void mb_dump(printf_f p, struct multiboot_info *mb_info);
 void mb_exn_handler(struct x86_exn_args *args);

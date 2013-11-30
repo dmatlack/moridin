@@ -6,7 +6,7 @@
 #ifndef __X86_IRQ_H__
 #define __X86_IRQ_H__
 
-#include <x86/idt.h>
+#include <arch/x86/idt.h>
 
 /*
  *
