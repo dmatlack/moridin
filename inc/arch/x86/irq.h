@@ -36,6 +36,10 @@
 #define IRQ_KEYBOARD      0x1
 
 void __int(uint8_t n);
-void generate_irq(uint8_t irq);
+void generate_irq(int irq);
+void handler_irq(int irq);
+
+void __enable_interrupts(void);
+void __disable_interrupts(void);
 
 #endif /* !__X86_IRQ_H__ */

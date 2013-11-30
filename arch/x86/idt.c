@@ -114,7 +114,7 @@ void idt_exn_gate(int vector, void (*handler)()) {
       SEGSEL_KERNEL_CS,
       (uint32_t) handler,
       IDT_GATE_PRESENT,
-      IDT_PL0,
+      IDT_PL3,
       IDT_D_32,
       IDT_GATE_TYPE_TRAP);
 }

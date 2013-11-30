@@ -173,4 +173,3 @@ int x86_exn_init(void (*handler)(struct x86_exn_args *)) {
 
   return 0;
 }
-

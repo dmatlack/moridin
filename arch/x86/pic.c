@@ -7,12 +7,38 @@
 #include <arch/x86/io.h>
 #include <arch/x86/idt.h>
 #include <debug.h>
+#include <kernel/kprintf.h>
 
 int pic_init(uint32_t master_offset, uint32_t slave_offset) {
   TRACE("master_offset=0x%08x, slave_offset=0x%08x",
         master_offset, slave_offset);
 
+  /*
+   * Remap the master and the slave so they invode the correct service routines
+   * in the IDT.
+   */
   pic_remap(master_offset, slave_offset);
+
+  /*
+   * Install the IRQ handlers
+   */
+  idt_irq_gate(master_offset + 0, __irq0);
+  idt_irq_gate(master_offset + 1, __irq1);
+  idt_irq_gate(master_offset + 2, __irq2);
+  idt_irq_gate(master_offset + 3, __irq3);
+  idt_irq_gate(master_offset + 4, __irq4);
+  idt_irq_gate(master_offset + 5, __irq5);
+  idt_irq_gate(master_offset + 6, __irq6);
+  idt_irq_gate(master_offset + 7, __irq7);
+  idt_irq_gate(slave_offset  + 0, __irq8);
+  idt_irq_gate(slave_offset  + 1, __irq9);
+  idt_irq_gate(slave_offset  + 2, __irq10);
+  idt_irq_gate(slave_offset  + 3, __irq11);
+  idt_irq_gate(slave_offset  + 4, __irq12);
+  idt_irq_gate(slave_offset  + 5, __irq13);
+  idt_irq_gate(slave_offset  + 6, __irq14);
+  idt_irq_gate(slave_offset  + 7, __irq15);
+
   return 0;
 }
 
@@ -99,16 +125,9 @@ uint16_t pic_get_irr(void) {
   return pic_get_reg(PIC_READ_IRR);
 }
 
-//TODO we could use this interface to chain interrupt handlers, allowing
-//multiple "devices" to listen to the same IRQ
-int pic_register_device(struct pic_device *device) {
-  int index;
-
-  index = (device->irq < 8) ? IDT_PIC_MASTER_OFFSET + device->irq :
-                              IDT_PIC_SLAVE_OFFSET + device->irq;
-
-  idt_irq_gate(index, device->handler);
-
-  return 0;
+void pic_eoi(uint8_t irq) {
+  if (irq >= 8) {
+    outb(PIC_SLAVE_CMD, PIC_EOI);
+  }
+  outb(PIC_MASTER_CMD, PIC_EOI);
 }
-

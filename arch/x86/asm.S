@@ -139,3 +139,12 @@ set_cr4:
     movl %eax, %cr4
     ret
 
+.global __enable_interrupts
+__enable_interrupts:
+  sti
+  ret
+
+.global __disable_interrupts
+__disable_interrupts:
+  cli
+  ret

@@ -153,4 +153,10 @@ void set_cr3(int32_t);
 int32_t get_cr4(void);
 void set_cr4(int32_t);
 
+/*
+ * EFLAGS
+ *
+ * TODO
+ */
+
 #endif /* !__X86_REG_H__ */

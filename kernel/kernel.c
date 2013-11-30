@@ -14,6 +14,7 @@
 #include <arch/x86/pic.h>
 #include <arch/x86/irq.h>
 #include <arch/x86/idt.h>
+#include <arch/x86/reg.h>
 
 static int __ticks = 0;
 
@@ -59,13 +60,11 @@ void kernel_main() {
     "          J.R.R. Tolkien\n"
     "\n");
 
-  SUCCEED_OR_DIE(pit_init(NULL));
+  SUCCEED_OR_DIE(pit_init(10, NULL));
 
-  generate_irq(IRQ_TIMER); // 1
-  generate_irq(IRQ_TIMER); // 2
-  generate_irq(IRQ_TIMER); // 3
-  generate_irq(IRQ_TIMER); // 4
-  generate_irq(IRQ_TIMER); // 5
+  __enable_interrupts();
+
+  while (1) continue;
 
   /* 
    * it's ok to return from kernel. it will get us back to boot/boot.S where 

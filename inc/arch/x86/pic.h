@@ -123,6 +123,9 @@ uint16_t pic_get_isr(void);
 /** @brief Return the PICs' Interrupt Request Register */
 uint16_t pic_get_irr(void);
 
+/** @brief Send an "END OF INTERRUPT" command to the PIC */
+void pic_eoi(uint8_t irq);
+
 /**
  * @brief A PIC device is a device connected to one of the 15 IRQ pins.
  * Examples of this are the Programmable Interval Timer, and the Keyboard.
@@ -133,5 +136,22 @@ struct pic_device {
 };
 
 int pic_register_device(struct pic_device *device);
+
+void __irq0(void);
+void __irq1(void);
+void __irq2(void);
+void __irq3(void);
+void __irq4(void);
+void __irq5(void);
+void __irq6(void);
+void __irq7(void);
+void __irq8(void);
+void __irq9(void);
+void __irq10(void);
+void __irq11(void);
+void __irq12(void);
+void __irq13(void);
+void __irq14(void);
+void __irq15(void);
 
 #endif /* !__ARCH_X86_PIC_H__ */
