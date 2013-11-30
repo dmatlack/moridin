@@ -6,6 +6,7 @@
 #include <kernel.h>
 #include <debug.h>
 #include <dev/vga.h>
+#include <dev/pit.h>
 #include <mm/physmem.h>
 #include <mm/vm.h>
 
@@ -58,19 +59,13 @@ void kernel_main() {
     "          J.R.R. Tolkien\n"
     "\n");
 
-  /*
-   * Look at our fancy irq routines...
-   */
-  idt_irq_gate(IDT_PIC_MASTER_OFFSET + IRQ_TIMER, tick);
+  SUCCEED_OR_DIE(pit_init(NULL));
 
   generate_irq(IRQ_TIMER); // 1
   generate_irq(IRQ_TIMER); // 2
   generate_irq(IRQ_TIMER); // 3
   generate_irq(IRQ_TIMER); // 4
   generate_irq(IRQ_TIMER); // 5
-
-  kprintf("num ticks: %d\n", __ticks);
-
 
   /* 
    * it's ok to return from kernel. it will get us back to boot/boot.S where 

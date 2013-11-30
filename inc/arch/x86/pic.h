@@ -27,6 +27,9 @@
  *
  * @author David Matlack
  */
+#ifndef __ARCH_X86_PIC_H__
+#define __ARCH_X86_PIC_H__
+
 #include <stdint.h>
 
 /**
@@ -119,3 +122,16 @@ void pic_imr_clear(uint8_t irq);
 uint16_t pic_get_isr(void);
 /** @brief Return the PICs' Interrupt Request Register */
 uint16_t pic_get_irr(void);
+
+/**
+ * @brief A PIC device is a device connected to one of the 15 IRQ pins.
+ * Examples of this are the Programmable Interval Timer, and the Keyboard.
+ */
+struct pic_device {
+  int irq;
+  void (*handler)(void);
+};
+
+int pic_register_device(struct pic_device *device);
+
+#endif /* !__ARCH_X86_PIC_H__ */

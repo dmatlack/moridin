@@ -5,6 +5,7 @@
  */
 #include <arch/x86/pic.h>
 #include <arch/x86/io.h>
+#include <arch/x86/idt.h>
 #include <debug.h>
 
 int pic_init(uint32_t master_offset, uint32_t slave_offset) {
@@ -97,3 +98,17 @@ uint16_t pic_get_isr(void) {
 uint16_t pic_get_irr(void) {
   return pic_get_reg(PIC_READ_IRR);
 }
+
+//TODO we could use this interface to chain interrupt handlers, allowing
+//multiple "devices" to listen to the same IRQ
+int pic_register_device(struct pic_device *device) {
+  int index;
+
+  index = (device->irq < 8) ? IDT_PIC_MASTER_OFFSET + device->irq :
+                              IDT_PIC_SLAVE_OFFSET + device->irq;
+
+  idt_irq_gate(index, device->handler);
+
+  return 0;
+}
+
