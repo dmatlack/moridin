@@ -83,10 +83,36 @@
 // 3. Environment
 #define PIC_ICW4_8086 0x01
 
+/*
+ *
+ * x86 Hardware Interrupts
+ * 
+ * 8259A Input pin  Interrupt Number  Description
+ * ------------------------------------------------------------------
+ * IRQ0             0x08              Timer
+ * IRQ1             0x09              Keyboard
+ * IRQ2             0x0A              Cascade for 8259A Slave controller
+ * IRQ3             0x0B              Serial port 2
+ * IRQ4             0x0C              Serial port 1
+ * IRQ5             0x0D              AT systems: Parallel Port 2. PS/2 systems: reserved
+ * IRQ6             0x0E              Diskette drive
+ * IRQ7             0x0F              Parallel Port 1
+ * IRQ8/IRQ0        0x70              CMOS Real time clock
+ * IRQ9/IRQ1        0x71              CGA vertical retrace
+ * IRQ10/IRQ2       0x72              Reserved
+ * IRQ11/IRQ3       0x73              Reserved
+ * IRQ12/IRQ4       0x74              AT systems: reserved. PS/2: auxiliary device
+ * IRQ13/IRQ5       0x75              FPU
+ * IRQ14/IRQ6       0x76              Hard disk controller
+ * IRQ15/IRQ7       0x77              Reserved
+ *
+ */
+#define MAX_IRQS 16
+
 /**
  * @brief Initialize the PIC with the given master/slave vector offsets.
  */
-int pic_init(uint32_t master_offset, uint32_t slave_offset);
+int pic_init(void);
 
 /**
  * @brief Remap the Master and Slave PIC's Vector Offsets.
@@ -125,33 +151,5 @@ uint16_t pic_get_irr(void);
 
 /** @brief Send an "END OF INTERRUPT" command to the PIC */
 void pic_eoi(uint8_t irq);
-
-/**
- * @brief A PIC device is a device connected to one of the 15 IRQ pins.
- * Examples of this are the Programmable Interval Timer, and the Keyboard.
- */
-struct pic_device {
-  int irq;
-  void (*handler)(void);
-};
-
-int pic_register_device(struct pic_device *device);
-
-void __irq0(void);
-void __irq1(void);
-void __irq2(void);
-void __irq3(void);
-void __irq4(void);
-void __irq5(void);
-void __irq6(void);
-void __irq7(void);
-void __irq8(void);
-void __irq9(void);
-void __irq10(void);
-void __irq11(void);
-void __irq12(void);
-void __irq13(void);
-void __irq14(void);
-void __irq15(void);
 
 #endif /* !__ARCH_X86_PIC_H__ */

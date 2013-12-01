@@ -1,50 +1,63 @@
 /**
  * @file arch/x86/irq.c
  *
- * TODO move most of me out of arch/x86/ and into kernel/
+ * @brief x86-dependent IRQ code.
  */
 #include <arch/x86/irq.h>
 #include <arch/x86/idt.h>
 #include <arch/x86/pic.h>
-#include <kernel/kprintf.h>
+
+#include <kernel/irq.h>
+
 #include <debug.h>
-#include <arch/x86/io.h>
 #include <assert.h>
-#include <list.h>
 
-int spurious_irqs = 0;
+int irq_counts[MAX_IRQS];
 
-static void spurious_irq(struct irq_context *c) {
-  (void)c;
-  spurious_irqs++;
-}
-static struct irq_handler spurious_irq_handler;
-
-/*
- * For each IRQ, we keep a list of handlers that are registered to receive
- * said IRQ.
- */
-static irq_handler_list_t irq_handlers[MAX_IRQS]; // FIXME magic numbers
-
-int irq_init(void) {
+int x86_init_irq(void) {
   int i;
 
-  for (i = 0; i < MAX_IRQS; i++) {
-    list_init(&irq_handlers[i]);
+  /*
+   * Initialize the hardware to receive interrupts.
+   */
+  if (0 != pic_init()) {
+    return -1;
   }
 
   /*
-   * Add as handler for spurious irqs (7)
+   * Install the IRQ handlers
    */
-  spurious_irq_handler.top_handler = spurious_irq;
-  spurious_irq_handler.bottom_handler = NULL;
-  list_elem_init(&spurious_irq_handler, link);
-  list_insert_tail(&irq_handlers[7], &spurious_irq_handler, link);
+  idt_irq_gate(IDT_PIC_MASTER_OFFSET + 0, __irq0);
+  idt_irq_gate(IDT_PIC_MASTER_OFFSET + 1, __irq1);
+  idt_irq_gate(IDT_PIC_MASTER_OFFSET + 2, __irq2);
+  idt_irq_gate(IDT_PIC_MASTER_OFFSET + 3, __irq3);
+  idt_irq_gate(IDT_PIC_MASTER_OFFSET + 4, __irq4);
+  idt_irq_gate(IDT_PIC_MASTER_OFFSET + 5, __irq5);
+  idt_irq_gate(IDT_PIC_MASTER_OFFSET + 6, __irq6);
+  idt_irq_gate(IDT_PIC_MASTER_OFFSET + 7, __irq7);
+  idt_irq_gate(IDT_PIC_SLAVE_OFFSET  + 0, __irq8);
+  idt_irq_gate(IDT_PIC_SLAVE_OFFSET  + 1, __irq9);
+  idt_irq_gate(IDT_PIC_SLAVE_OFFSET  + 2, __irq10);
+  idt_irq_gate(IDT_PIC_SLAVE_OFFSET  + 3, __irq11);
+  idt_irq_gate(IDT_PIC_SLAVE_OFFSET  + 4, __irq12);
+  idt_irq_gate(IDT_PIC_SLAVE_OFFSET  + 5, __irq13);
+  idt_irq_gate(IDT_PIC_SLAVE_OFFSET  + 6, __irq14);
+  idt_irq_gate(IDT_PIC_SLAVE_OFFSET  + 7, __irq15);
+
+  /*
+   * Reset the IRQs statistics trackers
+   */
+  for (i = 0; i < MAX_IRQS; i++) {
+    irq_counts[i] = 0;
+  }
 
   return 0;
 }
 
-void generate_irq(int irq) {
+/**
+ * @brief Generate an interrupt request.
+ */
+void x86_generate_irq(int irq) {
   if (irq < 8) {
     __int(IDT_PIC_MASTER_OFFSET + irq);
   }
@@ -53,32 +66,23 @@ void generate_irq(int irq) {
   }
 }
 
-void handle_irq(int irq) {
-  struct irq_handler *handler;
-  struct irq_context context;
+/**
+ * @brief This is the second level handler for all IRQs (the first
+ * being the assembly entry points which are what are actually 
+ * installed in the IDT). The job of this function is to collect
+ * statistics and then pass the irq up to the kernel to handle.
+ */
+void x86_handle_irq(int irq) {
+  ASSERT(irq >= 0 && irq < MAX_IRQS);
 
-  context.irq = irq;
+  irq_counts[irq]++;
 
-  list_foreach(handler, &(irq_handlers[irq]), link) {
-    if (NULL != handler->top_handler) handler->top_handler(&context);
-  }
-
-  pic_eoi(irq);
-
-  //TODO way in the future, delay this work using a high priority kernel thread
-  // or something similar. At this moment we are still in interrupt context!!
-  list_foreach(handler, &(irq_handlers[irq]), link) {
-    if (NULL != handler->bottom_handler) handler->bottom_handler(&context);
-  }
+  /*
+   * pass the interrupt request up to the kernel
+   */
+  handle_irq(irq);
 }
 
-void register_irq(int irq, struct irq_handler *new_handler) {
-  ASSERT(irq >= 0 && irq <= 15);
-
-  //TODO disable_interrupts
-
-  list_elem_init(new_handler, link);
-  list_insert_tail(&(irq_handlers[irq]), new_handler, link);
-
-  //TODO restore_interrupts
+void x86_acknowledge_irq(int irq) {
+  pic_eoi(irq);
 }

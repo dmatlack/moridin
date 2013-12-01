@@ -4,44 +4,51 @@
  * @author David Matlack
  */
 #include <kernel.h>
+#include <assert.h>
 #include <debug.h>
-#include <dev/vga.h>
-#include <dev/pit.h>
-#include <mm/physmem.h>
+
+#include <kernel/kmalloc.h>
+#include <kernel/irq.h>
+#include <kernel/timer.h>
+
 #include <mm/vm.h>
+#include <mm/physmem.h>
 
-#include <arch/x86/exn.h>
-#include <arch/x86/pic.h>
-#include <arch/x86/irq.h>
-#include <arch/x86/idt.h>
-#include <arch/x86/reg.h>
-
-extern int __ticks;
-extern int spurious_irqs;
+extern void __enable_interrupts(void);
 
 void kernel_main() {
 
-  SUCCEED_OR_DIE(log_init(dputchar, LOG_LEVEL_DEBUG));
-  TRACE_ON;
-  TRACE();
-
-  LOG_PMEM_ZONE(PMEM_ZONE_KERNEL);
-  LOG_PMEM_ZONE(PMEM_ZONE_USER);
-
-  /* 
-   * Initialize hardware interrupts by first telling the PIC where in the IDT it 
-   * can find its interrupts handlers, and then installing the necessary interrupts 
-   * handlers for each device connected to the PIC.
-   * FIXME: move this machine dependent code elsewhere (interrupts_init?)
+  /*
+   * Debug Logging
    */
-  SUCCEED_OR_DIE(pic_init(IDT_PIC_MASTER_OFFSET, IDT_PIC_SLAVE_OFFSET));
-  SUCCEED_OR_DIE(irq_init()); // call pic_init from in irq_init?
+  SUCCEED_OR_DIE(log_init(dputchar, LOG_LEVEL_DEBUG));
 
+  TRACE_ON;
+
+  /*
+   * Hardware Interrupts
+   */
+  SUCCEED_OR_DIE(irq_init());
+
+  /*
+   * Virtual Memory Bootstrap
+   */
   SUCCEED_OR_DIE(vm_bootstrap());
 
+  /*
+   * Kernel Dynamic Memory Allocation
+   */
   SUCCEED_OR_DIE(kmalloc_init());
 
+  /*
+   * Physical Memory Manager
+   */
   SUCCEED_OR_DIE(pmem_init());
+
+  /*
+   * Kernel Timer
+   */
+  SUCCEED_OR_DIE(timer_init(100));
 
   kprintf(
     "\n"
@@ -58,11 +65,8 @@ void kernel_main() {
     "          J.R.R. Tolkien\n"
     "\n");
 
-  SUCCEED_OR_DIE(pit_init(100));
+  generate_irq(0);
+  //__enable_interrupts();
 
-  __enable_interrupts();
-
-  while (__ticks < 1000) continue;
-  __disable_interrupts();
-  kprintf("number of spurious interrupts: %d\n", spurious_irqs);
+  while (1) continue;
 }
