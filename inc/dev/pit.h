@@ -32,18 +32,18 @@ extern struct pic_device timer_device;
 #define HIBYTE            (2 << 4)
 #define LOHIBYTE          (3 << 4)
 
-#define OPMODE0           (0 << 2) // interrupt on terminal count
-#define OPMODE1           (1 << 2) // hardware re-triggerable one-shot
-#define OPMODE2           (2 << 2) // rate generator
-#define SQUARE_WAVE       (3 << 2) // square wave generator
-#define OPMODE4           (4 << 2) // software triggered strobe
-#define OPMODE5           (5 << 2) // hardware triggered strobe
-#define OPMODE6           (6 << 2) // same as (2)
-#define OPMODE7           (7 << 2) // same as (3)
+#define OPMODE0           (0 << 1) // interrupt on terminal count
+#define OPMODE1           (1 << 1) // hardware re-triggerable one-shot
+#define OPMODE2           (2 << 1) // rate generator
+#define SQUARE_WAVE       (3 << 1) // square wave generator
+#define OPMODE4           (4 << 1) // software triggered strobe
+#define OPMODE5           (5 << 1) // hardware triggered strobe
+#define OPMODE6           (6 << 1) // same as (2)
+#define OPMODE7           (7 << 1) // same as (3)
 
 #define BINARYMODE  (0 << 0) // 0  6-bit binary
 #define BCDMODE     (1 << 0) // 1  our-digit BCD
 
-int pit_init(int hz, void (*handler)(void));
+int pit_init(int hz);
 
 #endif /* !__DEV_PIT_H__ */

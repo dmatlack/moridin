@@ -16,11 +16,8 @@
 #include <arch/x86/idt.h>
 #include <arch/x86/reg.h>
 
-static int __ticks = 0;
-
-void tick(void) {
-  __ticks++;
-}
+extern int __ticks;
+extern int spurious_irqs;
 
 void kernel_main() {
 
@@ -38,6 +35,7 @@ void kernel_main() {
    * FIXME: move this machine dependent code elsewhere (interrupts_init?)
    */
   SUCCEED_OR_DIE(pic_init(IDT_PIC_MASTER_OFFSET, IDT_PIC_SLAVE_OFFSET));
+  SUCCEED_OR_DIE(irq_init()); // call pic_init from in irq_init?
 
   SUCCEED_OR_DIE(vm_bootstrap());
 
@@ -60,14 +58,11 @@ void kernel_main() {
     "          J.R.R. Tolkien\n"
     "\n");
 
-  SUCCEED_OR_DIE(pit_init(10, NULL));
+  SUCCEED_OR_DIE(pit_init(100));
 
   __enable_interrupts();
 
-  while (1) continue;
-
-  /* 
-   * it's ok to return from kernel. it will get us back to boot/boot.S where 
-   * we just twidle our thumbs
-   */
+  while (__ticks < 1000) continue;
+  __disable_interrupts();
+  kprintf("number of spurious interrupts: %d\n", spurious_irqs);
 }

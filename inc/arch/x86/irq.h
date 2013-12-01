@@ -7,7 +7,9 @@
 #define __X86_IRQ_H__
 
 #include <arch/x86/idt.h>
+#include <list.h>
 
+#define MAX_IRQS 16
 /*
  *
  * x86 Hardware Interrupts
@@ -34,6 +36,32 @@
  */
 #define IRQ_TIMER         0x0
 #define IRQ_KEYBOARD      0x1
+
+struct irq_context {
+  int irq;
+};
+
+typedef void (*irq_handler_f)(struct irq_context *context);
+
+struct irq_handler {
+  /**
+   * @brief The top_handler, if registered, is executed in interrupt context,
+   * while interrupts are disabled. It should be short and sweet.
+   */
+  irq_handler_f top_handler;
+  /**
+   * @brief The bottom_handler, if registered, is executed some time after
+   * the interrupt has been acknowledged. It runs with interrupts enabled.
+   */
+  irq_handler_f bottom_handler;
+
+  list_link(struct irq_handler) link;
+};
+
+list_typedef(struct irq_handler) irq_handler_list_t;
+
+int irq_init(void);
+void register_irq(int irq, struct irq_handler *handler);
 
 void __int(uint8_t n);
 void generate_irq(int irq);
