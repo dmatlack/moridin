@@ -6,65 +6,92 @@
  * @author David Matlack
  */
 #include <kernel/irq.h>
-#include <kernel/kprintf.h>
+
+#include <dev/vga.h>
+
+#include <kernel.h>
 #include <debug.h>
 #include <assert.h>
 #include <list.h>
 
+struct irq_state {
+  irq_handler_list_t handlers;
+  int count;
+  int in_irq;
+};
+
+int __max_irqs;
+struct irq_state *__irqs;
+
 #ifdef ARCH_X86
-#include <arch/x86/irq.h>
+extern struct machine_irq_interface x86_irq_interface;
+static struct machine_irq_interface *__machine_irq_system = &x86_irq_interface;
 #endif
-
-#define FIXME_NUM_IRQS 16
-
-/*
- * For each IRQ, we keep a list of handlers that are registered to receive
- * said IRQ.
- */
-static irq_handler_list_t irq_handlers[FIXME_NUM_IRQS];
 
 int irq_init(void) {
+  struct machine_irq_info irq_info;
   int i;
 
-#ifdef ARCH_X86
-  x86_init_irq();
-#endif
+  TRACE("");
 
-  for (i = 0; i < FIXME_NUM_IRQS; i++) {
-    list_init(&irq_handlers[i]);
+  if (0 != __machine_irq_system->init(&irq_info)) {
+    return -1;
+  }
+
+  __max_irqs = irq_info.max_irqs;
+
+  __irqs = kmalloc(sizeof(struct irq_state) * __max_irqs);
+  if (NULL == __irqs) {
+    kprintf("NULL == __irqs\n");
+    return -1;
+  }
+  
+  for (i = 0; i < __max_irqs; i++) {
+    struct irq_state *irq = __irqs + i;
+    list_init(&irq->handlers);
+    irq->count = 0;
+    irq->in_irq = 0;
   }
 
   return 0;
 }
 
 void generate_irq(int irq) {
-#ifdef ARCH_X86
-  x86_generate_irq(irq);
-#endif
+  __machine_irq_system->generate_irq(irq);
 }
 
 void acknowledge_irq(int irq) {
-#ifdef ARCH_X86
-  x86_acknowledge_irq(irq);
-#endif
+  __machine_irq_system->acknowledge_irq(irq);
 }
 
 
 void handle_irq(int irq) {
-  struct irq_handler *handler;
   struct irq_context context;
+  struct irq_state *state;
+  struct irq_handler *handler;
+
+  state = &__irqs[irq];
+
+  //FIXME atomic test and set
+  ASSERT(0 == state->in_irq);
+  state->in_irq++;
+  state->count++;
 
   context.irq = irq;
 
-  list_foreach(handler, &(irq_handlers[irq]), link) {
+  list_foreach(handler, &state->handlers, link) {
     if (NULL != handler->top_handler) handler->top_handler(&context);
   }
 
+  state->in_irq--;
   acknowledge_irq(irq);
 
-  //FIXME move this out of interrupt context
-  list_foreach(handler, &(irq_handlers[irq]), link) {
-    if (NULL != handler->bottom_handler) handler->bottom_handler(&context);
+  {
+    int row,col;
+    vga_get_cursor(&row, &col);
+    vga_set_cursor(24, 0);
+    kprintf("Timer: %8d Keyboard: %8d", __irqs[0].count, __irqs[1].count);
+    vga_set_cursor(row, col);
   }
 }
 
@@ -75,7 +102,7 @@ void register_irq(int irq, struct irq_handler *new_handler) {
 
   //TODO disable_interrupts
 
-  list_insert_tail(&(irq_handlers[irq]), new_handler, link);
+  list_insert_tail(&__irqs[irq].handlers, new_handler, link);
 
   //TODO restore_interrupts
 }

@@ -19,4 +19,10 @@
 #define CONFIG_MIN_PHYSMEM_KERNEL       MB(32)
 #define CONFIG_MIN_PHYSMEM_USER         MB(32)
 
+/*
+ * The default frequency (times per second) to receive hardware interrupts
+ * from the timer.
+ */
+#define CONFIG_TIMER_HZ 100
+
 #endif /* !__KERNEL_CONFIG_H__ */

@@ -14,7 +14,9 @@
 #include <mm/vm.h>
 #include <mm/physmem.h>
 
-extern void __enable_interrupts(void);
+#include <arch/x86/irq.h>
+
+extern struct irq_state *__irqs;
 
 void kernel_main() {
 
@@ -24,11 +26,6 @@ void kernel_main() {
   SUCCEED_OR_DIE(log_init(dputchar, LOG_LEVEL_DEBUG));
 
   TRACE_ON;
-
-  /*
-   * Hardware Interrupts
-   */
-  SUCCEED_OR_DIE(irq_init());
 
   /*
    * Virtual Memory Bootstrap
@@ -41,6 +38,11 @@ void kernel_main() {
   SUCCEED_OR_DIE(kmalloc_init());
 
   /*
+   * Hardware Interrupts
+   */
+  SUCCEED_OR_DIE(irq_init());
+
+  /*
    * Physical Memory Manager
    */
   SUCCEED_OR_DIE(pmem_init());
@@ -48,7 +50,7 @@ void kernel_main() {
   /*
    * Kernel Timer
    */
-  SUCCEED_OR_DIE(timer_init(100));
+  SUCCEED_OR_DIE(timer_init());
 
   kprintf(
     "\n"
@@ -65,8 +67,9 @@ void kernel_main() {
     "          J.R.R. Tolkien\n"
     "\n");
 
-  generate_irq(0);
-  //__enable_interrupts();
+  __enable_interrupts();
 
-  while (1) continue;
+  while (1) {
+    continue;
+  }
 }

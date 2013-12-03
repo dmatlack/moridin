@@ -8,6 +8,26 @@
 
 #include <list.h>
 
+/*
+ * Information about the systems IRQs that must be provided by the machine
+ * dependent code.
+ */
+struct machine_irq_info {
+  int max_irqs;
+};
+
+struct machine_irq_interface {
+  /**
+   * @brief The init function must do two things:
+   * 1. Populate all fields of the machine_irq_info struct.
+   * 2. Initialize interrupts so that when they are generated, they call 
+   * the handle_irq() function in this file.
+   */
+  int  (*init)(struct machine_irq_info *info);
+  void (*generate_irq)(int irq);
+  void (*acknowledge_irq)(int irq);
+};
+
 struct irq_context {
   int irq;
 };

@@ -5,33 +5,38 @@
  */
 #include <kernel/timer.h>
 #include <kernel/irq.h>
+#include <kernel/config.h>
 
 #include <dev/pit.h>
 
 #include <debug.h>
 
-struct irq_handler timer_handler;
+struct irq_handler __timer_handler;
+int __timer_hz;
+
 
 /**
- * @brief Initialize the system timer. This is the timer used for
- * multitasking.
- * @param hz The frequency at which to receive interrupts from the timer.
+ * @brief Initialize the system timer. This is the timer used for multitasking.
  */
-int timer_init(int hz) {
+int timer_init(void) {
+  TRACE("");
+
+  __timer_hz = CONFIG_TIMER_HZ;
 
   /*
-   * Initialize the hardware
+   * Initialize the timer hardware
    */
-  if (0 != pit_init(hz)) {
+  if (0 != pit_init(__timer_hz)) {
     return -1;
   }
 
   /*
    * Register a handler for timer interrupts
    */
-  timer_handler.top_handler    = NULL;
-  timer_handler.bottom_handler = NULL;
-  register_irq(0 /*FIXME*/, &timer_handler);
+  __timer_handler.top_handler    = NULL;
+  __timer_handler.bottom_handler = NULL;
+
+  register_irq(0, &__timer_handler);
 
   return 0;
 }

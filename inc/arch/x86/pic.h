@@ -107,7 +107,12 @@
  * IRQ15/IRQ7       0x77              Reserved
  *
  */
-#define MAX_IRQS 16
+#define PIC_IRQ_COUNT      16
+#define PIC_IRQ_TIMER      0
+#define PIC_IRQ_KEYBOARD   1
+#define PIC_IRQ_SERIAL2    3
+#define PIC_IRQ_SERIAL1    4
+
 
 /**
  * @brief Initialize the PIC with the given master/slave vector offsets.

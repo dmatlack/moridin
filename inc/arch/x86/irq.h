@@ -6,10 +6,11 @@
 #ifndef __X86_IRQ_H__
 #define __X86_IRQ_H__
 
+#include <kernel/irq.h>
 #include <arch/x86/idt.h>
 #include <list.h>
 
-int  x86_init_irq(void);
+int  x86_init_irq(struct machine_irq_info *info);
 void x86_generate_irq(int irq);
 void x86_handle_irq(int irq);
 void x86_acknowledge_irq(int irq);

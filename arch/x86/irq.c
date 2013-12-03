@@ -6,16 +6,22 @@
 #include <arch/x86/irq.h>
 #include <arch/x86/idt.h>
 #include <arch/x86/pic.h>
+#include <arch/x86/io.h>
 
 #include <kernel/irq.h>
 
 #include <debug.h>
 #include <assert.h>
 
-int irq_counts[MAX_IRQS];
+struct machine_irq_interface x86_irq_interface = {
+  .init = x86_init_irq,
+  .generate_irq = x86_generate_irq,
+  .acknowledge_irq = x86_acknowledge_irq
+};
 
-int x86_init_irq(void) {
-  int i;
+int x86_init_irq(struct machine_irq_info *info) {
+  
+  info->max_irqs = PIC_IRQ_COUNT;
 
   /*
    * Initialize the hardware to receive interrupts.
@@ -44,13 +50,6 @@ int x86_init_irq(void) {
   idt_irq_gate(IDT_PIC_SLAVE_OFFSET  + 6, __irq14);
   idt_irq_gate(IDT_PIC_SLAVE_OFFSET  + 7, __irq15);
 
-  /*
-   * Reset the IRQs statistics trackers
-   */
-  for (i = 0; i < MAX_IRQS; i++) {
-    irq_counts[i] = 0;
-  }
-
   return 0;
 }
 
@@ -69,13 +68,13 @@ void x86_generate_irq(int irq) {
 /**
  * @brief This is the second level handler for all IRQs (the first
  * being the assembly entry points which are what are actually 
- * installed in the IDT). The job of this function is to collect
- * statistics and then pass the irq up to the kernel to handle.
+ * installed in the IDT). The job of this function is to pass 
+ * the irq up to the kernel to handle.
  */
 void x86_handle_irq(int irq) {
-  ASSERT(irq >= 0 && irq < MAX_IRQS);
+  ASSERT(irq >= 0 && irq < PIC_IRQ_COUNT);
 
-  irq_counts[irq]++;
+  if (irq == 1) inb(0x60); //FIXME remove me
 
   /*
    * pass the interrupt request up to the kernel
@@ -83,6 +82,9 @@ void x86_handle_irq(int irq) {
   handle_irq(irq);
 }
 
+/**
+ * @brief Acknowledge the irq by sending the correct message to the PIC.
+ */
 void x86_acknowledge_irq(int irq) {
   pic_eoi(irq);
 }
