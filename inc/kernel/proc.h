@@ -41,7 +41,7 @@ struct thread_struct {
   int tid;
 };
 
-struct process_struct {
+struct proc_struct {
   /*
    * the process family hierarchy: a pointer to your parent, and a list
    * of your children.
@@ -54,6 +54,9 @@ struct process_struct {
    */
   thread_list_t threads;
 
+  struct vm_address_space *vm;
+
+  int next_tid;
   int pid;
 };
 

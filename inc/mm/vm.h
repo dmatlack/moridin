@@ -118,6 +118,7 @@ struct vm_address_space {
 int vm_bootstrap(void);
 
 int vm_address_space_init(struct vm_address_space *vm);
+int vm_address_space_create(struct vm_address_space **vmp);
 int vm_map_region(struct vm_address_space *vm, struct vm_region *new_region);
 
 #endif /* !__MM_VM_H__ */

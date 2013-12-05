@@ -15,8 +15,18 @@
 #include <list.h>
 
 struct irq_state {
+  /**
+   * @brief The list of handlers that are register to receive this interrupt.
+   */
   irq_handler_list_t handlers;
+  /**
+   * @brief The number of times this interrupt has occured.
+   */
   int count;
+  /**
+   * @brief Incremented upon receiving an interrupt, decremented after all
+   * handlers have been run.
+   */
   int in_irq;
 };
 
@@ -63,7 +73,6 @@ void generate_irq(int irq) {
 void acknowledge_irq(int irq) {
   __machine_irq_system->acknowledge_irq(irq);
 }
-
 
 void handle_irq(int irq) {
   struct irq_context context;

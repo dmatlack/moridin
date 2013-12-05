@@ -92,6 +92,14 @@ int vm_address_space_init(struct vm_address_space *vm) {
   return 0;
 }
 
+int vm_address_space_create(struct vm_address_space **vmp) {
+  *vmp = kmalloc(sizeof(struct vm_address_space));
+  if (NULL == *vmp) {
+    return -1;
+  }
+  return vm_address_space_init(*vmp);
+}
+
 /**
  * @brief Map the provided region into the given address space.
  *
