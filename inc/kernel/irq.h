@@ -26,6 +26,8 @@ struct machine_irq_interface {
   int  (*init)(struct machine_irq_info *info);
   void (*generate_irq)(int irq);
   void (*acknowledge_irq)(int irq);
+  void (*disable_irqs)(void);
+  void (*enable_irqs)(void);
 };
 
 struct irq_context {
@@ -55,5 +57,7 @@ int irq_init(void);
 void generate_irq(int irq);
 void handle_irq(int irq);
 void register_irq(int irq, struct irq_handler *new_handler);
+void enable_irqs(void);
+void disable_irqs(void);
 
 #endif /* !__KERNEL_IRQ_H__ */

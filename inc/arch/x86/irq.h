@@ -14,6 +14,8 @@ int  x86_init_irq(struct machine_irq_info *info);
 void x86_generate_irq(int irq);
 void x86_handle_irq(int irq);
 void x86_acknowledge_irq(int irq);
+void x86_enable_irqs(void);
+void x86_disable_irqs(void);
 
 void __int(uint8_t n);
 void __enable_interrupts(void);

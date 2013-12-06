@@ -67,7 +67,7 @@ void kernel_main() {
     "          J.R.R. Tolkien\n"
     "\n");
 
-  __enable_interrupts();
+  enable_irqs();
 
   while (1) {
     continue;

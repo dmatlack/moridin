@@ -16,7 +16,9 @@
 struct machine_irq_interface x86_irq_interface = {
   .init = x86_init_irq,
   .generate_irq = x86_generate_irq,
-  .acknowledge_irq = x86_acknowledge_irq
+  .acknowledge_irq = x86_acknowledge_irq,
+  .enable_irqs = x86_enable_irqs,
+  .disable_irqs = x86_disable_irqs
 };
 
 int x86_init_irq(struct machine_irq_info *info) {
@@ -88,3 +90,13 @@ void x86_handle_irq(int irq) {
 void x86_acknowledge_irq(int irq) {
   pic_eoi(irq);
 }
+
+void x86_enable_irqs(void) {
+  __enable_interrupts();
+}
+
+void x86_disable_irqs(void) {
+  __disable_interrupts();
+}
+
+

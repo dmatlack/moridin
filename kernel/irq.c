@@ -34,6 +34,7 @@ int __max_irqs;
 struct irq_state *__irqs;
 
 #ifdef ARCH_X86
+typedef int irq_mask_t;
 extern struct machine_irq_interface x86_irq_interface;
 static struct machine_irq_interface *__machine_irq_system = &x86_irq_interface;
 #endif
@@ -114,4 +115,12 @@ void register_irq(int irq, struct irq_handler *new_handler) {
   list_insert_tail(&__irqs[irq].handlers, new_handler, link);
 
   //TODO restore_interrupts
+}
+
+void enable_irqs(void) {
+  __machine_irq_system->enable_irqs();
+}
+
+void disable_irqs(void) {
+  __machine_irq_system->disable_irqs();
 }
