@@ -115,7 +115,7 @@
 
 
 /**
- * @brief Initialize the PIC with the given master/slave vector offsets.
+ * @brief Initialize the PIC.
  */
 int pic_init(void);
 

@@ -96,11 +96,17 @@ void handle_irq(int irq) {
   state->in_irq--;
   acknowledge_irq(irq);
 
+  /*
+   * Print some info about interrupts on the bottom line of the console
+   */
   {
     int row,col;
+    int i;
     vga_get_cursor(&row, &col);
     vga_set_cursor(24, 0);
-    kprintf("Timer: %8d Keyboard: %8d", __irqs[0].count, __irqs[1].count);
+    for (i = 0; i < 16; i++) { 
+      if (__irqs[i].count > 0) kprintf("%d:%d ", i, __irqs[i].count);
+    }
     vga_set_cursor(row, col);
   }
 }
