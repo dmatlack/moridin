@@ -14,6 +14,8 @@
 #include <mm/vm.h>
 #include <mm/physmem.h>
 
+#include <dev/pci.h>
+
 #include <arch/x86/irq.h>
 
 extern struct irq_state *__irqs;
@@ -46,6 +48,11 @@ void kernel_main() {
    * Physical Memory Manager
    */
   SUCCEED_OR_DIE(pmem_init());
+
+  /*
+   * Peripheral Component Interconnect
+   */
+  SUCCEED_OR_DIE(pci_init());
 
   /*
    * Kernel Timer

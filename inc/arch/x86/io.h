@@ -16,7 +16,7 @@ void outw(uint16_t port, uint16_t val);
 /** 
  * @brief write 4 byte the given port 
  */
-void outl(uint16_t port, uint32_t val);
+void outd(uint16_t port, uint32_t val);
 
 /**
  * @brief read 1 byte from the given port 
