@@ -10,6 +10,31 @@
 #include <kernel.h>
 #include <arch/x86/io.h>
 
+static inline const char *pci_class_code_desc(int class_code) {
+  switch (class_code) {
+    case 0x00: return "Device was built prior definition of the class code field";
+    case 0x01: return "Mass Storage Controller";
+    case 0x02: return "Network Controller";
+    case 0x03: return "Display Controller";
+    case 0x04: return "Multimedia Controller";
+    case 0x05: return "Memory Controller";
+    case 0x06: return "Bridge Device";
+    case 0x07: return "Simple Communication Controllers";
+    case 0x08: return "Base System Peripherals";
+    case 0x09: return "Input Devices";
+    case 0x0A: return "Docking Stations";
+    case 0x0B: return "Processors";
+    case 0x0C: return "Serial Bus Controllers";
+    case 0x0D: return "Wireless Controllers";
+    case 0x0E: return "Intelligent I/O Controllers";
+    case 0x0F: return "Satellite Communication Controllers";
+    case 0x10: return "Encryption/Decryption Controllers";
+    case 0x11: return "Data Acquisition and Signal Processing Controllers";
+    case 0xFF: return "Device does not fit any defined class.";
+    default:   return "Reserved"; 
+  }
+}
+
 /**
  * @brief Configure a PCI device.
  *
@@ -75,7 +100,8 @@ void pci_check_device(int bus, int device) {
     return;
   }
 
-  INFO("pci vendor=0x%x device=0x%x", d.vendor_id, d.device_id);
+  INFO("pci vendor=0x%x device=0x%x, header_type=0x%x, class_code=0x%x (%s), subclass=0x%x",
+      d.vendor_id, d.device_id, d.header_type, d.class_code, pci_class_code_desc(d.class_code), d.subclass);
 }
 
 int pci_init(void) {

@@ -11,6 +11,7 @@
 #include <mm/vm.h>
 #include <string.h>
 
+#include <errno.h>
 #include <debug.h>
 #include <assert.h>
 
@@ -44,7 +45,7 @@ int proc_create(struct proc_struct **procp) {
 
   *procp = kmalloc(sizeof(struct proc_struct));
   if (NULL == *procp) {
-    return -1;
+    return ENOMEM;
   }
 
   return proc_init(*procp);
@@ -73,7 +74,7 @@ int thread_create(struct thread_struct **threadp) {
 
   *threadp = kmemalign(PAGE_SIZE, sizeof(struct thread_struct));
   if (NULL == *threadp) {
-    return -1;
+    return ENOMEM;
   }
 
   return thread_init(*threadp);

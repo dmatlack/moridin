@@ -4,3 +4,4 @@
 isodir/
 .*.swp
 myos.S
+/DISK*

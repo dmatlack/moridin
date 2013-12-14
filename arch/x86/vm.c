@@ -120,6 +120,7 @@ void entry_set_flags(entry_t *entry, vm_flags_t flags) {
 int x86_map_page(struct entry_table *pd, size_t vpage, size_t ppage,
                  vm_flags_t flags) {
   struct entry_table *pt;
+  size_t vtop;
   entry_t *pde, *pte;
 
   ASSERT(IS_PAGE_ALIGNED(vpage));
@@ -150,7 +151,7 @@ int x86_map_page(struct entry_table *pd, size_t vpage, size_t ppage,
   entry_set_present(pte);
   entry_set_flags(pte, flags);
 
-  ASSERT(ppage == x86_vtop(pd, vpage));
+  ASSERT(x86_vtop(pd, vpage, &vtop) && ppage == vtop);
 
   return 0;
 }
@@ -190,25 +191,29 @@ int x86_map_pages(struct entry_table *pd, size_t *vpages, size_t *ppages,
 /**
  * @brief Convert the virtual address into the physical address it is
  * mapped to.
+ *
+ * @return TRUE (non-zero) if the address is mapped, FALSE (zero) if the
+ * address is not mapped.
  */
-size_t x86_vtop(struct entry_table *pd,  size_t vaddr) {
+bool x86_vtop(struct entry_table *pd,  size_t vaddr, size_t *paddrp) {
   struct entry_table *pt;
   entry_t *pde, *pte;
+
+  ASSERT_NOT_NULL(paddrp);
   
   pde = get_pde(pd, vaddr);
 
   if (!entry_is_present(pde)) { 
-    DEBUG("PDE was not present!");
-    return -1; //FIXME 0xffffffff
+    return false;
   }
 
   pt = (struct entry_table *) entry_get_addr(pde);
   pte = get_pte(pt, vaddr);
 
   if (!entry_is_present(pte)) { 
-    DEBUG("PTE was not present!");
-    return -1; //FIXME 0xffffffff
+    return false;
   }
 
-  return entry_get_addr(pte) + PHYS_OFFSET(vaddr);
+  *paddrp = entry_get_addr(pte) + PHYS_OFFSET(vaddr);
+  return true;
 }

@@ -248,7 +248,7 @@ int x86_vm_map(struct vm_machine_object *object, size_t *vpages,
 //TODO unmap
 extern struct vm_machine_interface x86_vm_machine_interface;
 
-size_t x86_vtop(struct entry_table *pd, size_t vaddr);
+bool x86_vtop(struct entry_table *pd,  size_t vaddr, size_t *paddrp);
 
 int x86_map_page(struct entry_table *pd, size_t vpage, size_t ppage, 
                  vm_flags_t flags);

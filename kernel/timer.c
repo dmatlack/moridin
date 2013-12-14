@@ -19,6 +19,8 @@ int __timer_hz;
  * @brief Initialize the system timer. This is the timer used for multitasking.
  */
 int timer_init(void) {
+  int ret;
+
   TRACE("");
 
   __timer_hz = CONFIG_TIMER_HZ;
@@ -26,8 +28,8 @@ int timer_init(void) {
   /*
    * Initialize the timer hardware
    */
-  if (0 != pit_init(__timer_hz)) {
-    return -1;
+  if (0 != (ret = pit_init(__timer_hz))) {
+    return ret;
   }
 
   /*

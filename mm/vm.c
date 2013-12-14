@@ -23,6 +23,7 @@
  */
 #include <mm/vm.h>
 #include <mm/physmem.h>
+#include <errno.h>
 #include <debug.h>
 
 #include <kernel/kmalloc.h>
@@ -61,6 +62,8 @@ struct vm_machine_interface *machine = &x86_vm_machine_interface;
  * @return 0 on success, non-0 on error
  */
 int vm_bootstrap(void) {
+  int ret;
+
   TRACE("void");
 
   /*
@@ -75,8 +78,8 @@ int vm_bootstrap(void) {
   LOG_VM_ZONE(VM_ZONE_KERNEL);
   LOG_VM_ZONE(VM_ZONE_USER);
 
-  if (0 != machine->bootstrap(PAGE_SIZE)) {
-    return -1;
+  if (0 != (ret = machine->bootstrap(PAGE_SIZE))) {
+    return ret;
   }
 
   return 0;
@@ -141,17 +144,17 @@ int vm_map_region(struct vm_address_space *vm, struct vm_region *new_region) {
     size_t vpage = new_region->address + (i * PAGE_SIZE);
     size_t ppage;
     
-    if (!pmem_alloc(&ppage, 1, PMEM_ZONE_USER)) {
-      ret = -1;
+    if (0 != (ret = pmem_alloc(&ppage, 1, PMEM_ZONE_USER))) {
       goto vm_region_map_cleanup;
     }
 
-    if (!machine->map(vm->object, &vpage, &ppage, 1, new_region->flags)) {
-      ret = -1;
+    if (0 != (ret = machine->map(vm->object, &vpage, &ppage, 1, 
+                                 new_region->flags))) {
       goto vm_region_map_cleanup;
     }
   }
 
 vm_region_map_cleanup:
+  //FIXME rollback
   return ret;
 }

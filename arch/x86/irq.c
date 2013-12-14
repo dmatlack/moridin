@@ -22,14 +22,15 @@ struct machine_irq_interface x86_irq_interface = {
 };
 
 int x86_init_irq(struct machine_irq_info *info) {
+  int ret;
   
   info->max_irqs = PIC_IRQ_COUNT;
 
   /*
    * Initialize the hardware to receive interrupts.
    */
-  if (0 != pic_init()) {
-    return -1;
+  if (0 != (ret = pic_init())) {
+    return ret;
   }
 
   /*

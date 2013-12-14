@@ -9,6 +9,7 @@
 #include <kernel/kprintf.h> //remove me
 #include <debug.h>
 
+#include <errno.h>
 #include <stddef.h>
 #include <assert.h>
 
@@ -137,7 +138,7 @@ int pmem_alloc(size_t *pages, int num_to_alloc, struct pmem_zone *zone) {
   int num_alloced = 0;
 
   if (zone->num_free < num_to_alloc) {
-    return -1;
+    return ENOMEM;
   }
 
   for (; zone->page_index < zone->num_pages;

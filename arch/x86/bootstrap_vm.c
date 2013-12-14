@@ -91,6 +91,7 @@ static void x86_bootstrap_region(struct entry_table *pd,
    */
   for (i = 0; i < psize / X86_PAGE_SIZE; i++) {
     struct entry_table *pt;
+    size_t vtop;
     entry_t *pde, *pte;
 
     vpage = vstart + i*X86_PAGE_SIZE;
@@ -108,7 +109,7 @@ static void x86_bootstrap_region(struct entry_table *pd,
     entry_set_addr(pte, ppage);
 
     ASSERT(ppage == entry_get_addr(pte));
-    ASSERT(ppage == x86_vtop(pd, vpage));
+    ASSERT(x86_vtop(pd, vpage, &vtop) && ppage == vtop);
   }
 
   DEBUG("    MAPPED: 0x%08x through 0x%08x", vstart, vstart + psize);

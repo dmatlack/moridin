@@ -13,6 +13,7 @@
 #include <debug.h>
 #include <assert.h>
 #include <list.h>
+#include <errno.h>
 
 struct irq_state {
   /**
@@ -42,11 +43,12 @@ static struct machine_irq_interface *__machine_irq_system = &x86_irq_interface;
 int irq_init(void) {
   struct machine_irq_info irq_info;
   int i;
+  int ret;
 
   TRACE("");
 
-  if (0 != __machine_irq_system->init(&irq_info)) {
-    return -1;
+  if (0 != (ret = __machine_irq_system->init(&irq_info))) {
+    return ret;
   }
 
   __max_irqs = irq_info.max_irqs;
@@ -54,7 +56,7 @@ int irq_init(void) {
   __irqs = kmalloc(sizeof(struct irq_state) * __max_irqs);
   if (NULL == __irqs) {
     kprintf("NULL == __irqs\n");
-    return -1;
+    return ENOMEM;
   }
   
   for (i = 0; i < __max_irqs; i++) {
