@@ -1,96 +1,31 @@
-###
-# Makefile
 #
-# by David Matlack
-###
-PWD = $(shell pwd)
-NAME = myos
+#
+# Operating System Makefile
+#
+#
+.PHONY: default kernel iso clean
 
-AUTOSTART := $(shell rm -f $(NAME).S)
+default: iso
 
-###############################################################################
-# Project Directory/Files
-###############################################################################
-
-# directories with source code
-PROJDIRS := arch boot lib dev kernel debug mm
-
-# source files by type
-CFILES = $(shell find $(PWD)/$(PROJDIRS) -type f -name "*.c")
-HFILES = $(shell find $(PWD)/$(PROJDIRS) -type f -name "*.h")
-SFILES = $(shell find $(PWD)/$(PROJDIRS) -type f -name "*.S")
-
-OBJFILES = $(patsubst %.c,%.o,$(CFILES)) $(patsubst %.S,%.o,$(SFILES))
-
-
-###############################################################################
-# Compiler Options
-###############################################################################
-CC = i586-elf-gcc # compiler
-AS = i586-elf-as  # assembler
-WARNINGS := \
-			-Wall \
-			-Wextra \
-			-Wshadow \
-			-Wcast-align \
-			-Wwrite-strings \
-			-Wredundant-decls \
-			-Wnested-externs \
-			-Winline \
-			-Wuninitialized \
-			-Werror \
-
-CFLAGS := -g -std=c99 -ffreestanding -DARCH_X86 $(WARNINGS)
-INCLUDES := -I$(PWD)/inc/lib -I$(PWD)/inc
-
-###############################################################################
-# Targets
-###############################################################################
-.PHONY: all clean 
-
-all: $(OBJFILES) $(HFILES) linker.ld boot/grub.cfg
-	$(CC) -T linker.ld -o $(NAME).bin -ffreestanding -O2 -nostdlib $(OBJFILES) -lgcc
+#
+# Create an .iso (CDROM image) that can boot the os
+#
+iso: kernel boot/grub.cfg
 	mkdir -p isodir
 	mkdir -p isodir/boot
-	cp $(NAME).bin isodir/boot/$(NAME).bin
+	cp kernel/KERNEL.o isodir/boot/KERNEL.o
 	mkdir -p isodir/boot/grub
 	cp boot/grub.cfg isodir/boot/grub/grub.cfg
-	grub-mkrescue -o $(NAME).iso isodir
-	objdump -D $(NAME).bin > $(NAME).S
+	grub-mkrescue -o OS.iso isodir
+
+#
+# Build the kernel sources into an object file
+#
+kernel:
+	make -C kernel/
+
 
 clean:
-	rm -rf $(NAME).S
+	make -C kernel/ clean
 	rm -rf isodir
-	rm -rf $(OBJFILES)
-	rm -rf $(NAME).bin
-	rm -rf $(NAME).iso
-
-###############################################################################
-# General Make Rules for filetypes
-###############################################################################
-
-%.d: %.S
-	$(CC) $(CFLAGS) -DASSEMBLER $(INCLUDES) -M -MP -MF $@ -MT $(<:.S=.o) $<
-
-%.d: %.s
-	@echo "You should use the .S file extension rather than .s"
-	@echo ".s does not support precompiler directives (like #include)"
-	@false
-
-%.d: %.c
-	$(CC) $(CFLAGS) $(INCLUDES) -M -MP -MF $@ -MT $(<:.c=.o) $<
-
-%.o: %.S
-	$(CC) $(CFLAGS) -DASSEMBLER $(INCLUDES) -c -o $@ $<
-	#$(OBJCOPY) -R .comment -R .note $@ $@
-
-%.o: %.s
-	@echo "You should use the .S file extension rather than .s"
-	@echo ".s does not support precompiler directives (like #include)"
-	@false
-
-%.o: %.c
-	$(CC) $(CFLAGS) $(INCLUDES) -c -o $@ $<
-	#$(OBJCOPY) -R .comment -R .note $@ $@
-
-###############################################################################
+	rm -rf OS.iso
