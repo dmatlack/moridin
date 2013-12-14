@@ -32,4 +32,4 @@ Make sure you compile bochs with the debugging enabled:
 
 To run the kernel with qemu, emulating 1GB of memory, run: 
 
-  $ qemu-system-i386 myos.iso -m 1024
+  $ qemu-system-i386 <ISO> -m 1024
