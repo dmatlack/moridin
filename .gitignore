@@ -1,7 +1,7 @@
+.*.swp
 *.o
 *.bin
 *.iso
 isodir/
-.*.swp
-myos.S
+kernel/KERNEL.S
 /DISK*
