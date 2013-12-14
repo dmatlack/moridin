@@ -79,6 +79,7 @@ struct pci_device {
   int cache_line_size;
 };
 
+void pci_scan_bus(int bus);
 int pci_init(void);
 
 #endif /* !__DEV_PCI_H__ */

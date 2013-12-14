@@ -89,29 +89,60 @@ void pci_parse_device(struct pci_device *d, int bus, int device, int func) {
   d->cache_line_size = (dword) & 0xff;
 }
 
+/**
+ * @brief Return true if this is a multifunction device.
+ */
+bool is_multifunc_device(int bus, int device) {
+  uint8_t header_type = (pci_config_read(bus, device, 0, 0x0C) >> 16) & 0xff;
+  /*
+   * bit 7 of the header type is set to 1 if this is a multifunction device
+   */
+  return (header_type & 0x80) != 0;
+}
+
 void pci_check_device(int bus, int device) {
-
   struct pci_device d;
+  int func;
+  int num_funcs = is_multifunc_device(bus, device) ? 8 : 1;
 
-  pci_parse_device(&d, bus, device, 0);
+  for (func = 0; func < num_funcs; func++) {
 
-  if (d.vendor_id == 0xffff) {
-    // device does not exist
-    return;
+    pci_parse_device(&d, bus, device, func);
+
+    if (d.vendor_id == 0xffff) {
+      // device does not exist
+      return;
+    }
+
+    INFO("pci vendor=0x%x device=0x%x header_type=0x%x, class_code=0x%x (%s), subclass=0x%x",
+        d.vendor_id, d.device_id, d.header_type, d.class_code, pci_class_code_desc(d.class_code), d.subclass);
+
+    /*
+     * If this device is a PCI-PCI bridge, then search the downstream bus
+     */
+    if (d.class_code == 0x06 && d.subclass == 0x04) {
+      int secondary_bus = (pci_config_read(bus, device, 0, 0x18) >> 8) & 0xff;
+
+      INFO("PCI-PCI Bridge found. Secondary Bus: %d", secondary_bus);
+      pci_scan_bus(secondary_bus);
+    }
+
   }
+}
 
-  INFO("pci vendor=0x%x device=0x%x, header_type=0x%x, class_code=0x%x (%s), subclass=0x%x",
-      d.vendor_id, d.device_id, d.header_type, d.class_code, pci_class_code_desc(d.class_code), d.subclass);
+void pci_scan_bus(int bus) {
+  int device;
+
+  TRACE("bus=%d", bus);
+
+  for (device = 0; device < 32; device++) {
+    pci_check_device(bus, device);
+  }
 }
 
 int pci_init(void) {
-  int bus, device;
 
-  for (bus = 0; bus < 32; bus++) {
-    for (device = 0; device < 256; device++) {
-      pci_check_device(bus, device);
-    }
-  }
+  pci_scan_bus(0);
 
   return 0;
 }
