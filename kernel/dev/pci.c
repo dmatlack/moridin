@@ -7,8 +7,12 @@
 #include <stdint.h>
 
 #include <debug.h>
+#include <errno.h>
 #include <kernel.h>
 #include <arch/x86/io.h>
+
+struct pci_bus *__pci_root;
+pci_device_list_t __pci_devices;
 
 static inline const char *pci_class_code_desc(int class_code) {
   switch (class_code) {
@@ -100,49 +104,119 @@ bool is_multifunc_device(int bus, int device) {
   return (header_type & 0x80) != 0;
 }
 
-void pci_check_device(int bus, int device) {
-  struct pci_device d;
-  int func;
-  int num_funcs = is_multifunc_device(bus, device) ? 8 : 1;
+bool device_exists(int bus, int device, int func) {
+  uint16_t vendor_id = pci_config_read(bus, device, func, 0x00) & 0xffff;
+  /*
+   * 0xffff is not a valid vendor id and indicates that this device does
+   * not exist
+   */
+  return vendor_id != 0xffff;
+}
 
-  for (func = 0; func < num_funcs; func++) {
+int pci_device_create(struct pci_device **dp, int bus, int device, int func) {
+  struct pci_device *d;
 
-    pci_parse_device(&d, bus, device, func);
+  *dp = d = kmalloc(sizeof(struct pci_device));
+  if (NULL == d) {
+    return ENOMEM;
+  }
 
-    if (d.vendor_id == 0xffff) {
-      // device does not exist
-      return;
+  list_elem_init(d, global_link);
+  list_elem_init(d, bus_link);
+
+  pci_parse_device(d, bus, device, func);
+
+  return 0;
+}
+
+int pci_scan_bus(struct pci_bus *b) {
+  int ret, device, func;
+
+  for (device = 0; device < 32; device++) {
+    for (func = 0; func < 8; func++) {
+      struct pci_device *d;
+
+      if (!device_exists(b->bus, device, func)) continue;
+      
+      if (0 != (ret = pci_device_create(&d, b->bus, device, func))) {
+        return ret;
+      }
+
+      list_insert_tail(&__pci_devices, d, global_link);
+      list_insert_tail(&b->devices, d, bus_link);
+
+      /*
+       * If this device is a PCI-PCI bridge, then search the downstream bus
+       */
+      if (d->class_code == 0x06 && d->subclass == 0x04) {
+        struct pci_bus *sb;
+       
+        sb = kmalloc(sizeof(struct pci_bus));
+        if (NULL == b) {
+          return ENOMEM;
+        }
+
+        list_init(&sb->devices);
+        list_init(&sb->buses);
+        list_elem_init(sb, bus_link);
+        sb->bus = (pci_config_read(b->bus, device, 0, 0x18) >> 8) & 0xff;
+        sb->self = d;
+    
+        INFO("PCI-PCI Bridge found. Secondary Bus: %d", sb->bus);
+
+        pci_scan_bus(sb);
+      }
+
+      if (func == 0 && !is_multifunc_device(b->bus, device)) break;
     }
+  }
 
-    INFO("pci vendor=0x%x device=0x%x header_type=0x%x, class_code=0x%x (%s), subclass=0x%x",
-        d.vendor_id, d.device_id, d.header_type, d.class_code, pci_class_code_desc(d.class_code), d.subclass);
+  return 0;
+}
 
-    /*
-     * If this device is a PCI-PCI bridge, then search the downstream bus
-     */
-    if (d.class_code == 0x06 && d.subclass == 0x04) {
-      int secondary_bus = (pci_config_read(bus, device, 0, 0x18) >> 8) & 0xff;
+void __lspci(struct pci_bus *root, int depth) {
+  struct pci_device *d;
+  struct pci_bus *sb;
 
-      INFO("PCI-PCI Bridge found. Secondary Bus: %d", secondary_bus);
-      pci_scan_bus(secondary_bus);
+  INFO("%*sBus: %d", depth, "", root->bus);
+  list_foreach(d, &root->devices, bus_link) {
+    INFO("%*sclass=0x%x (%s), subclass=0x%x device-id=0x%x, vendor-id=0x%x", depth*2, "",
+          d->class_code, pci_class_code_desc(d->class_code),
+          d->subclass, d->device_id, d->vendor_id);
+
+    list_foreach(sb, &root->buses, bus_link) {
+      if (sb->self == d) __lspci(sb, depth + 1);
     }
-
   }
 }
 
-void pci_scan_bus(int bus) {
-  int device;
-
-  TRACE("bus=%d", bus);
-
-  for (device = 0; device < 32; device++) {
-    pci_check_device(bus, device);
-  }
+void lspci(void) {
+  __lspci(__pci_root, 0);
 }
 
 int pci_init(void) {
+  int ret;
 
-  pci_scan_bus(0);
+  list_init(&__pci_devices);
+
+  __pci_root = kmalloc(sizeof(struct pci_bus));
+  if (NULL == __pci_root) {
+    return ENOMEM;
+  }
+  list_init(&__pci_root->devices);
+  list_init(&__pci_root->buses);
+  list_elem_init(__pci_root, bus_link);
+  __pci_root->bus = 0;
+  __pci_root->self = NULL;
+
+  /*
+   * construct the pci device tree
+   */
+  if (0 != (ret = pci_scan_bus(__pci_root))) {
+    return ret;
+  }
+  
+  lspci();
 
   return 0;
 }
