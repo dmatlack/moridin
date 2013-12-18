@@ -72,6 +72,10 @@ uint32_t pci_config_read(int bus, int device, int func, int offset) {
 void pci_parse_device(struct pci_device *d, int bus, int device, int func) {
   uint32_t dword;
 
+  d->pci_config_bus = bus;
+  d->pci_config_device = device;
+  d->pci_config_func = func;
+
   dword = pci_config_read(bus, device, func, 0x00);
   d->device_id = (dword >> 16) & 0xffff;
   d->vendor_id = (dword) & 0xffff;
@@ -180,9 +184,12 @@ void __lspci(struct pci_bus *root, int depth) {
 
   INFO("%*sBus: %d", depth, "", root->bus);
   list_foreach(d, &root->devices, bus_link) {
-    INFO("%*sclass=0x%x (%s), subclass=0x%x device-id=0x%x, vendor-id=0x%x", depth*2, "",
-          d->class_code, pci_class_code_desc(d->class_code),
-          d->subclass, d->device_id, d->vendor_id);
+
+    INFO("%*s[%d][%d] class=0x%x (%s), subclass=0x%x device-id=0x%x, "
+         "vendor-id=0x%x", (depth+1)*2, "",
+         d->pci_config_device, d->pci_config_func,
+         d->class_code, pci_class_code_desc(d->class_code),
+         d->subclass, d->device_id, d->vendor_id);
 
     list_foreach(sb, &root->buses, bus_link) {
       if (sb->self == d) __lspci(sb, depth + 1);

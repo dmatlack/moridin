@@ -148,6 +148,13 @@ struct pci_device {
    * devices on the same bus as this device 
    */
   list_link(struct pci_device) bus_link;
+
+  /*
+   * PCI configuration space selectors
+   */
+  int pci_config_bus;
+  int pci_config_device;
+  int pci_config_func;
 };
 
 /*
