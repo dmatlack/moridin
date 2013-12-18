@@ -69,6 +69,7 @@ struct pci_bus {
 };
 
 struct pci_device {
+
   /* 
    * identifies a device, where valid IDs are allocated by the vendor 
    */

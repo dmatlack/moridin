@@ -124,4 +124,6 @@ extern int errno;                 /* place where the error numbers go */
 #define ETRAPDENIED  (_SIGN 110)  /* IPC trap not allowed */
 #define EDONTREPLY   (_SIGN 201)  /* pseudo-code: don't send a reply */
 
+const char *strerr(int err);
+
 #endif /* _ERRNO_H */

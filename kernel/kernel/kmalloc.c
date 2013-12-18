@@ -155,11 +155,8 @@ void *__kmalloc(size_t size) {
 void *kmalloc(size_t size) {
   void* addr;
 
-  TRACE("size=0x%08x", size);
-
   addr = __kmalloc(size);
 
-  DEBUG("    return %p", addr);
   return addr;
 }
 
@@ -168,8 +165,6 @@ void *kmalloc(size_t size) {
 void *kmemalign(size_t alignment, size_t size) {
 	unsigned shift;
 	void *chunk;
-
-  TRACE("alignment=0x%08x, size=0x%08x", alignment, size);
 
 	/* Find the alignment shift in bits.  XXX use proc_ops.h  */
 	for (shift = 0; (1 << shift) < alignment; shift++);
@@ -193,6 +188,5 @@ void *kcalloc(size_t size) {
 }
 
 void kfree(void *buf, size_t size) {
-  TRACE("buf=%p, size=0x%08x", buf, size);
 	lmm_free(&kernel_lmm, buf, size);
 }

@@ -4,6 +4,7 @@
  * @brief Peripheral Component Interconnect
  */
 #include <dev/pci.h>
+#include <dev/ide.h>
 #include <stdint.h>
 
 #include <debug.h>
@@ -202,7 +203,15 @@ void lspci(void) {
 }
 
 int pci_init(void) {
+  struct pci_device *d;
   int ret;
+
+  TRACE();
+
+  if (0 != (ret = ide_init())) {
+    ERROR("Unable to initialize ide subsystem: %s", strerr(ret));
+    return ret;
+  }
 
   list_init(&__pci_devices);
 
@@ -221,6 +230,15 @@ int pci_init(void) {
    */
   if (0 != (ret = pci_scan_bus(__pci_root))) {
     return ret;
+  }
+
+  list_foreach(d, &__pci_devices, global_link) {
+    if (0x1 == d->class_code && 0x1 == d->subclass) {
+      if (0 != (ret = ide_device_init(d))) {
+        WARN("Failed to initialize IDE device (bus=%d, device=%d, func=%d).",
+             d->pci_config_bus, d->pci_config_device, d->pci_config_func);
+      }
+    }
   }
   
   lspci();
