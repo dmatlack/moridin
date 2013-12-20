@@ -7,6 +7,7 @@
 #define NULL ((void *)0)
 #endif
 
+#define arraylen(array) (sizeof(array)/sizeof(array[0]))
 #define offsetof(stype,field)	((size_t)(&((stype*)NULL)->field))
 
 /**

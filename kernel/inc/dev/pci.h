@@ -1,16 +1,6 @@
 /**
  * @file dev/pci.h
  *
- * Reference: http://wiki.osdev.org/PCI
- *            http://tldp.org/LDP/tlk/dd/pci.html
- */
-#ifndef __DEV_PCI_H__
-#define __DEV_PCI_H__
-
-#include <stdint.h>
-#include <list.h>
-
-/************
  * PCI: Peripheral Component Interconnect
  *
  * Configuration Space
@@ -22,7 +12,15 @@
  * Configuration read/write cycles are used to access the Configuration Space
  * of each target (device). A target is selected via IDSEL, which acts as a 
  * "chip select" signal.
+ *
+ * Reference: http://wiki.osdev.org/PCI
+ *            http://tldp.org/LDP/tlk/dd/pci.html
  */
+#ifndef __DEV_PCI_H__
+#define __DEV_PCI_H__
+
+#include <stdint.h>
+#include <list.h>
 
 /*
  * Write to this address to configure/select a device
@@ -32,6 +30,14 @@
  * Read from this address to get the result of the configuration.
  */
 #define CONFIG_DATA 0xCFC
+
+/*
+ * Functions to lookup string descriptions for devices. See pci_table.c.
+ */
+const char *pci_lookup_vendor(uint16_t vendor_id);
+const char *pci_lookup_device(uint16_t vendor_id, uint16_t device_id);
+const char *pci_lookup_classcode(uint8_t classcode);
+const char *pci_lookup_subclass(uint8_t classcode, uint8_t subclass, uint8_t progif);
 
 struct pci_device;
 struct pci_bus;
@@ -70,76 +76,61 @@ struct pci_bus {
 
 struct pci_device {
 
-  /* 
-   * identifies a device, where valid IDs are allocated by the vendor 
+  /*
+   * PCI configuration space selectors
    */
-  int device_id;
+  int pci_config_bus;
+  int pci_config_device;
+  int pci_config_func;
 
-  /* 
-   * identifies a manufacturer. vendor ids are allocated by PCI-SIG and
-   * 0xFFFF indicates a non-existent device 
+  /*
+   * The PCI Device Configuration Space
    */
-  int vendor_id;
+  struct {
+    uint16_t device_id;
+    uint16_t vendor_id;
+    uint16_t status;
+    uint16_t command;
+    uint8_t  classcode;
+    uint8_t  subclass;
+    uint8_t  progif;
+    uint8_t  revision_id;
+    uint8_t  bist;
+    uint8_t  header_type;
+    uint8_t  latency_timer;
+    uint8_t  cache_line_size;
 
-  /* 
-   * a register used to record status information 
+    /*
+     * The rest of the PCI configuration space depends on the header_type
+     */
+    union {
+      struct { /* header_type == 0x00 */
+        uint32_t bar0;
+        uint32_t bar1;
+        uint32_t bar2;
+        uint32_t bar3;
+        uint32_t bar4;
+        uint32_t bar5;
+        uint32_t cardbus_cis_pointer;
+        uint16_t subsystem_id;
+        uint16_t subsystem_vendor_id;
+        uint32_t expansion_rom;
+        uint8_t  capabilities;
+        uint8_t  max_latency;
+        uint8_t  min_grant;
+        uint8_t  interrupt_pin;
+        uint8_t  interrupt_line;
+      };
+    };
+  };
+
+  /*
+   * String descriptions of the device
    */
-  int status;
-
-  /* 
-   * provides control of a device's ability to generate and respond to
-   * pci cycles. the only functionality guarenteed to be supported by 
-   * all devices is to diconnect from the pci bus for all accesses except
-   * the configuration space access. command = 0 for this function. 
-   */
-  int command;
-
-  /* 
-   * a read-only register that specifies the type of function the device
-   * supports 
-   */
-  int class_code;
-
-  /* 
-   * a read-only register that specifies the _specific_ function the device
-   * performs 
-   */
-  int subclass;
-
-  /* 
-   * A read-only register that specifies a register level programming 
-   * interface the device has, if it has any at all 
-   */
-  int progif;
-
-  /* 
-   * specifies a revision identifies (vendor allocated) 
-   */
-  int revision_id;
-
-  /* 
-   * represents the status and allows control of a device's "built-in self
-   * test" 
-   */
-  int bist;
-
-  /* 
-   * Identifies the layout of the reast of the header beginning at byte 0x10
-   * of the header and also specifies whether or not the device has multiple
-   * functions (bit 7). 
-   */
-  int header_type;
-
-  /* 
-   * specifies the latency timer in units of pci bus clocks 
-   */
-  int latency_timer;
-
-  /* 
-   * specifies the system cache line size in 32-bit units (DWORD) 
-   */
-  int cache_line_size;
-
+  const char *vendor_desc;
+  const char *device_desc;
+  const char *classcode_desc;
+  const char *subclass_desc;
 
   /* 
    * list of all devices on the system 
@@ -149,13 +140,6 @@ struct pci_device {
    * devices on the same bus as this device 
    */
   list_link(struct pci_device) bus_link;
-
-  /*
-   * PCI configuration space selectors
-   */
-  int pci_config_bus;
-  int pci_config_device;
-  int pci_config_func;
 };
 
 /*

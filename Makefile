@@ -27,5 +27,5 @@ kernel:
 
 clean:
 	make -C kernel/ clean
-	rm -rf isodir
+	rm -rf iso
 	rm -rf OS.iso
