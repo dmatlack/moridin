@@ -68,9 +68,14 @@ static inline int __get_bit(int word, int index) {
 }
 #define get_bit(w, i)    __get_bit((int) w, (int) i)
 
+/**
+ * @brief Set the <index>th byte of <word> to <byte>.
+ *
+ * <index> is the BYTE INDEX. Meaning, <index> = 1 will affect bits 8-15.
+ */
 static inline void __set_byte(int *word, int index, int byte) {
-  *word &= MASK(8) << index;
-  *word &= byte << index;
+  *word &= MASK(8) << (index*8);
+  *word &= byte << (index*8);
 }
 #define set_byte(w, i, b) __set_byte((int*)w, (int)i, (int)b)
 
