@@ -53,5 +53,5 @@ int ide_device_init(struct pci_device *pci_d) {
 
   list_insert_tail(&__ide_devices, ide_d, global_link);
 
-  return ENOMEM;
+  return 0;
 }
