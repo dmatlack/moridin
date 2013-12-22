@@ -99,8 +99,8 @@ struct vm_region {
 
 #define INITIALIZE_VM_REGION(region_ptr, address, size, flags, name) \
   do { \
-    ASSERT(NULL != (region_ptr)); \
-    ASSERT(FLOOR(PAGE_SIZE, (size)) == size); \
+    ASSERT_NOT_NULL(region_ptr); \
+    ASSERT_EQUALS(FLOOR(PAGE_SIZE, (size)), size); \
     (region_ptr)->address = (address); \
     (region_ptr)->size    = (size); \
     (region_ptr)->flags   = (flags); \

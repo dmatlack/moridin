@@ -176,7 +176,7 @@ static inline int entry_is_dirty(entry_t *entry) {
  */
 #define ENTRY_ADDR_MASK (~MASK(11))
 static inline void entry_set_addr(entry_t *entry_ptr, size_t addr) {
-  ASSERT(FLOOR(X86_PAGE_SIZE, (size_t) (addr)) == ((size_t)(addr)));
+  ASSERT_EQUALS(FLOOR(X86_PAGE_SIZE, (size_t) (addr)), ((size_t)(addr)));
   *(entry_ptr) &= ~ENTRY_ADDR_MASK;
   *(entry_ptr) |= addr;
 }

@@ -116,9 +116,9 @@ int vm_map_region(struct vm_address_space *vm, struct vm_region *new_region) {
   int ret = 0;
   unsigned int i;
 
-  ASSERT(NULL != vm);
-  ASSERT(NULL != new_region);
-  ASSERT(FLOOR(PAGE_SIZE, new_region->size) == new_region->size);
+  ASSERT_NOT_NULL(vm);
+  ASSERT_NOT_NULL(new_region);
+  ASSERT_EQUALS(FLOOR(PAGE_SIZE, new_region->size), new_region->size);
 
   num_pages = new_region->size / PAGE_SIZE;
 

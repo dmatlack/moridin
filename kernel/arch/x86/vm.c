@@ -151,7 +151,8 @@ int x86_map_page(struct entry_table *pd, size_t vpage, size_t ppage,
   entry_set_present(pte);
   entry_set_flags(pte, flags);
 
-  ASSERT(x86_vtop(pd, vpage, &vtop) && ppage == vtop);
+  ASSERT(x86_vtop(pd, vpage, &vtop));
+  ASSERT_EQUALS(ppage, vtop);
 
   return 0;
 }

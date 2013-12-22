@@ -85,7 +85,7 @@ void handle_irq(int irq) {
   state = &__irqs[irq];
 
   //FIXME atomic test and set
-  ASSERT(0 == state->in_irq);
+  ASSERT_EQUALS(0, state->in_irq);
   state->in_irq++;
   state->count++;
 

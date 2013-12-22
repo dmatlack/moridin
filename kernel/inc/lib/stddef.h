@@ -46,19 +46,6 @@
 #define FLOOR(size, val) \
   ((((unsigned) (val)) / (size)) * (size))
 
-static inline void __set_bit(int *word, int index, int bit) {
-  *word = (bit == 0) ?
-      (*word) & ~(1 << index)
-      :
-      (*word) | (1 << index);
-}
-static inline int __get_bit(int word, int index) {
-  return (word >> index) & 0x1;
-}
-
-#define set_bit(w, i, b) __set_bit((int *) w, (int) i, (int) b)
-#define get_bit(w, i)    __get_bit((int) w, (int) i)
-
 /**
  * @brief Return the binary number that contains n ones in a row.
  *
@@ -67,5 +54,24 @@ static inline int __get_bit(int word, int index) {
  *  MASK(10) = 1023 = 1111111111_2
  */
 #define MASK(n) ((1 << n) - 1)
+
+static inline void __set_bit(int *word, int index, int bit) {
+  *word = (bit == 0) ?
+      (*word) & ~(1 << index)
+      :
+      (*word) | (1 << index);
+}
+#define set_bit(w, i, b) __set_bit((int *) w, (int) i, (int) b)
+
+static inline int __get_bit(int word, int index) {
+  return (word >> index) & 0x1;
+}
+#define get_bit(w, i)    __get_bit((int) w, (int) i)
+
+static inline void __set_byte(int *word, int index, int byte) {
+  *word &= MASK(8) << index;
+  *word &= byte << index;
+}
+#define set_byte(w, i, b) __set_byte((int*)w, (int)i, (int)b)
 
 #endif /* _STDDEF_H_ */

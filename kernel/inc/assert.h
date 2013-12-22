@@ -22,4 +22,15 @@ int panic(const char *fmt, ...);
 
 #define ASSERT_NOT_NULL(expression) ASSERT(NULL != (expression))
 
+#define ASSERT_EQUALS(left, right)\
+  ((void)(\
+    (int)(left) == (int)(right) ? \
+      0 : \
+      panic("%s:%u: failed ASSERT_EQUALS!\n" \
+            "   EXPECTED: %s == %s\n" \
+            "        GOT: 0x%x != 0x%x", \
+            __FILE__, __LINE__, #left, #right, (size_t)left, (size_t)right)\
+  ))
+      
+
 #endif /* _ASSERT_H_ */

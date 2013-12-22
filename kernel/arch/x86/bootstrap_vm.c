@@ -80,7 +80,7 @@ static void x86_bootstrap_region(struct entry_table *pd,
     entry_set_present(pde);
     entry_set_readwrite(pde);
 
-    ASSERT(entry_get_addr(pde) == pgtbl_addr);
+    ASSERT_EQUALS(entry_get_addr(pde), pgtbl_addr);
 
     vpage += X86_PAGE_SIZE * ENTRY_TABLE_SIZE;
   }
@@ -108,8 +108,9 @@ static void x86_bootstrap_region(struct entry_table *pd,
     entry_set_readwrite(pte);
     entry_set_addr(pte, ppage);
 
-    ASSERT(ppage == entry_get_addr(pte));
-    ASSERT(x86_vtop(pd, vpage, &vtop) && ppage == vtop);
+    ASSERT_EQUALS(ppage, entry_get_addr(pte));
+    ASSERT(x86_vtop(pd, vpage, &vtop));
+    ASSERT_EQUALS(ppage, vtop);
   }
 
   DEBUG("    MAPPED: 0x%08x through 0x%08x", vstart, vstart + psize);
@@ -126,10 +127,10 @@ static void x86_bootstrap_region(struct entry_table *pd,
 int x86_vm_bootstrap(size_t kernel_page_size) {
   TRACE("kernel_page_size=0x%08x", kernel_page_size);
 
-  ASSERT(sizeof(entry_t) == 4);
-  ASSERT(X86_PAGE_SIZE == KB(4));
-  ASSERT(X86_PAGE_SIZE == kernel_page_size);
-  ASSERT(FLOOR(X86_PAGE_SIZE, (size_t) bootstrap_pgdir) == 
+  ASSERT_EQUALS(sizeof(entry_t), 4);
+  ASSERT_EQUALS(X86_PAGE_SIZE, KB(4));
+  ASSERT_EQUALS(X86_PAGE_SIZE, kernel_page_size);
+  ASSERT_EQUALS(FLOOR(X86_PAGE_SIZE, (size_t) bootstrap_pgdir),
          (size_t) bootstrap_pgdir);
 
   entry_table_init(bootstrap_pgdir);
