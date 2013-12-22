@@ -45,10 +45,10 @@ struct pci_bus;
 list_typedef(struct pci_device) pci_device_list_t;
 list_typedef(struct pci_bus) pci_bus_list_t;
 
-/*
- * A PCI bus can have multiple devices, and any of those devices can be
- * PCI-PCI bridge, which is an interconnect to another PCI bus. Thus a
- * struct pci_bus is a tree structure.
+/**
+ * @brief A PCI bus can have multiple devices, and any of those devices can be
+ * PCI-PCI bridge, which is an interconnect to another PCI bus. Thus a struct
+ * pci_bus is a tree structure.
  */
 struct pci_bus {
   /*
@@ -140,6 +140,54 @@ struct pci_device {
    * devices on the same bus as this device 
    */
   list_link(struct pci_device) bus_link;
+
+#define PCI_DEVICE_MAX_DRIVERS 32
+  struct pci_device_driver *drivers[PCI_DEVICE_MAX_DRIVERS];
+  unsigned int num_drivers;
+};
+
+/*
+ * A struct that can identify a set of devices
+ */
+struct pci_device_id {
+  uint16_t vendor_id;
+  uint16_t device_id;
+  uint8_t classcode;
+  uint8_t subclass;
+};
+
+#define PCI_VENDOR_ANY 0xFFFF
+#define PCI_DEVICE_ANY 0xFFFF
+#define PCI_CLASSCODE_ANY 0xFF
+#define PCI_SUBCLASS_ANY 0xFF
+
+#define PCI_DEVICE_ID(vid, did, cc, sc)\
+  {\
+    .vendor_id = vid,\
+    .device_id = did,\
+    .classcode = cc,\
+    .subclass = sc,\
+  }
+
+list_typedef(struct pci_device_driver) pci_device_driver_list_t;
+
+/**
+ * @brief A pci_device_driver is a set of callbacks that will be invoked on
+ * all devices that the driver requests to handle.
+ */
+struct pci_device_driver {
+  const char *name;
+
+  /*
+   * The pci_device_id identifies the set of devices this driver will be
+   * matched to
+   */
+  struct pci_device_id id;
+
+  int (*init)(void);
+  int (*new_device)(struct pci_device *pci_d);
+
+  list_link(struct pci_device_driver) pci_link;
 };
 
 /*
@@ -153,7 +201,13 @@ extern struct pci_bus *__pci_root;
  */
 extern pci_device_list_t __pci_devices;
 
-int pci_scan_bus(struct pci_bus *b);
+/*
+ * A list of all pci device drivers registered in the system.
+ */
+extern pci_device_driver_list_t __pci_drivers;
+
 int pci_init(void);
+int pci_scan_bus(struct pci_bus *b);
+void pci_register_driver(struct pci_device_driver *driver);
 
 #endif /* !__DEV_PCI_H__ */

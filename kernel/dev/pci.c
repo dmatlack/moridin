@@ -4,16 +4,20 @@
  * @brief Peripheral Component Interconnect
  */
 #include <dev/pci.h>
-#include <dev/ide.h>
+#include <string.h>
 #include <stdint.h>
-
 #include <debug.h>
 #include <errno.h>
 #include <kernel.h>
 #include <arch/x86/io.h>
+#include <types.h>
 
 struct pci_bus *__pci_root;
+
 pci_device_list_t __pci_devices;
+pci_device_driver_list_t __pci_drivers;
+
+extern struct pci_device_driver __ide_pci_driver;
 
 /**
  * @brief Configure a PCI device.
@@ -124,6 +128,10 @@ void pci_parse_device(struct pci_device *d, int bus, int device, int func) {
 }
 
 
+/**
+ * @brief Create a pci_device struct from the device identified from the tuple
+ * (bus, device, func).
+ */
 int pci_device_create(struct pci_device **dp, int bus, int device, int func) {
   struct pci_device *d;
 
@@ -131,15 +139,23 @@ int pci_device_create(struct pci_device **dp, int bus, int device, int func) {
   if (NULL == d) {
     return ENOMEM;
   }
+  memset(d, 0, sizeof(struct pci_device));
 
   list_elem_init(d, global_link);
   list_elem_init(d, bus_link);
+  
+  d->num_drivers = 0;
 
   pci_parse_device(d, bus, device, func);
 
   return 0;
 }
 
+/**
+ * @brief Scan the provided bus for devices, adding those devices to the global
+ * list of pci devices as well as the bus' list of devices. If a PCI-PCI bridge
+ * device is found, recursively scan the downstream bus.
+ */
 int pci_scan_bus(struct pci_bus *b) {
   int ret, device, func;
 
@@ -255,8 +271,9 @@ void __lspci(struct pci_bus *root, int depth) {
   list_foreach(d, &root->devices, bus_link) {
 
     pci_print_device(d);
-    kprintf("%s/%s/%s/%s\n", d->vendor_desc, d->device_desc, d->classcode_desc,
-        d->subclass_desc);
+    kprintf("%04x:%04x:%02x.%02x %s, %s, %s, %s\n", 
+        d->vendor_id, d->device_id, d->classcode, d->subclass,
+        d->vendor_desc, d->device_desc, d->classcode_desc, d->subclass_desc);
 
     list_foreach(sb, &root->buses, bus_link) {
       if (sb->self == d) __lspci(sb, depth + 1);
@@ -268,17 +285,55 @@ void lspci(void) {
   __lspci(__pci_root, 0);
 }
 
+/**
+ * @brief Return true if the given device <d> matches the pci_device_id
+ * struct <id>.
+ */
+bool pci_device_match(struct pci_device_id *id, struct pci_device *d) {
+  if (id->vendor_id != d->vendor_id && id->vendor_id != PCI_VENDOR_ANY)
+    return false;
+  if (id->device_id != d->device_id && id->device_id != PCI_DEVICE_ANY)
+    return false;
+  if (id->classcode != d->classcode && id->classcode != PCI_CLASSCODE_ANY)
+    return false;
+  if (id->subclass != d->subclass && id->subclass != PCI_SUBCLASS_ANY)
+    return false;
+  return true;
+}
+
+void pci_device_add_driver(struct pci_device *d, 
+                           struct pci_device_driver *driver) {
+  int ret;
+
+  if (d->num_drivers == PCI_DEVICE_MAX_DRIVERS) {
+    WARN("Attempted to register more than %d drivers for device "
+         "%04x:%04x:%02x.%02x", 
+         PCI_DEVICE_MAX_DRIVERS, d->vendor_id, d->device_id, d->classcode,
+         d->subclass);
+    return;
+  }
+
+  if (0 != (ret = driver->new_device(d))) {
+    WARN("Failed to add device %04x:%04x:%02x.%02x to driver %s: %s",
+         d->vendor_id, d->device_id, d->classcode, d->subclass,
+         driver->name, strerr(ret));
+    return;
+  }
+
+  d->drivers[d->num_drivers++] = driver;
+}
+
+/**
+ * @brief Initialize the PCI subsystem. This initialization will build
+ * the PCI bus tree, and call driver initializers on all devices that have
+ * matching drivers.
+ */
 int pci_init(void) {
-  struct pci_device *d;
   int ret;
 
   TRACE();
 
-  if (0 != (ret = ide_init())) {
-    ERROR("Unable to initialize ide subsystem: %s", strerr(ret));
-    return ret;
-  }
-
+  list_init(&__pci_devices);
   list_init(&__pci_devices);
 
   __pci_root = kmalloc(sizeof(struct pci_bus));
@@ -298,16 +353,36 @@ int pci_init(void) {
     return ret;
   }
 
-  list_foreach(d, &__pci_devices, global_link) {
-    if (0x1 == d->classcode && 0x1 == d->subclass) {
-      if (0 != (ret = ide_device_init(d))) {
-        WARN("Failed to initialize IDE device (bus=%d, device=%d, func=%d).",
-             d->pci_config_bus, d->pci_config_device, d->pci_config_func);
-      }
-    }
-  }
-  
   lspci();
 
+  /*
+   * register the default drivers
+   */
+  pci_register_driver(&__ide_pci_driver);
+  //TODO add more drivers ...
+
   return 0;
+}
+
+void pci_register_driver(struct pci_device_driver *driver) {
+  struct pci_device *d;
+  int ret;
+
+  if (0 != (ret = driver->init())) {
+    WARN("Failed to initalize the %s driver system: %s", driver->name,
+         strerr(ret));
+    return;
+  }
+
+  list_elem_init(driver, pci_link);
+  list_insert_tail(&__pci_drivers, driver, pci_link);
+
+  /*
+   * invoke the driver on each matching device
+   */
+  list_foreach(d, &__pci_devices, global_link) {
+    if (pci_device_match(&driver->id, d)) {
+      pci_device_add_driver(d, driver);
+    }
+  }
 }
