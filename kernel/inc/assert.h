@@ -22,15 +22,11 @@ int panic(const char *fmt, ...);
 
 #define ASSERT_NOT_NULL(expression) ASSERT(NULL != (expression))
 
+void __assert_equals(const char *file, const char *func, int line,
+                     int left, const char *leftstr, 
+                     int right, const char *rightstr);
+
 #define ASSERT_EQUALS(left, right)\
-  ((void)(\
-    (int)(left) == (int)(right) ? \
-      0 : \
-      panic("%s:%u: failed ASSERT_EQUALS!\n" \
-            "   EXPECTED: %s == %s\n" \
-            "        GOT: 0x%x != 0x%x", \
-            __FILE__, __LINE__, #left, #right, (size_t)left, (size_t)right)\
-  ))
-      
+  __assert_equals(__FILE__, __func__, __LINE__, left, #left, right, #right)
 
 #endif /* _ASSERT_H_ */
