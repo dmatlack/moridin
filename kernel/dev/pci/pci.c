@@ -18,7 +18,7 @@ struct pci_bus *__pci_root;
 pci_device_list_t __pci_devices;
 pci_device_driver_list_t __pci_drivers;
 
-extern struct pci_device_driver __ide_pci_driver;
+extern struct pci_device_driver __piix_ide_driver;
 
 /*
  * The CONFIG_ADDRESS register has the following structure:
@@ -403,7 +403,7 @@ int pci_init(void) {
   /*
    * register the default drivers
    */
-  pci_register_driver(&__ide_pci_driver);
+  pci_register_driver(&__piix_ide_driver);
   //TODO add more drivers ...
 
   return 0;
