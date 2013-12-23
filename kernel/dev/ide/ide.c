@@ -12,7 +12,7 @@ ide_device_list_t __ide_devices;
 
 struct pci_device_driver __ide_pci_driver = {
   .name = "IDE",
-  .id = PCI_DEVICE_ID(PCI_VENDOR_ANY, PCI_DEVICE_ANY, 0x1, 0x1),
+  .id = STRUCT_PCI_DEVICE_ID(PCI_VENDOR_ANY, PCI_DEVICE_ANY, 0x1, 0x1),
   .init = ide_init,
   .new_device = ide_device_init,
 };
@@ -48,10 +48,16 @@ int ide_device_init(struct pci_device *pci_d) {
     return ENOMEM;
   }
 
-  list_elem_init(ide_d, global_link);
   ide_d->pci_d = pci_d;
 
+  list_elem_init(ide_d, global_link);
   list_insert_tail(&__ide_devices, ide_d, global_link);
+
+  /*
+   * BAR 4 of the PCI configuration space holds the Bus Master Interface
+   * Base Address (BMIBA).
+   */
+  ide_d->BMIBA = pci_config_ind(pci_d, PCI_BAR4) & ~MASK(2);
 
   return 0;
 }

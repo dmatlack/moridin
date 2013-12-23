@@ -11,6 +11,7 @@
 #include <kernel.h>
 #include <arch/x86/io.h>
 #include <types.h>
+#include <stddef.h>
 
 struct pci_bus *__pci_root;
 
@@ -19,106 +20,122 @@ pci_device_driver_list_t __pci_drivers;
 
 extern struct pci_device_driver __ide_pci_driver;
 
-/**
- * @brief Configure a PCI device.
- *
+/*
  * The CONFIG_ADDRESS register has the following structure:
  *
  * Bit   :  31      | 30-24    | 23-16 | 15-11  | 10-8     | 7-2      | 1-0
  * Value :  enable  | reserved | bus   | device | function | register | 00
- *
- * @param bus the bus number
- * @param device the device number
- * @param func the function number
- * @param offset the offset into the 256 byte configuration space to read. the
- * offset should be a multiple of 0x4 or you will get overlapping words.
  */
-uint32_t pci_config_read(int bus, int device, int func, int offset) {
-  uint32_t address;
+#define PCI_CONFIG(bus, device, func, offset) \
+  ((1 << 31)        | \
+   ((bus) << 16)    | \
+   ((device) << 11) | \
+   ((func) << 8)    | \
+   ((offset) & (MASK(6) << 2)))
+
+uint32_t pci_config_ind(struct pci_device *d, int offset) {
+  uint32_t config;
+
+  config = PCI_CONFIG(d->bus, d->device, d->func, offset);
+  outd(CONFIG_ADDRESS, config);
+
+  return ind(CONFIG_DATA);
+}
+
+uint16_t pci_config_inw(struct pci_device *d, int offset) {
   uint32_t data;
-
-  address = (1 << 31)      |
-            (bus << 16)    |
-            (device << 11) |
-            (func << 8)    |
-            (offset & 0xfc);
-
-  outd(CONFIG_ADDRESS, address);
-  data = ind(CONFIG_DATA);
-
-  return data;
+  data = pci_config_ind(d, offset);
+  return (data >> ((offset % 4) * 8)) & 0xFFFF;
 }
 
-bool is_multifunc_device(int bus, int device) {
-  uint8_t header_type = (pci_config_read(bus, device, 0, 0x0C) >> 16) & 0xff;
-  return (header_type & 0x80) != 0;
+uint8_t pci_config_inb(struct pci_device *d, int offset) {
+  uint32_t data;
+  data = pci_config_ind(d, offset);
+  return (data >> ((offset % 4) * 8)) & 0xFF;
 }
 
-bool device_exists(int bus, int device, int func) {
-  uint16_t vendor_id = pci_config_read(bus, device, func, 0x00) & 0xffff;
-  return vendor_id != 0xffff;
+void pci_config_outd(struct pci_device *d, int offset, uint32_t data) {
+  uint32_t config;
+
+  config = PCI_CONFIG(d->bus, d->device, d->func, offset);
+  outd(CONFIG_ADDRESS, config);
+  outd(CONFIG_DATA, data);
 }
 
-void pci_parse_device(struct pci_device *d, int bus, int device, int func) {
+void pci_config_outw(struct pci_device *d, int offset, uint16_t data) {
   uint32_t dword;
 
-  d->pci_config_bus = bus;
-  d->pci_config_device = device;
-  d->pci_config_func = func;
+  dword = pci_config_ind(d, offset);
+  set_byte(&dword, offset % 4, data & 0xFF);
+  set_byte(&dword, (offset+1) % 4, (data >> 8) & 0xFF);
+  pci_config_outd(d, offset, dword);
+}
 
-  dword = pci_config_read(bus, device, func, 0x00);
-  d->device_id = (dword >> 16) & 0xffff;
-  d->vendor_id = (dword) & 0xffff;
+void pci_config_outb(struct pci_device *d, int offset, uint8_t data) {
+  uint32_t dword;
 
-  dword = pci_config_read(bus, device, func, 0x04);
-  d->status = (dword >> 16) & 0xffff;
-  d->command = (dword) & 0xffff;
+  dword = pci_config_ind(d, offset);
+  set_byte(&dword, offset % 4, data & 0xFF);
+  pci_config_outd(d, offset, dword);
+}
 
-  dword = pci_config_read(bus, device, func, 0x08);
-  d->classcode = (dword >> 24) & 0xff;
-  d->subclass = (dword >> 16) & 0xff;
-  d->progif = (dword >> 8) & 0xff;
-  d->revision_id = (dword) & 0xff;
+/**
+ * @brief Return true if the "device" identified by the <bus>/<device> tuple
+ * is a multifunction device.
+ */
+bool is_multifunc_device(int bus, int device) {
+  struct pci_device d;
+  d.bus = bus;
+  d.device = device;
+  d.func = 0;
 
-  dword = pci_config_read(bus, device, func, 0x0C);
-  d->bist = (dword >> 24) & 0xff;
-  d->header_type = (dword >> 16) & 0xff;
-  d->latency_timer = (dword >> 8) & 0xff;
-  d->cache_line_size = (dword) & 0xff;
+  return (pci_config_inb(&d, PCI_HEADER_TYPE) & 0x80) != 0;
+}
+
+/**
+ * @brief Return true if a device, identified by the given <bus>, <device>,
+ * and <func>, exists.
+ */
+bool device_exists(int bus, int device, int func) {
+  struct pci_device d;
+  d.bus = bus;
+  d.device = device;
+  d.func = func;
+
+  return pci_config_inw(&d, PCI_VENDOR_ID) != 0xFFFF;
+}
+
+void pci_device_config_readall(struct pci_device *d) {
+
+  d->device_id       = pci_config_inw(d, PCI_DEVICE_ID);
+  d->vendor_id       = pci_config_inw(d, PCI_VENDOR_ID);
+  d->status          = pci_config_inw(d, PCI_STATUS);
+  d->command         = pci_config_inw(d, PCI_COMMAND);
+  d->classcode       = pci_config_inb(d, PCI_CLASSCODE);
+  d->subclass        = pci_config_inb(d, PCI_SUBCLASS);
+  d->progif          = pci_config_inb(d, PCI_PROGIF);
+  d->revision_id     = pci_config_inb(d, PCI_REVISION_ID);
+  d->bist            = pci_config_inb(d, PCI_BIST);
+  d->header_type     = pci_config_inb(d, PCI_HEADER_TYPE);
+  d->latency_timer   = pci_config_inb(d, PCI_LATENCY_TIMER);
+  d->cache_line_size = pci_config_inb(d, PCI_CACHE_LINE_SIZE);
 
   if (d->header_type == 0x00) {
-    INFO("header_type==0x00 for device %p", d);
-    dword = pci_config_read(bus, device, func, 0x10);
-    d->bar0 = dword;
-    dword = pci_config_read(bus, device, func, 0x14);
-    d->bar1 = dword;
-    dword = pci_config_read(bus, device, func, 0x18);
-    d->bar2 = dword;
-    dword = pci_config_read(bus, device, func, 0x1C);
-    d->bar3 = dword;
-    dword = pci_config_read(bus, device, func, 0x20);
-    d->bar4 = dword;
-    dword = pci_config_read(bus, device, func, 0x24);
-    d->bar5 = dword;
-
-    dword = pci_config_read(bus, device, func, 0x28);
-    d->cardbus_cis_pointer = dword;
-
-    dword = pci_config_read(bus, device, func, 0x2C);
-    d->subsystem_id = (dword >> 16) & 0xffff;
-    d->subsystem_vendor_id = dword & 0xffff;
-
-    dword = pci_config_read(bus, device, func, 0x30);
-    d->expansion_rom = dword;
-
-    dword = pci_config_read(bus, device, func, 0x34);
-    d->capabilities = dword & 0xff;
-
-    dword = pci_config_read(bus, device, func, 0x3C);
-    d->max_latency = (dword >> 24) & 0xff;
-    d->min_grant = (dword >> 16) & 0xff;
-    d->interrupt_pin = (dword >> 8) & 0xff;
-    d->interrupt_line = (dword) & 0xff;
+    d->bar0                = pci_config_ind(d, PCI_BAR0);
+    d->bar1                = pci_config_ind(d, PCI_BAR1);
+    d->bar2                = pci_config_ind(d, PCI_BAR2);
+    d->bar3                = pci_config_ind(d, PCI_BAR3);
+    d->bar4                = pci_config_ind(d, PCI_BAR4);
+    d->bar5                = pci_config_ind(d, PCI_BAR5);
+    d->cardbus_cis_pointer = pci_config_ind(d, PCI_CARDBUS_CIS_POINTER);
+    d->subsystem_id        = pci_config_inw(d, PCI_SUBSYSTEM_ID);
+    d->subsystem_vendor_id = pci_config_inw(d, PCI_SUBSYSTEM_VENDOR_ID);
+    d->expansion_rom       = pci_config_ind(d, PCI_EXPANSION_ROM);
+    d->capabilities        = pci_config_inb(d, PCI_CAPABILITIES);
+    d->max_latency         = pci_config_inb(d, PCI_MAX_LATENCY);
+    d->min_grant           = pci_config_inb(d, PCI_MIN_GRANT);
+    d->interrupt_pin       = pci_config_inb(d, PCI_INTERRUPT_PIN);
+    d->interrupt_line      = pci_config_inb(d, PCI_INTERRUPT_LINE);
   }
 
   d->vendor_desc = pci_lookup_vendor(d->vendor_id);
@@ -126,7 +143,6 @@ void pci_parse_device(struct pci_device *d, int bus, int device, int func) {
   d->classcode_desc = pci_lookup_classcode(d->classcode);
   d->subclass_desc = pci_lookup_subclass(d->classcode, d->subclass, d->progif);
 }
-
 
 /**
  * @brief Create a pci_device struct from the device identified from the tuple
@@ -145,8 +161,11 @@ int pci_device_create(struct pci_device **dp, int bus, int device, int func) {
   list_elem_init(d, bus_link);
   
   d->num_drivers = 0;
+  d->bus = bus;
+  d->device = device;
+  d->func = func;
 
-  pci_parse_device(d, bus, device, func);
+  pci_device_config_readall(d);
 
   return 0;
 }
@@ -186,7 +205,7 @@ int pci_scan_bus(struct pci_bus *b) {
         list_init(&sb->devices);
         list_init(&sb->buses);
         list_elem_init(sb, bus_link);
-        sb->bus = (pci_config_read(b->bus, device, 0, 0x18) >> 8) & 0xff;
+        sb->bus = pci_config_inb(d, 0x19);
         sb->self = d;
     
         INFO("PCI-PCI Bridge found. Secondary Bus: %d", sb->bus);
@@ -202,11 +221,14 @@ int pci_scan_bus(struct pci_bus *b) {
 }
 
 void pci_print_device(struct pci_device *d) {
-  INFO("PCI DEVICE (%p)\n"
-    "vendor id:           0x%04x %s\n"
-    "device id:           0x%04x %s\n"
-    "classcode:           0x%02x   %s\n"
-    "subclass:            0x%02x   %s\n"
+  /*
+   * Follow linux's lspci command format of <bus>:<device>.<func>
+   */
+  INFO("PCI DEVICE (%p) %02x:%02x.%02x\n"
+    "vendor id:           0x%04x   %s\n"
+    "device id:           0x%04x   %s\n"
+    "classcode:           0x%02x     %s\n"
+    "subclass:            0x%02x     %s\n"
     "status:              0x%04x\n"
     "command:             0x%04x\n"
     "progif:              0x%02x\n"
@@ -223,16 +245,16 @@ void pci_print_device(struct pci_device *d) {
     "bar4:                0x%08x\n"
     "bar5:                0x%08x\n"
     "cardbus cis ptr:     0x%08x\n"
-    "subsystem_id:        0x%04x\n"
-    "subsystem_vendor_id: 0x%04x\n"
-    "expansion_rom:       0x%08x\n"
+    "subsystem id:        0x%04x\n"
+    "subsystem vendor id: 0x%04x\n"
+    "expansion rom:       0x%08x\n"
     "capabilities:        0x%02x\n"
-    "max_latency:         0x%02x\n"
-    "min_grant:           0x%02x\n"
-    "interrupt_pin:       0x%02x\n"
-    "interrupt_line:      0x%02x\n"
+    "max latency:         0x%02x\n"
+    "min grant:           0x%02x\n"
+    "interrupt pin:       0x%02x\n"
+    "interrupt line:      0x%02x\n"
     "\n",
-    d,
+    d, d->bus, d->device, d->func,
     d->vendor_id, d->vendor_desc,
     d->device_id, d->device_desc,
     d->classcode, d->classcode_desc,
@@ -271,8 +293,8 @@ void __lspci(struct pci_bus *root, int depth) {
   list_foreach(d, &root->devices, bus_link) {
 
     pci_print_device(d);
-    kprintf("%04x:%04x:%02x.%02x %s, %s, %s, %s\n", 
-        d->vendor_id, d->device_id, d->classcode, d->subclass,
+    kprintf("%02x:%02x.%02x %s, %s, %s, %s\n", 
+        d->bus, d->device, d->func,
         d->vendor_desc, d->device_desc, d->classcode_desc, d->subclass_desc);
 
     list_foreach(sb, &root->buses, bus_link) {
@@ -323,6 +345,29 @@ void pci_device_add_driver(struct pci_device *d,
   d->drivers[d->num_drivers++] = driver;
 }
 
+void pci_register_driver(struct pci_device_driver *driver) {
+  struct pci_device *d;
+  int ret;
+
+  if (0 != (ret = driver->init())) {
+    WARN("Failed to initalize the %s driver system: %s", driver->name,
+         strerr(ret));
+    return;
+  }
+
+  list_elem_init(driver, pci_link);
+  list_insert_tail(&__pci_drivers, driver, pci_link);
+
+  /*
+   * invoke the driver on each matching device
+   */
+  list_foreach(d, &__pci_devices, global_link) {
+    if (pci_device_match(&driver->id, d)) {
+      pci_device_add_driver(d, driver);
+    }
+  }
+}
+
 /**
  * @brief Initialize the PCI subsystem. This initialization will build
  * the PCI bus tree, and call driver initializers on all devices that have
@@ -362,27 +407,4 @@ int pci_init(void) {
   //TODO add more drivers ...
 
   return 0;
-}
-
-void pci_register_driver(struct pci_device_driver *driver) {
-  struct pci_device *d;
-  int ret;
-
-  if (0 != (ret = driver->init())) {
-    WARN("Failed to initalize the %s driver system: %s", driver->name,
-         strerr(ret));
-    return;
-  }
-
-  list_elem_init(driver, pci_link);
-  list_insert_tail(&__pci_drivers, driver, pci_link);
-
-  /*
-   * invoke the driver on each matching device
-   */
-  list_foreach(d, &__pci_devices, global_link) {
-    if (pci_device_match(&driver->id, d)) {
-      pci_device_add_driver(d, driver);
-    }
-  }
 }
