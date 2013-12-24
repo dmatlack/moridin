@@ -210,12 +210,30 @@
   #define IDEIO_CMD_CYLINDER_HI     0x05
   #define IDEIO_CMD_HEAD            0x06
   #define IDEIO_CMD_DRIVE           0x06
+      #define IDEIO_SELECT_MASTER 0xA0
+      #define IDEIO_SELECT_SLAVE  0xB0
   #define IDEIO_CMD_STATUS          0x07
+      #define IDEIO_ERR (1 << 0)
+      #define IDEIO_DRQ (1 << 3)
+      #define IDEIO_SRV (1 << 4)
+      #define IDEIO_DF  (1 << 5)
+      #define IDEIO_RDY (1 << 6)
+      #define IDEIO_BSY (1 << 7)
   #define IDEIO_CMD_COMMAND         0x07
+      #define IDEIO_IDENTIFY  0xEC
 
 #define PRIMARY_CTL_BLOCK_OFFSET    0x3F4
 #define SECONDARY_CTL_BLOCK_OFFSET  0x374
   #define IDEIO_CTL_ALT_STATUS      0x02
+  /*
+   * DEVICE CONTROL byte:
+   *    1     nIEN    Set this to stop the current device from sending
+   *                  interrupts.
+   *    2     SRST    Set this to do a "Software Reset" on all ATA drives
+   *                  on a bus, if one is misbehaving.
+   *    7     HOB     Set this to read back the High Order Byte of the
+   *                  last LBA48 value sent to an IO port.
+   */
   #define IDEIO_CTL_DEVICE_CTL      0x02
   #define IDEIO_CTL_TO_ISA          0x03
 

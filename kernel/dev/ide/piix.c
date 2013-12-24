@@ -8,6 +8,7 @@
 #include <debug.h>
 #include <assert.h>
 #include <kernel.h>
+#include <arch/x86/io.h>
 
 piix_ide_device_list_t __piix_ide_devices;
 
@@ -26,6 +27,99 @@ int piix_ide_init(void) {
   return 0;
 }
 
+const char *ata_device_str(uint8_t clo, uint8_t chi) {
+  if (clo == 0x14 && chi == 0xEB) return "PATAPI";
+  if (clo == 0x69 && chi == 0x96) return "SATAPI";
+  if (clo == 0x00 && chi == 0x00) return "PATA";
+  if (clo == 0x3c && chi == 0xc3) return "SATA";
+  return "unknown";
+}
+
+static void piix_ide_identify(int block_offset, int select_drive) {
+  uint8_t data[256];
+  uint8_t idstatus;
+
+  TRACE("block_offset=0x%04x, select_drive=0x%04x", block_offset, select_drive);
+
+  if (inb(block_offset + IDEIO_CMD_STATUS) == 0xff) {
+    INFO("There are no drives attached to this bus!"); 
+    return;
+  }
+
+  /*
+   * Select the appropriate drive
+   */
+  outb(block_offset + IDEIO_CMD_DRIVE, select_drive);
+
+  /*
+   * Set all the info registers (sector count, cylinders lo/hi, etc... to 0
+   */ 
+  outb(block_offset + IDEIO_CMD_SECTOR_COUNT, 0);
+  outb(block_offset + IDEIO_CMD_SECTOR_NUM,   0);
+  outb(block_offset + IDEIO_CMD_CYLINDER_LO,  0);
+  outb(block_offset + IDEIO_CMD_CYLINDER_HI,  0);
+
+  /*
+   * IDENTIFY yourself, drive!
+   */
+  outb(block_offset + IDEIO_CMD_COMMAND, IDEIO_IDENTIFY);
+  idstatus = inb(block_offset + IDEIO_CMD_STATUS);
+
+  if (0 == idstatus) {
+    INFO("Drive does not exist!");
+  }
+  else {
+    uint8_t clo, chi;
+
+    INFO("Drive exists. status=0x%04x (BSY=%d)", idstatus, idstatus & IDEIO_BSY);
+    /*
+     * The drive exists! Poll the BSY bit until it is cleared.
+     */
+    do {
+      idstatus = inb(block_offset + IDEIO_CMD_STATUS);
+      
+      /*
+       * ATAPI and SATA devices *should* report error in response to an identify.
+       */
+      if (idstatus & IDEIO_ERR) break;
+    } while ((idstatus & IDEIO_BSY) != 0);
+    INFO("Done waiting for BSY.");
+
+    /*
+     * If CYLINDER_LO or CYLINDER_HI are non-zero, this is not an ATA drive
+     */
+    clo = inb(block_offset + IDEIO_CMD_CYLINDER_LO);
+    chi = inb(block_offset + IDEIO_CMD_CYLINDER_HI);
+    kprintf("clo=0x%02x, chi=0x%02x (%s)\n", clo, chi, ata_device_str(clo, chi));
+
+    if (clo != 0 || chi != 0) {
+      INFO("Drive is not ATA! (clo=0x%02x, chi=0x%02x)", clo, chi);
+    }
+    else {
+      /*
+       * Continue polling until DRQ (ready to transfer data) is set or
+       * ERR (error) is set.
+       */
+      do {
+        idstatus = inb(block_offset + IDEIO_CMD_STATUS);
+      } while (((idstatus & IDEIO_DRQ) == 0) && ((idstatus & IDEIO_ERR) == 0));
+      INFO("Done waiting for DRQ/ERR");
+      
+      if ((idstatus & IDEIO_ERR) != 0) {
+        INFO("Error occured while waiting!");
+      }
+      else {
+        int i;
+
+        INFO("IDENTIFY succeeded!");
+        for (i = 0; i < 256; i++) {
+          data[i] = inb(IDEIO_CMD_DATA);
+        }
+        (void)data;
+      }
+    }
+  }
+}
 
 /**
  * @brief Initialize new IDE device from a PCI device.
@@ -71,8 +165,10 @@ int piix_ide_device_init(struct pci_device *pci_d) {
   ide_d->BMIBA = pci_config_ind(pci_d, PCI_BAR4) & ~MASK(2);
   INFO("Bus Master Base Address: 0x%08x", ide_d->BMIBA);
 
-  INFO("IDETIM (primary): 0x%04x", pci_config_inw(pci_d, IDETIM_PRIMARY));
-  INFO("IDETIM (primary): 0x%04x", pci_config_inw(pci_d, IDETIM_SECONDARY));
+  piix_ide_identify(PRIMARY_CMD_BLOCK_OFFSET, IDEIO_SELECT_MASTER);
+  piix_ide_identify(PRIMARY_CMD_BLOCK_OFFSET, IDEIO_SELECT_SLAVE);
+  piix_ide_identify(SECONDARY_CMD_BLOCK_OFFSET, IDEIO_SELECT_MASTER);
+  piix_ide_identify(SECONDARY_CMD_BLOCK_OFFSET, IDEIO_SELECT_SLAVE);
 
   return 0;
 }
