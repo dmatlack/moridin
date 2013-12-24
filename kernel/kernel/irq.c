@@ -114,7 +114,8 @@ void handle_irq(int irq) {
 }
 
 void register_irq(int irq, struct irq_handler *new_handler) {
-  ASSERT(irq >= 0 && irq <= 15);
+  ASSERT_GREATEREQ(irq, 0);
+  ASSERT_LESSEQ(irq, 15);
 
   list_elem_init(new_handler, link);
 

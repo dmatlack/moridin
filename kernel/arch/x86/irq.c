@@ -75,7 +75,8 @@ void x86_generate_irq(int irq) {
  * the irq up to the kernel to handle.
  */
 void x86_handle_irq(int irq) {
-  ASSERT(irq >= 0 && irq < PIC_IRQ_COUNT);
+  ASSERT_GREATEREQ(irq, 0);
+  ASSERT_LESS(irq, PIC_IRQ_COUNT);
 
   if (irq == 1) inb(0x60); //FIXME remove me
 
