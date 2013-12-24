@@ -133,6 +133,105 @@
  */
 #define BMIDTP 0x04
 
+/*
+ * IDE Timing Register (part of PCI Config Space)
+ *
+ * This register controls the IDE interface and selects the timing
+ * characteristics of the PCI Local Bus IDE cycle. 
+ *
+ * Primary/Secondary: distinguish between cables
+ * Master/Slave: distinguish between drivers. 0=master, 1=slave.
+ *
+ *  Bit    | Decription
+ * ----------------------------------------------------------------------------
+ *  15       IDE Decode Enable. 1=Enable, 0=Disable. When enabled, I/O 
+ *           transactions on PCI targeting IDE ATA register blocks (command
+ *           block and control block) are positively decoded. When disabled,
+ *           these accesses are subtractively decoded to ISA.
+ *
+ *  14       Reserved on PIIX.
+ *
+ *  13:12    IORDY sample Point (ISP). This fields selects the number of clocks
+ *           between DIOx# assertion and the first IORDY sample point.
+ *
+ *           00=5, 01=4, 10=3, 11=2 (clocks)
+ *
+ *  11:10    Reserved
+ *
+ *  9:8      Recovery Time (RTC). This field selects the minimum number of
+ *           clocks between the last IORDY# sample and the DIOx# strobe of
+ *           the next cycle.
+ *
+ *           00=4, 01=3, 10=2, 11=1 (clocks)
+ *
+ *  7        DMA Timing Enable Only (DTE1). 1=fast timing mode is enabled for
+ *           DMA data transfers for drive 1. PIO transfers to the IDE data port
+ *           still run in compatability mode.
+ *
+ *  6        Prefetch and Posting Enable (PPE1). 1=prefetch and posting to the
+ *           IDE data port is enabled for drive 1.
+ *
+ *  5        IORDY Sample Point Enable Drive Select 1 (IE1). 0=IORDY sampling
+ *           disabled for drive 1. When IE1=1 and the currently selected drive
+ *           is drive 0, all accesses to the enabled I/O address range sample
+ *           IORDY.
+ *
+ *  4        Fast Timing Bank Drive Select 1 (TIME1). The TIME1=0, accesses to
+ *           the data port of the enabled I/O address range use the 16-bit
+ *           compatible timing PCI local bus path.
+ *
+ *           When TIME1=1 and the currently selected drive is 1, accesses to
+ *           the data port of the enabled I/O address range us the fast timing
+ *           bank PCI local bus IDE path.
+ *
+ *  3        DTE0 (see DTE1)
+ *
+ *  2        PPE0 (see PPE1)
+ *
+ *  1        IE0 (see IE1)
+ *
+ *  0        TIME0 (see TIME1)
+ *        
+ */
+#define IDETIM_PRIMARY 0x40
+#define IDETIM_SECONDARY 0x42
+
+/*
+ * IDE I/O Port: COMMAND BLOCK
+ */
+#define PRIMARY_CMD_BLOCK_OFFSET    0x1F0
+#define SECONDARY_CMD_BLOCK_OFFSET  0x170
+  #define IDEIO_CMD_DATA            0x00
+  #define IDEIO_CMD_ERROR           0x01
+  #define IDEIO_CMD_FEATURES        0x01
+  #define IDEIO_CMD_SECTOR_COUNT    0x02
+  #define IDEIO_CMD_SECTOR_NUM      0x03
+  #define IDEIO_CMD_CYLINDER_LO     0x04
+  #define IDEIO_CMD_CYLINDER_HI     0x05
+  #define IDEIO_CMD_HEAD            0x06
+  #define IDEIO_CMD_DRIVE           0x06
+  #define IDEIO_CMD_STATUS          0x07
+  #define IDEIO_CMD_COMMAND         0x07
+
+#define PRIMARY_CTL_BLOCK_OFFSET    0x3F4
+#define SECONDARY_CTL_BLOCK_OFFSET  0x374
+  #define IDEIO_CTL_ALT_STATUS      0x02
+  #define IDEIO_CTL_DEVICE_CTL      0x02
+  #define IDEIO_CTL_TO_ISA          0x03
+
+/*
+ * Physical Region Descriptor (PRD)
+ *
+ * The PRD describes the physical memory region to be transferred. The
+ * PRDs are stored in a table in memory. The data transfer proceeds until
+ * all regions described by the PRDs in the table have been transferred.
+ *
+ * Byte 0-3: Memory region Physical base address [31:1]
+ * Byte 4-5: Byte count (size of region) [15:1]
+ * Bit 63:   End of Table (EOT)
+ */
+//TODO
+
 struct piix_ide_device {
   struct pci_device *pci_d;
 

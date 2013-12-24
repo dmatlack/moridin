@@ -36,6 +36,13 @@ int piix_ide_device_init(struct pci_device *pci_d) {
   TRACE("pci_d=%p", pci_d);
   ASSERT_NOT_NULL(pci_d);
 
+  if ((pci_d->progif & (1 << 7)) == 0) {
+    ERROR("Suspected PIIX IDE device %02x:%02x.%02x does not support "
+          "Bus Master IDE capabilities. (progif=0x%02x)",
+          pci_d->bus, pci_d->device, pci_d->func, pci_d->progif);
+    return EINVAL;
+  }
+
   INFO("Initializing PIIX IDE PCI device: %02x:%02x.%02x (device=0x%04x)",
           pci_d->bus, pci_d->device, pci_d->func,
           pci_d->device_id);
@@ -63,6 +70,9 @@ int piix_ide_device_init(struct pci_device *pci_d) {
    */
   ide_d->BMIBA = pci_config_ind(pci_d, PCI_BAR4) & ~MASK(2);
   INFO("Bus Master Base Address: 0x%08x", ide_d->BMIBA);
+
+  INFO("IDETIM (primary): 0x%04x", pci_config_inw(pci_d, IDETIM_PRIMARY));
+  INFO("IDETIM (primary): 0x%04x", pci_config_inw(pci_d, IDETIM_SECONDARY));
 
   return 0;
 }
