@@ -19,6 +19,7 @@
 
 #include <dev/pci.h>
 #include <list.h>
+#include <dev/ata.h>
 
 #define IDE_PRIMARY_IRQ   14
 #define IDE_SECONDARY_IRQ 15
@@ -197,58 +198,15 @@
 #define IDETIM_SECONDARY 0x42
 
 /*
- * IDE I/O Port: COMMAND BLOCK
+ * ATA I/O Block Locations: ATA uses two I/O blocks (one called "command"
+ * and ony called "control"). In the PIIX/3, we know where those blocks
+ * are in memory. We will use these values to tell the ATA driver where to
+ * look for devices.
  */
 #define PRIMARY_CMD_BLOCK_OFFSET    0x1F0
-#define SECONDARY_CMD_BLOCK_OFFSET  0x170
-  #define IDEIO_CMD_DATA            0x00
-  #define IDEIO_CMD_ERROR           0x01
-  #define IDEIO_CMD_FEATURES        0x01
-  #define IDEIO_CMD_SECTOR_COUNT    0x02
-  #define IDEIO_CMD_SECTOR_NUM      0x03
-  #define IDEIO_CMD_CYLINDER_LO     0x04
-  #define IDEIO_CMD_CYLINDER_HI     0x05
-  #define IDEIO_CMD_HEAD            0x06
-  #define IDEIO_CMD_DRIVE           0x06
-      #define IDEIO_SELECT_MASTER 0xA0
-      #define IDEIO_SELECT_SLAVE  0xB0
-  #define IDEIO_CMD_STATUS          0x07
-      #define IDEIO_ERR (1 << 0)
-      #define IDEIO_DRQ (1 << 3)
-      #define IDEIO_SRV (1 << 4)
-      #define IDEIO_DF  (1 << 5)
-      #define IDEIO_RDY (1 << 6)
-      #define IDEIO_BSY (1 << 7)
-  #define IDEIO_CMD_COMMAND         0x07
-      #define IDEIO_IDENTIFY  0xEC
-
 #define PRIMARY_CTL_BLOCK_OFFSET    0x3F4
+#define SECONDARY_CMD_BLOCK_OFFSET  0x170
 #define SECONDARY_CTL_BLOCK_OFFSET  0x374
-  #define IDEIO_CTL_ALT_STATUS      0x02
-  /*
-   * DEVICE CONTROL byte:
-   *    1     nIEN    Set this to stop the current device from sending
-   *                  interrupts.
-   *    2     SRST    Set this to do a "Software Reset" on all ATA drives
-   *                  on a bus, if one is misbehaving.
-   *    7     HOB     Set this to read back the High Order Byte of the
-   *                  last LBA48 value sent to an IO port.
-   */
-  #define IDEIO_CTL_DEVICE_CTL      0x02
-  #define IDEIO_CTL_TO_ISA          0x03
-
-/*
- * Physical Region Descriptor (PRD)
- *
- * The PRD describes the physical memory region to be transferred. The
- * PRDs are stored in a table in memory. The data transfer proceeds until
- * all regions described by the PRDs in the table have been transferred.
- *
- * Byte 0-3: Memory region Physical base address [31:1]
- * Byte 4-5: Byte count (size of region) [15:1]
- * Bit 63:   End of Table (EOT)
- */
-//TODO
 
 struct piix_ide_device {
   struct pci_device *pci_d;
@@ -259,6 +217,8 @@ struct piix_ide_device {
    * Bus Master Interface Base Address
    */
   uint32_t BMIBA;
+
+  struct ata_bus ata[2];
 
   list_link(struct piix_ide_device) piix_link;
 };
