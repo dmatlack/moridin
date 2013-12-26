@@ -20,8 +20,16 @@ enum ata_drive_type get_drive_type(uint8_t clo, uint8_t chi) {
   if (clo == 0x3c && chi == 0xc3) return ATA_SATA;
   return ATA_UNKNOWN;
 }
+
 bool does_ata_bus_exist(int cmd_block) {
   return inb(cmd_block + ATA_CMD_STATUS) != 0xff;
+}
+
+/**
+ * @brief Select the provided ATA drive.
+ */
+void ata_select_drive(struct ata_drive *d) {
+  outb(d->bus->cmd_block + ATA_CMD_DRIVE, d->select);
 }
 
 #define RETURN_ERROR_IF_TIMEOUT(_count, _timeout, _culprit_string) \
@@ -49,10 +57,7 @@ int ata_identify(struct ata_drive *drive) {
 
   TRACE("drive=%p", drive);
 
-  /*
-   * Select the drive
-   */
-  outb(drive->bus->cmd_block + ATA_CMD_DRIVE, drive->select);
+  ata_select_drive(drive);
 
   /*
    * Set all the info registers (sector count, cylinders lo/hi, etc... to 0
@@ -102,12 +107,10 @@ int ata_identify(struct ata_drive *drive) {
   RETURN_ERROR_IF_TIMEOUT(i, timeout, "ATA_DRQ");
   
   if (idstatus & ATA_ERR) {
-    WARN("Error occured while waiting for ATA_DRQ after IDENTIFY.");
-    WARN("#");
-    WARN("#");
-    WARN("# TODO: parse the error code to figure out what's actually going on!");
-    WARN("#");
-    WARN("#");
+    uint8_t error;
+    error = inb(drive->bus->cmd_block + ATA_CMD_ERROR);
+    WARN("Error occured while waiting for ATA_DRQ after IDENTIFY: 0x%02x",
+         error);
     return EGENERIC;
   }
 
@@ -144,6 +147,14 @@ int ata_drive_create(struct ata_drive **drivep) {
 }
 
 /**
+ * @brief Disable IRQs of a specific drive.
+ */
+void ata_disable_irqs(struct ata_drive *d) {
+  ata_select_drive(d);
+  outb(d->bus->ctl_block + ATA_CTL_ALT_STATUS, ATA_NIEN);
+}
+
+/**
  * @brief Create a new ata_drive struct and add it to the provided ata_bus
  * struct.
  *
@@ -162,6 +173,8 @@ int ata_bus_add_drive(struct ata_bus *bus, uint8_t drive_select) {
   drive->select = drive_select;
   drive->bus = bus;
   drive->exists = false;
+
+  ata_disable_irqs(drive);
   
   identify_error = ata_identify(drive);
 

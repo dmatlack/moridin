@@ -30,6 +30,11 @@ int piix_ide_init(void) {
 
 /**
  * @brief Initialize new IDE device from a PCI device.
+ *
+ * @return
+ *    EINVAL if the device and driver don't match
+ *    EEXIST if the driver is already handling this device
+ *    ENOMEM if the driver ran out of memory
  */
 int piix_ide_device_init(struct pci_device *pci_d) {
   struct piix_ide_device *ide_d;
@@ -53,7 +58,9 @@ int piix_ide_device_init(struct pci_device *pci_d) {
    * Make sure this device has not already been added
    */
   list_foreach(ide_d, &__piix_ide_devices, piix_link) {
-    if (ide_d->pci_d == pci_d) return 0;
+    if (ide_d->pci_d == pci_d) {
+      return EEXIST;
+    }
   }
 
   ide_d = kmalloc(sizeof(struct piix_ide_device));
@@ -64,8 +71,7 @@ int piix_ide_device_init(struct pci_device *pci_d) {
   ide_d->pci_d = pci_d;
 
   list_elem_init(ide_d, piix_link);
-  list_insert_tail(&__piix_ide_devices, ide_d, piix_link);
-
+  
   /*
    * BAR 4 of the PCI configuration space holds the Bus Master Interface
    * Base Address (BMIBA).
@@ -80,12 +86,21 @@ int piix_ide_device_init(struct pci_device *pci_d) {
                               PRIMARY_CMD_BLOCK_OFFSET, 
                               PRIMARY_CTL_BLOCK_OFFSET))) {
     WARN("ata_new_bus error: %s", strerr(ret));
+    kfree(ide_d, sizeof(struct piix_ide_device));
+    return ret;
   }
   if (0 != (ret = ata_new_bus(ide_d->ata + 1, 
                               SECONDARY_CMD_BLOCK_OFFSET, 
                               SECONDARY_CTL_BLOCK_OFFSET))) {
     WARN("ata_new_bus error: %s", strerr(ret));
+    kfree(ide_d, sizeof(struct piix_ide_device));
+    return ret;
   }
 
+  /*
+   * If we made it this far, we successfully initialized our device. So add it
+   * to the global list and return success
+   */
+  list_insert_tail(&__piix_ide_devices, ide_d, piix_link);
   return 0;
 }
