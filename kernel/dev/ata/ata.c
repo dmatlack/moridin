@@ -42,32 +42,31 @@ bool does_ata_bus_exist(int cmd_block) {
  * @return 0 if the drive exists and reports data back via IDENTIFY, non-0
  * if the drive does not exist.
  */
-int ata_identify(int cmd_block, int drive_select, uint8_t data[256],
-                 enum ata_drive_type *typep) {
+int ata_identify(struct ata_drive *drive) {
   uint8_t idstatus, clo, chi;
   const int timeout = 0x100000;
   int i;
 
-  TRACE("cmd_block=0x%04x, drive_select=0x%04x", cmd_block, drive_select);
+  TRACE("drive=%p", drive);
 
   /*
-   * Select the appropriate drive
+   * Select the drive
    */
-  outb(cmd_block + ATA_CMD_DRIVE, drive_select);
+  outb(drive->bus->cmd_block + ATA_CMD_DRIVE, drive->select);
 
   /*
    * Set all the info registers (sector count, cylinders lo/hi, etc... to 0
    */ 
-  outb(cmd_block + ATA_CMD_SECTOR_COUNT, 0);
-  outb(cmd_block + ATA_CMD_SECTOR_NUM,   0);
-  outb(cmd_block + ATA_CMD_CYLINDER_LO,  0);
-  outb(cmd_block + ATA_CMD_CYLINDER_HI,  0);
+  outb(drive->bus->cmd_block + ATA_CMD_SECTOR_COUNT, 0);
+  outb(drive->bus->cmd_block + ATA_CMD_SECTOR_NUM,   0);
+  outb(drive->bus->cmd_block + ATA_CMD_CYLINDER_LO,  0);
+  outb(drive->bus->cmd_block + ATA_CMD_CYLINDER_HI,  0);
 
   /*
    * IDENTIFY yourself, drive!
    */
-  outb(cmd_block + ATA_CMD_COMMAND, ATA_IDENTIFY);
-  idstatus = inb(cmd_block + ATA_CMD_STATUS);
+  outb(drive->bus->cmd_block + ATA_CMD_COMMAND, ATA_IDENTIFY);
+  idstatus = inb(drive->bus->cmd_block + ATA_CMD_STATUS);
 
   if (0 == idstatus) {
     return ENODEV;
@@ -77,46 +76,56 @@ int ata_identify(int cmd_block, int drive_select, uint8_t data[256],
    * The drive exists! Poll the BSY bit until it is cleared.
    */
   for (i = 0; i < timeout; i++) {
-    idstatus = inb(cmd_block + ATA_CMD_STATUS);
+    idstatus = inb(drive->bus->cmd_block + ATA_CMD_STATUS);
     if (idstatus & ATA_ERR) break;
     if (!(idstatus & ATA_BSY)) break;
   }
   RETURN_ERROR_IF_TIMEOUT(i, timeout, "ATA_BSY");
 
-  /*
-   * If CYLINDER_LO or CYLINDER_HI are non-zero, this is not an ATA drive
-   */
-  clo = inb(cmd_block + ATA_CMD_CYLINDER_LO);
-  chi = inb(cmd_block + ATA_CMD_CYLINDER_HI);
-  *typep = get_drive_type(clo, chi);
+  drive->exists = true;
 
-  if (*typep != ATA_PATA && *typep != ATA_PATAPI) {
-    WARN("Found non-PATA drive: %s", drive_type_string(*typep));
-    return EINVAL;
-  }
+  /*
+   * Get the drive type based on the command block signature
+   */
+  clo = inb(drive->bus->cmd_block + ATA_CMD_CYLINDER_LO);
+  chi = inb(drive->bus->cmd_block + ATA_CMD_CYLINDER_HI);
+  drive->type = get_drive_type(clo, chi);
 
   /*
    * Continue polling until DRQ (ready to transfer data) is set or
    * ERR (error) is set.
    */
   for (i = 0; i < timeout; i++) {
-    idstatus = inb(cmd_block + ATA_CMD_STATUS);
+    idstatus = inb(drive->bus->cmd_block + ATA_CMD_STATUS);
     if ((idstatus & ATA_DRQ) || (idstatus & ATA_ERR)) break;
   }
   RETURN_ERROR_IF_TIMEOUT(i, timeout, "ATA_DRQ");
   
   if (idstatus & ATA_ERR) {
     WARN("Error occured while waiting for ATA_DRQ after IDENTIFY.");
+    WARN("#");
+    WARN("#");
+    WARN("# TODO: parse the error code to figure out what's actually going on!");
+    WARN("#");
+    WARN("#");
     return EGENERIC;
   }
 
+  /*
+   * If all succeeded, we read in the 256 byte IDENTIFY data
+   */
   for (i = 0; i < 256; i++) {
-    data[i] = inb(ATA_CMD_DATA);
+    drive->identify[i] = inw(drive->bus->cmd_block + ATA_CMD_DATA);
   }
-
   return 0;
 }
 
+/**
+ * @brief Allocate and initialize a struct ata_drive.
+ *
+ * (The "initialization" here is just to set some default values and init
+ * the <list.h> elements of the struct.)
+ */
 int ata_drive_create(struct ata_drive **drivep) {
   struct ata_drive *drive;
 
@@ -152,14 +161,18 @@ int ata_bus_add_drive(struct ata_bus *bus, uint8_t drive_select) {
 
   drive->select = drive_select;
   drive->bus = bus;
-  
-  identify_error = ata_identify(bus->command_block, drive->select,
-                                drive->identify, &drive->type);
-
   drive->exists = false;
-  if (0 == identify_error || EINVAL == identify_error) {
-    drive->exists = true;
-    kprintf("ATA Device: %s\n", drive_type_string(drive->type));
+  
+  identify_error = ata_identify(drive);
+
+  if (0 != identify_error) {
+    WARN("Unable to IDENTIFY drive 0x%02x of bus 0x%03x: %s",
+         drive->select, bus->cmd_block, strerr(identify_error));
+  }
+  else {
+    DEBUG("ATA IDENTIFY: cmd_block=0x%03x, drive=0x%02x, drive->type=%s",
+          bus->cmd_block, drive->select, drive_type_string(drive->type));
+    DEBUG("identify[80] = 0x%04x (ATA version supporting)", drive->identify[80]);
   }
 
   list_insert_tail(&bus->drives, drive, ata_bus_link);
@@ -180,24 +193,25 @@ int ata_bus_add_drive(struct ata_bus *bus, uint8_t drive_select) {
  * the caller.
  *
  * @return
- *    non-0 error if: out of memory (can't kmalloc) or this ATA bus does not
- *      exist
+ *    non-0 error if: out of memory (can't kmalloc)
  *
  *    0 success: otherwise (even if there is issues with the drives, we will
  *      still return success. the caller is expected to look at the ata_drive's
  *      and make sure they're all ok).
  */
-int ata_new_bus(struct ata_bus *bus, int cmd_block, int ctl_block) {
+int ata_new_bus(struct ata_bus *bus, unsigned cmd_block, unsigned ctl_block) {
   int ret;
 
   TRACE("bus=%p, cmd_block=0x%03x, ctl_block=0x%03x", bus, cmd_block, ctl_block);
 
   if (!does_ata_bus_exist(cmd_block)) {
-    return ENODEV;
+    bus->exists = false;
+    return 0;
   }
+  bus->exists = true;
 
-  bus->command_block = cmd_block;
-  bus->control_block = ctl_block;
+  bus->cmd_block = cmd_block;
+  bus->ctl_block = ctl_block;
 
   list_init(&bus->drives);
 

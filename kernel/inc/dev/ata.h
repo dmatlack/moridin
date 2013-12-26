@@ -77,8 +77,10 @@ struct ata_bus {
    * All the drives on an ATA bus share the same I/O ports, but the system
    * can choose between drives using the ATA_CMD_DRIVE command.
    */
-  int command_block;
-  int control_block;
+  unsigned cmd_block;
+  unsigned ctl_block;
+
+  bool exists;
 
   ata_drive_list_t drives;
 };
@@ -86,7 +88,7 @@ struct ata_bus {
 struct ata_drive {
   enum ata_drive_type type;
   bool exists;
-  uint8_t identify[256];
+  uint16_t identify[256];
   uint8_t select; // ATA_SELECT_SLAVE or ATA_SELECT_MASTER
 
   struct ata_bus *bus;
@@ -94,6 +96,6 @@ struct ata_drive {
   list_link(struct ata_drive) ata_bus_link;
 };
 
-int ata_new_bus(struct ata_bus *busp, int cmd_block, int ctl_block);
+int ata_new_bus(struct ata_bus *busp, unsigned cmd_block, unsigned ctl_block);
 
 #endif /* !__DEV_ATA_H__ */
