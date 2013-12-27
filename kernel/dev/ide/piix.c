@@ -13,6 +13,16 @@
 
 piix_ide_device_list_t __piix_ide_devices;
 
+/**
+ * @brief Global initializer for the PIIX IDE driver subsystem.
+ */
+int piix_ide_init(void) {
+  TRACE();
+  list_init(&__piix_ide_devices);
+  return 0;
+}
+
+
 //TODO add support for the device id: 0x1230
 struct pci_device_driver __piix_ide_driver = {
   .name       = "piix_ide",
@@ -22,9 +32,42 @@ struct pci_device_driver __piix_ide_driver = {
 };
 
 
-int piix_ide_init(void) {
-  TRACE();
-  list_init(&__piix_ide_devices);
+/**
+ * @brief Initialize the ATA buses and drives conntected to our IDE
+ * controller.
+ */
+static int piix_ata_init(struct piix_ide_device *ide_d) {
+  int ret, i;
+
+  /*
+   * PIIX has 2 ATA buses: Primary and Secondary
+   */
+  if (0 != (ret = ata_new_bus(ide_d->ata + 0, 
+                              PRIMARY_CMD_BLOCK_OFFSET, 
+                              PRIMARY_CTL_BLOCK_OFFSET))) {
+    WARN("ata_new_bus error: %s", strerr(ret));
+    return ret;
+  }
+
+  if (0 != (ret = ata_new_bus(ide_d->ata + 1, 
+                              SECONDARY_CMD_BLOCK_OFFSET, 
+                              SECONDARY_CTL_BLOCK_OFFSET))) {
+    WARN("ata_new_bus error: %s", strerr(ret));
+    return ret;
+  }
+
+  for (i = 0; i < 2; i++) {
+    struct ata_bus *bus = ide_d->ata + i;
+    struct ata_drive *drive;
+
+    DEBUG("ATA Bus %d: %s", i, bus->exists ? "" : "does not exist");
+
+    list_foreach(drive, &bus->drives, ata_bus_link) {
+      DEBUG("  Drive: %s", drive->exists ? drive_type_string(drive->type) : 
+            "does not exist");
+    }
+  }
+
   return 0;
 }
 
@@ -70,8 +113,6 @@ int piix_ide_device_init(struct pci_device *pci_d) {
 
   ide_d->pci_d = pci_d;
 
-  list_elem_init(ide_d, piix_link);
-  
   /*
    * BAR 4 of the PCI configuration space holds the Bus Master Interface
    * Base Address (BMIBA).
@@ -79,20 +120,9 @@ int piix_ide_device_init(struct pci_device *pci_d) {
   ide_d->BMIBA = pci_config_ind(pci_d, PCI_BAR4) & ~MASK(2);
   INFO("Bus Master Base Address: 0x%08x", ide_d->BMIBA);
 
-  /*
-   * PIIX has 2 ATA buses: Primary and Secondary
-   */
-  if (0 != (ret = ata_new_bus(ide_d->ata + 0, 
-                              PRIMARY_CMD_BLOCK_OFFSET, 
-                              PRIMARY_CTL_BLOCK_OFFSET))) {
-    WARN("ata_new_bus error: %s", strerr(ret));
-    kfree(ide_d, sizeof(struct piix_ide_device));
-    return ret;
-  }
-  if (0 != (ret = ata_new_bus(ide_d->ata + 1, 
-                              SECONDARY_CMD_BLOCK_OFFSET, 
-                              SECONDARY_CTL_BLOCK_OFFSET))) {
-    WARN("ata_new_bus error: %s", strerr(ret));
+  list_elem_init(ide_d, piix_link);
+  
+  if (0 != (ret = piix_ata_init(ide_d))) {
     kfree(ide_d, sizeof(struct piix_ide_device));
     return ret;
   }
