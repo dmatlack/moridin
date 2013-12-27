@@ -34,6 +34,7 @@ void ata_select_drive(struct ata_drive *d) {
 
 #define RETURN_ERROR_IF_TIMEOUT(_count, _timeout, _culprit_string) \
   do { \
+    DEBUG("  %s poll: %d cycles", _culprit_string, _count); \
     if ((_count) == (_timeout)) { \
       ERROR("Timed out waiting for %s!", _culprit_string); \
       return ETIMEDOUT; \
@@ -47,10 +48,14 @@ void ata_select_drive(struct ata_drive *d) {
  * For more information about WTF the IDENTIFY command returns, see section
  * 8.15 of http://www.t13.org/documents/UploadedDocuments/project/d1410r3b-ATA-ATAPI-6.pdf
  *
- * @return 0 if the drive exists and reports data back via IDENTIFY, non-0
- * if the drive does not exist.
+ * @return 
+ *    0 if the drive exists AND reports data back via IDENTIFY
+ *
+ *    ENODEV if the drive does not exist
+ *    ETIMEDOUT if the drive takes too long to respond to the IDENTIFY command
+ *    EGENERIC if the drive responds with an error to the IDENTIFY command
  */
-int ata_identify(struct ata_drive *drive) {
+int ata_identify(struct ata_drive *drive, uint16_t data[256]) {
   uint8_t idstatus, clo, chi;
   const int timeout = 0x100000;
   int i;
@@ -72,10 +77,7 @@ int ata_identify(struct ata_drive *drive) {
    */
   outb(drive->bus->cmd_block + ATA_CMD_COMMAND, ATA_IDENTIFY);
   idstatus = inb(drive->bus->cmd_block + ATA_CMD_STATUS);
-
-  if (0 == idstatus) {
-    return ENODEV;
-  }
+  if (0 == idstatus) return ENODEV;
 
   /*
    * The drive exists! Poll the BSY bit until it is cleared.
@@ -86,8 +88,6 @@ int ata_identify(struct ata_drive *drive) {
     if (!(idstatus & ATA_BSY)) break;
   }
   RETURN_ERROR_IF_TIMEOUT(i, timeout, "ATA_BSY");
-
-  drive->exists = true;
 
   /*
    * Get the drive type based on the command block signature
@@ -118,7 +118,7 @@ int ata_identify(struct ata_drive *drive) {
    * If all succeeded, we read in the 256 byte IDENTIFY data
    */
   for (i = 0; i < 256; i++) {
-    drive->identify[i] = inw(drive->bus->cmd_block + ATA_CMD_DATA);
+    data[i] = inw(drive->bus->cmd_block + ATA_CMD_DATA);
   }
   return 0;
 }
@@ -158,13 +158,14 @@ void ata_disable_irqs(struct ata_drive *d) {
  * @brief Create a new ata_drive struct and add it to the provided ata_bus
  * struct.
  *
- * @return non-0 only on UNRECOVERABLE ERROR (e.g. out of memory). this
- * function will return 0 even if the device does not exist. instead,
- * that will be indicated in the ata_device struct.
+ * @return 
+ *    ENOMEM if the kernel ran out of memory
+ *    0 otherwise
  */
 int ata_bus_add_drive(struct ata_bus *bus, uint8_t drive_select) {
   struct ata_drive *drive;
-  int ret, identify_error;
+  uint16_t data[256];
+  int ret;
 
   if (0 != (ret = ata_drive_create(&drive))) {
     return ret;
@@ -172,21 +173,19 @@ int ata_bus_add_drive(struct ata_bus *bus, uint8_t drive_select) {
 
   drive->select = drive_select;
   drive->bus = bus;
-  drive->exists = false;
 
+  /*
+   * We will be using polling at first, so disable IRQs for now
+   */
   ata_disable_irqs(drive);
-  
-  identify_error = ata_identify(drive);
 
-  if (0 != identify_error) {
-    WARN("Unable to IDENTIFY drive 0x%02x of bus 0x%03x: %s",
-         drive->select, bus->cmd_block, strerr(identify_error));
-  }
-  else {
-    DEBUG("ATA IDENTIFY: cmd_block=0x%03x, drive=0x%02x, drive->type=%s",
-          bus->cmd_block, drive->select, drive_type_string(drive->type));
-    DEBUG("identify[80] = 0x%04x (ATA version supporting)", drive->identify[80]);
-  }
+  /*
+   * Execute the IDENTIFY DEVICE command to figure out if the drive exists,
+   * and if we can support it
+   */
+  ret = ata_identify(drive, data);
+
+  drive->exists = (ret != ENODEV);
 
   list_insert_tail(&bus->drives, drive, ata_bus_link);
 
@@ -206,7 +205,7 @@ int ata_bus_add_drive(struct ata_bus *bus, uint8_t drive_select) {
  * the caller.
  *
  * @return
- *    non-0 error if: out of memory (can't kmalloc)
+ *    ENOMEM if 
  *
  *    0 success: otherwise (even if there is issues with the drives, we will
  *      still return success. the caller is expected to look at the ata_drive's

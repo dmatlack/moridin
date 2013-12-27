@@ -15,6 +15,8 @@ piix_ide_device_list_t __piix_ide_devices;
 
 /**
  * @brief Global initializer for the PIIX IDE driver subsystem.
+ *
+ * @return 0
  */
 int piix_ide_init(void) {
   TRACE();
@@ -35,6 +37,8 @@ struct pci_device_driver __piix_ide_driver = {
 /**
  * @brief Initialize the ATA buses and drives conntected to our IDE
  * controller.
+ *
+ * @return non-zero error if the ata subsystem cannot be initialized
  */
 static int piix_ata_init(struct piix_ide_device *ide_d) {
   int ret, i;

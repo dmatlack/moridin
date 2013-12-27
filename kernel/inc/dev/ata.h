@@ -88,7 +88,6 @@ struct ata_bus {
 struct ata_drive {
   enum ata_drive_type type;
   bool exists;
-  uint16_t identify[256];
   uint8_t select; // ATA_SELECT_SLAVE or ATA_SELECT_MASTER
 
   struct ata_bus *bus;
