@@ -48,7 +48,7 @@ struct vm_machine_interface *machine = &x86_vm_machine_interface;
 #endif
 
 #define LOG_VM_ZONE( zone_macro )\
-  INFO(#zone_macro": address=0x%0x, size=0x%08x",\
+  DEBUG(#zone_macro": address=0x%0x, size=0x%08x",\
        zone_macro->address, zone_macro->size)
 
 /**

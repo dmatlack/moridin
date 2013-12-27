@@ -137,16 +137,15 @@ void pci_device_config_readall(struct pci_device *d) {
     d->interrupt_pin       = pci_config_inb(d, PCI_INTERRUPT_PIN);
     d->interrupt_line      = pci_config_inb(d, PCI_INTERRUPT_LINE);
   }
-
-  d->vendor_desc = pci_lookup_vendor(d->vendor_id);
-  d->device_desc = pci_lookup_device(d->vendor_id, d->device_id);
-  d->classcode_desc = pci_lookup_classcode(d->classcode);
-  d->subclass_desc = pci_lookup_subclass(d->classcode, d->subclass, d->progif);
 }
 
 /**
  * @brief Create a pci_device struct from the device identified from the tuple
  * (bus, device, func).
+ *
+ * @return
+ *    ENOMEM if there is not enough memory to allocate a struct pci_device
+ *    0 otherwise
  */
 int pci_device_create(struct pci_device **dp, int bus, int device, int func) {
   struct pci_device *d;
@@ -167,6 +166,11 @@ int pci_device_create(struct pci_device **dp, int bus, int device, int func) {
 
   pci_device_config_readall(d);
 
+  d->vendor_desc = pci_lookup_vendor(d->vendor_id);
+  d->device_desc = pci_lookup_device(d->vendor_id, d->device_id);
+  d->classcode_desc = pci_lookup_classcode(d->classcode);
+  d->subclass_desc = pci_lookup_subclass(d->classcode, d->subclass, d->progif);
+
   return 0;
 }
 
@@ -174,6 +178,16 @@ int pci_device_create(struct pci_device **dp, int bus, int device, int func) {
  * @brief Scan the provided bus for devices, adding those devices to the global
  * list of pci devices as well as the bus' list of devices. If a PCI-PCI bridge
  * device is found, recursively scan the downstream bus.
+ *
+ * FIXME this function leaks memory when we run out of memory (ENOMEM) because
+ * we do not clean up the memory we allocated up until then. This is "ok" at
+ * the moment becuase only pci_init calls this function and so failing here
+ * will abort the entire kernel. But this should be fixed so that it can be
+ * called from other contexts.
+ *
+ * @return
+ *    ENOMEM if the kernel runs out of memory while building the pci device tree
+ *    0 otherwise
  */
 int pci_scan_bus(struct pci_bus *b) {
   int ret, device, func;
@@ -208,9 +222,14 @@ int pci_scan_bus(struct pci_bus *b) {
         sb->bus = pci_config_inb(d, 0x19);
         sb->self = d;
     
-        INFO("PCI-PCI Bridge found. Secondary Bus: %d", sb->bus);
+        DEBUG("PCI-PCI Bridge found. Secondary Bus: %d", sb->bus);
 
-        pci_scan_bus(sb);
+        if (0 != (ret = pci_scan_bus(sb))) {
+          kfree(sb, sizeof(struct pci_bus));
+          return ret;
+        }
+
+        list_insert_tail(&b->buses, sb, bus_link);
       }
 
       if (func == 0 && !is_multifunc_device(b->bus, device)) break;
@@ -224,7 +243,7 @@ void pci_print_device(struct pci_device *d) {
   /*
    * Follow linux's lspci command format of <bus>:<device>.<func>
    */
-  INFO("PCI DEVICE (%p) %02x:%02x.%02x\n"
+  DEBUG("PCI DEVICE (%p) %02x:%02x.%02x\n"
     "vendor id:           0x%04x   %s\n"
     "device id:           0x%04x   %s\n"
     "classcode:           0x%02x     %s\n"
@@ -289,7 +308,7 @@ void __lspci(struct pci_bus *root, int depth) {
   struct pci_device *d;
   struct pci_bus *sb;
 
-  INFO("%*sBus: %d", depth, "", root->bus);
+  DEBUG("%*sBus: %d", depth, "", root->bus);
   list_foreach(d, &root->devices, bus_link) {
 
     pci_print_device(d);
@@ -345,14 +364,22 @@ void pci_device_add_driver(struct pci_device *d,
   d->drivers[d->num_drivers++] = driver;
 }
 
-void pci_register_driver(struct pci_device_driver *driver) {
+/**
+ * @brief Register a driver by initializing it and finding all the devices
+ * that match it.
+ *
+ * @return 
+ *    0 on success
+ *    non-0 if the driver fails to initialize itself
+ */
+int pci_register_driver(struct pci_device_driver *driver) {
   struct pci_device *d;
   int ret;
 
   if (0 != (ret = driver->init())) {
     WARN("Failed to initalize the %s driver system: %s", driver->name,
          strerr(ret));
-    return;
+    return ret;
   }
 
   list_elem_init(driver, pci_link);
@@ -366,12 +393,18 @@ void pci_register_driver(struct pci_device_driver *driver) {
       pci_device_add_driver(d, driver);
     }
   }
+
+  return 0;
 }
 
 /**
  * @brief Initialize the PCI subsystem. This initialization will build
  * the PCI bus tree, and call driver initializers on all devices that have
  * matching drivers.
+ *
+ * @return
+ *    ENOMEM if there is not enough memory to initialize the pci subsystem
+ *    0 otherwise
  */
 int pci_init(void) {
   int ret;

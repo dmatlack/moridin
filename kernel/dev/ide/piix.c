@@ -97,7 +97,7 @@ int piix_ide_device_init(struct pci_device *pci_d) {
     return EINVAL;
   }
 
-  INFO("Initializing PIIX IDE PCI device: %02x:%02x.%02x (device=0x%04x)",
+  DEBUG("Initializing PIIX IDE PCI device: %02x:%02x.%02x (device=0x%04x)",
           pci_d->bus, pci_d->device, pci_d->func,
           pci_d->device_id);
 
@@ -122,7 +122,7 @@ int piix_ide_device_init(struct pci_device *pci_d) {
    * Base Address (BMIBA).
    */
   ide_d->BMIBA = pci_config_ind(pci_d, PCI_BAR4) & ~MASK(2);
-  INFO("Bus Master Base Address: 0x%08x", ide_d->BMIBA);
+  DEBUG("Bus Master Base Address: 0x%08x", ide_d->BMIBA);
 
   list_elem_init(ide_d, piix_link);
   

@@ -257,6 +257,6 @@ extern pci_device_driver_list_t __pci_drivers;
 
 int pci_init(void);
 int pci_scan_bus(struct pci_bus *b);
-void pci_register_driver(struct pci_device_driver *driver);
+int pci_register_driver(struct pci_device_driver *driver);
 
 #endif /* !__DEV_PCI_H__ */

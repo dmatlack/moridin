@@ -24,7 +24,6 @@ int pit_init(int hz) {
    */
   freq_hz = hz;
   freq_div = PIT_FREQ_HZ / hz;
-  INFO("freq_div=%d\n", freq_div);
 
   outb(PIT_COMMAND_PORT, IRQ_CHANNEL | LOHIBYTE | SQUARE_WAVE | BINARYMODE);
   outb(PIT_CHANNEL0_PORT, (freq_div >> 0) & 0xff); // low byte
