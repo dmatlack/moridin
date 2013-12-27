@@ -1,3 +1,40 @@
+Introduction
+-------------------------------------------------------------------------------
+
+  The purpose of this project is to gain more experience with operating system
+  and kernel design and implementation. I am also interested in learning more
+  about the peripheral devices that connect to a computer and how drivers
+  control and interface with said devices.
+
+  The kernel is monolithic by design. It will only run on the x86 architecture
+  at the moment, but I am trying to be careful in keeping kernel code and
+  machine-dependent code separate.
+
+Features (LAST UPDATED: 12/26/2013)
+-------------------------------------------------------------------------------
+
+  kernel: arch/, boot/, kernel/, lib/
+    - multiboot compatibility
+    - exception handling
+    - IRQ handling
+    - timer (configured to 100 HZ)
+    - stub keyboard driver
+
+  memory: arch/, mm/
+    - physical memory management (frame allocator)
+    - virtual memory (paging, not to disk yet)
+    - kernel dynamic memory (kmalloc)
+ 
+  devices: dev/
+    - VGA (console) driver
+    - PCI device scanning/discovery
+    - PIIX/PIIX3 IDE driver
+    - ATA
+      - IDENTIFY DEVICE
+
+  userspace: nothing yet!
+
+
 Build
 -------------------------------------------------------------------------------
 
