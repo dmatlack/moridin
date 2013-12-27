@@ -13,6 +13,23 @@
 
 #include <arch/x86/io.h>
 
+const char *ata_strerr(uint8_t error) {
+  if (error & (1 << 2)) return "ABORT";
+  else return "unknown";
+}
+
+/**
+ * @brief Return true if this driver supports a given type of device. We
+ * can use this to make sure we don't try to send commands and mess up
+ * any unsopported devices.
+ */
+bool ata_is_supported(struct ata_drive *d) {
+  switch (d->type) {
+    case ATA_PATA: return true;
+    default: return false;
+  }
+}
+
 enum ata_drive_type get_drive_type(uint8_t clo, uint8_t chi) {
   if (clo == 0x14 && chi == 0xEB) return ATA_PATAPI;
   if (clo == 0x69 && chi == 0x96) return ATA_SATAPI;
@@ -30,6 +47,19 @@ bool does_ata_bus_exist(int cmd_block) {
  */
 void ata_select_drive(struct ata_drive *d) {
   outb(d->bus->cmd_block + ATA_CMD_DRIVE, d->select);
+}
+
+/**
+ * @brief Send a command to an ATA drive.
+ */
+void ata_command(struct ata_drive *d, uint8_t command) {
+  int i;
+
+  ata_select_drive(d);
+
+  outb(d->bus->cmd_block + ATA_CMD_COMMAND, command);
+
+  for (i = 0; i < 4; i++) iodelay(); // spin for 400ns
 }
 
 #define RETURN_ERROR_IF_TIMEOUT(_count, _timeout, _culprit_string) \
@@ -75,7 +105,8 @@ int ata_identify(struct ata_drive *drive, uint16_t data[256]) {
   /*
    * IDENTIFY yourself, drive!
    */
-  outb(drive->bus->cmd_block + ATA_CMD_COMMAND, ATA_IDENTIFY);
+  ata_command(drive, ATA_IDENTIFY);
+
   idstatus = inb(drive->bus->cmd_block + ATA_CMD_STATUS);
   if (0 == idstatus) return ENODEV;
 
@@ -106,11 +137,16 @@ int ata_identify(struct ata_drive *drive, uint16_t data[256]) {
   }
   RETURN_ERROR_IF_TIMEOUT(i, timeout, "ATA_DRQ");
   
+  /*
+   * If an error occurred, it's probably because this is an ATAPI device, and
+   * it wants us to send it IDENTIFY PACKET DEVICE command intead. For now we
+   * will ignore ATAPI devices and not deal with them.
+   */
   if (idstatus & ATA_ERR) {
     uint8_t error;
     error = inb(drive->bus->cmd_block + ATA_CMD_ERROR);
-    WARN("Error occured while waiting for ATA_DRQ after IDENTIFY: 0x%02x",
-         error);
+    WARN("Error occured while waiting for ATA_DRQ after IDENTIFY: 0x%02x (%s)",
+         error, ata_strerr(error));
     return EGENERIC;
   }
 
@@ -155,6 +191,32 @@ void ata_disable_irqs(struct ata_drive *d) {
 }
 
 /**
+ * @brief Copy a "string" (series of bytes) from the result of the IDENTIFY
+ * DEVICE command (256 words / 512 bytes).
+ *
+ * This is useful because the result of IDENTIFY DEVICE contains strings
+ * such as the firmware version and serial number of the device.
+ */
+static void ata_read_identify_string(uint16_t *data, char *buffer,
+                                     unsigned offset, unsigned length) {
+  uint16_t word;
+  unsigned i;
+
+  /*
+   * WARNING: this function is a little weird because we are copying from an
+   * array of words into an array of bytes. i indexes WORDS not BYTES here!
+   */
+  for (i = 0; i < length; i++) {
+    word = data[offset + i];
+
+    buffer[2*i + 0] = (word >> 8) & 0xff;
+    buffer[2*i + 1] = (word >> 0) & 0xff;
+  }
+
+  buffer[length] = (char) 0;
+}
+
+/**
  * @brief Create a new ata_drive struct and add it to the provided ata_bus
  * struct.
  *
@@ -165,7 +227,7 @@ void ata_disable_irqs(struct ata_drive *d) {
 int ata_bus_add_drive(struct ata_bus *bus, uint8_t drive_select) {
   struct ata_drive *drive;
   uint16_t data[256];
-  int ret;
+  int ret, identify_ret;
 
   if (0 != (ret = ata_drive_create(&drive))) {
     return ret;
@@ -183,9 +245,34 @@ int ata_bus_add_drive(struct ata_bus *bus, uint8_t drive_select) {
    * Execute the IDENTIFY DEVICE command to figure out if the drive exists,
    * and if we can support it
    */
-  ret = ata_identify(drive, data);
+  identify_ret = ata_identify(drive, data);
 
-  drive->exists = (ret != ENODEV);
+  drive->exists = (ENODEV != identify_ret);
+  drive->usable = (0 == identify_ret);
+
+  if (drive->exists && !ata_is_supported(drive)) {
+    WARN("ATA device not supported: %s", drive_type_string(drive->type));
+  }
+
+  /*
+   * Check the results of IDENTIFY DEVICE. See section 8.15 of the ATA-6 spec.
+   */
+  if (0 == identify_ret) {
+    /* drives conforming to the ATA standard will clear bit 15 */
+    if (data[0] & (1 << 15)) drive->usable = false;
+    /* if bit 2 is set, the IDENTIFY response is incomplete */
+    if (data[0] & (1 << 2)) drive->usable = false;
+
+    ata_read_identify_string(data, drive->serial,
+                             ATA_IDENTIFY_SERIAL_WORD_OFFSET,
+                             ATA_IDENTIFY_SERIAL_WORD_LENGTH);
+    ata_read_identify_string(data, drive->firmware,
+                             ATA_IDENTIFY_FIRMWARE_WORD_OFFSET,
+                             ATA_IDENTIFY_FIRMWARE_WORD_LENGTH);
+    ata_read_identify_string(data, drive->model,
+                             ATA_IDENTIFY_MODEL_WORD_OFFSET,
+                             ATA_IDENTIFY_MODEL_WORD_LENGTH);
+  }
 
   list_insert_tail(&bus->drives, drive, ata_bus_link);
 

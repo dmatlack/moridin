@@ -67,8 +67,13 @@ static int piix_ata_init(struct piix_ide_device *ide_d) {
     DEBUG("ATA Bus %d: %s", i, bus->exists ? "" : "does not exist");
 
     list_foreach(drive, &bus->drives, ata_bus_link) {
-      DEBUG("  Drive: %s", drive->exists ? drive_type_string(drive->type) : 
-            "does not exist");
+      kprintf("  Drive: %s (%s)\n", drive->exists ? drive_type_string(drive->type) : 
+            "does not exist", drive->usable ? "usable" : "unusable");
+      if (drive->exists && drive->usable) {
+        kprintf("    Serial Number:    %s\n", drive->serial);
+        kprintf("    Firmware Version: %s\n", drive->firmware);
+        kprintf("    Model Number:     %s\n", drive->model);
+      }
     }
   }
 

@@ -18,26 +18,38 @@
 /*
  * ATA COMMAND BLOCK
  */
-#define ATA_CMD_DATA           0x00
-#define ATA_CMD_ERROR          0x01
-#define ATA_CMD_FEATURES       0x01
-#define ATA_CMD_SECTOR_COUNT   0x02
-#define ATA_CMD_SECTOR_NUM     0x03
-#define ATA_CMD_CYLINDER_LO    0x04
-#define ATA_CMD_CYLINDER_HI    0x05
-#define ATA_CMD_HEAD           0x06
-#define ATA_CMD_DRIVE          0x06
-#define     ATA_SELECT_MASTER  0xA0
-#define     ATA_SELECT_SLAVE   0xB0
-#define ATA_CMD_STATUS         0x07
-#define     ATA_ERR            (1 << 0)
-#define     ATA_DRQ            (1 << 3)
-#define     ATA_SRV            (1 << 4)
-#define     ATA_DF             (1 << 5)
-#define     ATA_RDY            (1 << 6)
-#define     ATA_BSY            (1 << 7)
-#define ATA_CMD_COMMAND        0x07
-#define     ATA_IDENTIFY       0xEC
+#define ATA_CMD_DATA            0x00
+#define ATA_CMD_ERROR           0x01
+#define ATA_CMD_FEATURES        0x01
+#define ATA_CMD_SECTOR_COUNT    0x02
+#define ATA_CMD_SECTOR_NUM      0x03
+#define ATA_CMD_CYLINDER_LO     0x04
+#define ATA_CMD_CYLINDER_HI     0x05
+#define ATA_CMD_HEAD            0x06
+#define ATA_CMD_DRIVE           0x06
+#define     ATA_SELECT_MASTER   0xA0
+#define     ATA_SELECT_SLAVE    0xB0
+#define ATA_CMD_STATUS          0x07
+#define     ATA_ERR             (1 << 0)
+#define     ATA_DRQ             (1 << 3)
+#define     ATA_SRV             (1 << 4)
+#define     ATA_DF              (1 << 5)
+#define     ATA_RDY             (1 << 6)
+#define     ATA_BSY             (1 << 7)
+#define ATA_CMD_COMMAND         0x07
+#define     ATA_READ_PIO        0x20
+#define     ATA_READ_PIO_EXT    0x24
+#define     ATA_READ_DMA        0xC8
+#define     ATA_READ_DMA_EXT    0x25
+#define     ATA_WRITE_PIO       0x30
+#define     ATA_WRITE_PIO_EXT   0x34
+#define     ATA_WRITE_DMA       0xCA
+#define     ATA_WRITE_DMA_EXT   0x35
+#define     ATA_CACHE_FLUSH     0xE7
+#define     ATA_CACHE_FLUSH_EXT 0xEA
+#define     ATA_PACKET          0xA0
+#define     ATA_IDENTIFY_PACKET 0xA1
+#define     ATA_IDENTIFY        0xEC
 
 /*
  * ATA CONTROL BLOCK
@@ -87,11 +99,30 @@ struct ata_bus {
 
 struct ata_drive {
   enum ata_drive_type type;
-  bool exists;
   uint8_t select; // ATA_SELECT_SLAVE or ATA_SELECT_MASTER
 
-  struct ata_bus *bus;
+  /*
+   * True if there exists a drive in this slot.
+   */
+  bool exists;
+  /*
+   * True if the drive is set up properly and ready to be used.
+   */
+  bool usable;
 
+#define ATA_IDENTIFY_SERIAL_WORD_OFFSET 10
+#define ATA_IDENTIFY_SERIAL_WORD_LENGTH 10
+  char serial[ATA_IDENTIFY_SERIAL_WORD_LENGTH*2 + 1];
+
+#define ATA_IDENTIFY_FIRMWARE_WORD_OFFSET 23
+#define ATA_IDENTIFY_FIRMWARE_WORD_LENGTH 4
+  char firmware[ATA_IDENTIFY_FIRMWARE_WORD_LENGTH*2 + 1];
+
+#define ATA_IDENTIFY_MODEL_WORD_OFFSET 27
+#define ATA_IDENTIFY_MODEL_WORD_LENGTH 20
+  char model[ATA_IDENTIFY_MODEL_WORD_LENGTH*2 + 1];
+
+  struct ata_bus *bus;
   list_link(struct ata_drive) ata_bus_link;
 };
 
