@@ -110,9 +110,8 @@ Thanks
         lmm/*         |
         malloc/*      ===
 
-  So in general, the third-party code is clib stuff and dynamic memory
-  allocation. All files retain their original copyright notices at the
-  top. My many thanks to the original developers for their work.
+  All files retain their original copyright notices at the top. My many thanks
+  to the original developers for their work.
 
   Also I'd like to thank everyone who contributed to the wiki at
   http://wiki.osdev.org, as it is an invaluable resource.
