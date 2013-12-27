@@ -73,6 +73,7 @@ static int piix_ata_init(struct piix_ide_device *ide_d) {
         DEBUG("    Serial Number:    %s", drive->serial);
         DEBUG("    Firmware Version: %s", drive->firmware);
         DEBUG("    Model Number:     %s", drive->model);
+        DEBUG("    sectors:          %d", drive->sectors);
       }
     }
   }

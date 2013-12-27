@@ -122,6 +122,12 @@ struct ata_drive {
 #define ATA_IDENTIFY_MODEL_WORD_LENGTH 20
   char model[ATA_IDENTIFY_MODEL_WORD_LENGTH*2 + 1];
 
+  /*
+   * One greater than the total number of user addressable sectors. Determined
+   * via the IDENTIFY DEVICE command.
+   */
+  unsigned sectors;
+
   struct ata_bus *bus;
   list_link(struct ata_drive) ata_bus_link;
 };

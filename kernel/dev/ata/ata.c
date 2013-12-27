@@ -272,6 +272,12 @@ int ata_bus_add_drive(struct ata_bus *bus, uint8_t drive_select) {
     ata_read_identify_string(data, drive->model,
                              ATA_IDENTIFY_MODEL_WORD_OFFSET,
                              ATA_IDENTIFY_MODEL_WORD_LENGTH);
+
+    /*
+     * For 32-bit values, ATA transfers the lower order 16-bits first, then the
+     * higher order 16-bits.
+     */
+    drive->sectors = data[61] << 16 | data[60];
   }
 
   list_insert_tail(&bus->drives, drive, ata_bus_link);
