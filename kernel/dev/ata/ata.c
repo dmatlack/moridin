@@ -258,9 +258,13 @@ int ata_bus_add_drive(struct ata_bus *bus, uint8_t drive_select) {
    * Check the results of IDENTIFY DEVICE. See section 8.15 of the ATA-6 spec.
    */
   if (0 == identify_ret) {
-    /* drives conforming to the ATA standard will clear bit 15 */
+    /* 
+     * drives conforming to the ATA standard will clear bit 15
+     */
     if (data[0] & (1 << 15)) drive->usable = false;
-    /* if bit 2 is set, the IDENTIFY response is incomplete */
+    /* 
+     * if bit 2 is set, the IDENTIFY response is incomplete
+     */
     if (data[0] & (1 << 2)) drive->usable = false;
 
     ata_read_identify_string(data, drive->serial,
@@ -273,11 +277,22 @@ int ata_bus_add_drive(struct ata_bus *bus, uint8_t drive_select) {
                              ATA_IDENTIFY_MODEL_WORD_OFFSET,
                              ATA_IDENTIFY_MODEL_WORD_LENGTH);
 
+    drive->sectors_per_block = data[47] & 0xff;
+
     /*
      * For 32-bit values, ATA transfers the lower order 16-bits first, then the
      * higher order 16-bits.
      */
     drive->sectors = data[61] << 16 | data[60];
+
+    /*
+     * Check if the drive supports PIO
+     */
+    drive->supported_pio_mode = 0;
+    if ((data[53] & (1 << 1))) {
+      if (data[64] & (1 << 1)) drive->supported_pio_mode = 4;
+      else if (data[64] & 1)   drive->supported_pio_mode = 3;
+    }
   }
 
   list_insert_tail(&bus->drives, drive, ata_bus_link);

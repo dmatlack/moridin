@@ -128,6 +128,16 @@ struct ata_drive {
    */
   unsigned sectors;
 
+  /*
+   * 0 if PIO is not supported, 3 or 4 otherwise
+   */
+  unsigned supported_pio_mode;
+
+  /*
+   * number of sectors per block supported by READ/WRITE MULTIPLE command
+   */
+  unsigned sectors_per_block;
+
   struct ata_bus *bus;
   list_link(struct ata_drive) ata_bus_link;
 };
