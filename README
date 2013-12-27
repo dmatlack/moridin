@@ -2,9 +2,7 @@ Introduction
 -------------------------------------------------------------------------------
 
   The purpose of this project is to gain more experience with operating system
-  and kernel design and implementation. I am also interested in learning more
-  about the peripheral devices that connect to a computer and how drivers
-  control and interface with said devices.
+  and kernel design and implementation.
 
   The kernel is monolithic by design. It will only run on the x86 architecture
   at the moment, but I am trying to be careful in keeping kernel code and
@@ -32,9 +30,6 @@ Features (LAST UPDATED: 12/26/2013)
     - ATA
       - IDENTIFY DEVICE
 
-  userspace: nothing yet!
-
-
 Build
 -------------------------------------------------------------------------------
 
@@ -47,12 +42,12 @@ Build
 Run
 -------------------------------------------------------------------------------
 
-I am using bochs to test and run the kernel. You can download bochs from the
-bochs sourceforge page: https://sourceforge.net/projects/bochs/files/bochs/.
+  I am using bochs to test and run the kernel. You can download bochs from the
+  bochs sourceforge page: https://sourceforge.net/projects/bochs/files/bochs/.
 
-Make sure you compile bochs with the debugging enabled:
+  Make sure you compile bochs with the debugging enabled:
 
-   ./configure \
+    ./configure \
             --enable-pci \
             --enable-vmx \
             --enable-debugger \
@@ -67,6 +62,57 @@ Make sure you compile bochs with the debugging enabled:
             --disable-docbook \
             --with-x --with-x11 --with-term
 
-To run the kernel with qemu, emulating 1GB of memory, run: 
+  To run the kernel with qemu, emulating 1GB of memory, run: 
 
-  $ qemu-system-i386 <ISO> -m 1024
+    $ qemu-system-i386 <ISO> -m 1024
+
+Thanks
+-------------------------------------------------------------------------------
+
+  While I am writing the kernel and device code myself, there is some library
+  code that lives in the kernel that I did not write.
+    
+    kernel/
+      arch/           ===
+        x86/          |
+          bcopy.S     | 15-410 (OS course @ CMU)
+          bzero.S     |
+      dev/            ===
+        pci/          |
+          pci_table.c | minix
+      inc/            ===
+        asm_style.h   | 15-410
+        boot/         ===
+          multiboot.h | GNU (http://www.gnu.org/software/grub/manual/multiboot/)
+                      ===
+        errno.h       | minix
+        lib/          ===
+          ctype.h     |
+          fmt.h       |
+          fmt/        |
+            doprnt.h  |
+            doscan.h  |
+          stdarg.h    |
+          stddef.h    |
+          stdint.h    |
+          stdlib.h    | University of Utah (CSL) 
+          string.h    | /
+          types.h     | University of California (stdlib/qsort.c)
+      lib/            | /
+        stdlib/*      | Carnegie Mellon (Mach)
+        string/*      |
+        fmt/          |
+          doprnt.c    |
+          doscan.c    |
+          sprintf.c   |
+          sscanf.c    |
+      mm/             |
+        lmm/*         |
+        malloc/*      ===
+
+  So in general, the third-party code is clib stuff and dynamic memory
+  allocation. All files retain their original copyright notices at the
+  top. My many thanks to the original developers for their work.
+
+  Also I'd like to thank everyone who contributed to the wiki at
+  http://wiki.osdev.org, as it is an invaluable resource.

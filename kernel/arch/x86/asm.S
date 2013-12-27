@@ -45,6 +45,7 @@ ind:
 	movw 4(%esp), %dx
 	in %dx, %eax
 	ret
+
 .global iodelay
 iodelay:
     pushl %eax
