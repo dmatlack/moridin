@@ -1,8 +1,8 @@
 Introduction
 -------------------------------------------------------------------------------
 
-  The purpose of this project is to gain more experience with operating system
-  and kernel design and implementation.
+  The purpose of this project is to gain more experience with operating system,
+  and kernel, design and implementation.
 
   The kernel is monolithic by design. It will only run on the x86 architecture
   at the moment, but I am trying to be careful in keeping kernel code and
