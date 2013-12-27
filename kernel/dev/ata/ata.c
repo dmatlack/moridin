@@ -66,7 +66,7 @@ void ata_command(struct ata_drive *d, uint8_t command) {
   do { \
     DEBUG("  %s poll: %d cycles", _culprit_string, _count); \
     if ((_count) == (_timeout)) { \
-      ERROR("Timed out waiting for %s!", _culprit_string); \
+      WARN("ATA drive timed out waiting for %s!", _culprit_string); \
       return ETIMEDOUT; \
     } \
   } while (0)
@@ -145,8 +145,8 @@ int ata_identify(struct ata_drive *drive, uint16_t data[256]) {
   if (idstatus & ATA_ERR) {
     uint8_t error;
     error = inb(drive->bus->cmd_block + ATA_CMD_ERROR);
-    WARN("Error occured while waiting for ATA_DRQ after IDENTIFY: 0x%02x (%s)",
-         error, ata_strerr(error));
+    DEBUG("Error occured while waiting for ATA_DRQ after IDENTIFY: 0x%02x (%s)",
+          error, ata_strerr(error));
     return EGENERIC;
   }
 
@@ -251,7 +251,9 @@ int ata_bus_add_drive(struct ata_bus *bus, uint8_t drive_select) {
   drive->usable = (0 == identify_ret);
 
   if (drive->exists && !ata_is_supported(drive)) {
-    WARN("ATA device not supported: %s", drive_type_string(drive->type));
+    WARN("ATA device type not supported: %s (bus cmd: 0x%03x, drive select: "
+         "0x%02x)", drive_type_string(drive->type), drive->bus->cmd_block,
+          drive->select);
   }
 
   /*

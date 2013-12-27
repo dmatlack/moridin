@@ -240,9 +240,8 @@ int pci_scan_bus(struct pci_bus *b) {
 }
 
 void pci_print_device(struct pci_device *d) {
-  /*
-   * Follow linux's lspci command format of <bus>:<device>.<func>
-   */
+
+#ifdef KDEBUG
   DEBUG("PCI DEVICE (%p) %02x:%02x.%02x\n"
     "vendor id:           0x%04x   %s\n"
     "device id:           0x%04x   %s\n"
@@ -302,6 +301,11 @@ void pci_print_device(struct pci_device *d) {
     d->interrupt_pin,
     d->interrupt_line
   );
+#else
+  INFO("%02x:%02x.%02x %s, %s, %s, %s", 
+       d->bus, d->device, d->func,
+       d->vendor_desc, d->device_desc, d->classcode_desc, d->subclass_desc);
+#endif
 }
 
 void __lspci(struct pci_bus *root, int depth) {
@@ -312,9 +316,6 @@ void __lspci(struct pci_bus *root, int depth) {
   list_foreach(d, &root->devices, bus_link) {
 
     pci_print_device(d);
-    kprintf("%02x:%02x.%02x %s, %s, %s, %s\n", 
-        d->bus, d->device, d->func,
-        d->vendor_desc, d->device_desc, d->classcode_desc, d->subclass_desc);
 
     list_foreach(sb, &root->buses, bus_link) {
       if (sb->self == d) __lspci(sb, depth + 1);

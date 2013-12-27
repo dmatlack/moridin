@@ -40,7 +40,7 @@ WARNINGS := \
 			-Wuninitialized \
 			-Werror \
 
-CFLAGS := -g -std=c99 -ffreestanding -DARCH_X86 $(WARNINGS)
+CFLAGS := -g -std=c99 -ffreestanding -DARCH_X86 $(WARNINGS) -DKDEBUG
 INCLUDES := -I$(PWD)/inc/lib -I$(PWD)/inc
 
 ###############################################################################

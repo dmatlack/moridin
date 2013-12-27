@@ -34,10 +34,16 @@ int trace(const char *fmt, ...);
 #define TRACE_RESTORE do { __log.trace_on--; } while (0)
 #define TRACE_OFF     do { __log.trace_on = 0; } while (0)
 
-#define WARN(fmt, ...) log(LOG_LEVEL_WARN, "[WARN]   ", fmt"\n", ##__VA_ARGS__)
 #define INFO(fmt, ...) log(LOG_LEVEL_INFO, "[INFO]   ", fmt"\n", ##__VA_ARGS__)
+#define WARN(fmt, ...) log(LOG_LEVEL_WARN, "[WARN]   ", fmt"\n", ##__VA_ARGS__)
 #define ERROR(fmt, ...) log(LOG_LEVEL_ERROR, "[ERROR]  ", fmt"\n", ##__VA_ARGS__)
-#define DEBUG(fmt, ...) log(LOG_LEVEL_DEBUG, "[DEBUG]  ", fmt"\n", ##__VA_ARGS__)
-#define TRACE(fmt, ...) trace("[TRACE]  %s("fmt")\n", __func__, ##__VA_ARGS__)
+
+#ifdef KDEBUG
+    #define DEBUG(fmt, ...) log(LOG_LEVEL_DEBUG, "[DEBUG]  ", fmt"\n", ##__VA_ARGS__)
+    #define TRACE(fmt, ...) trace("[TRACE]  %s("fmt")\n", __func__, ##__VA_ARGS__)
+#else
+    #define DEBUG(fmt, ...)
+    #define TRACE(fmt, ...)
+#endif
 
 #endif /* !__DEBUG_LOG_H__ */

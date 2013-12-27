@@ -64,7 +64,8 @@ static int piix_ata_init(struct piix_ide_device *ide_d) {
     struct ata_bus *bus = ide_d->ata + i;
     struct ata_drive *drive;
 
-    DEBUG("ATA Bus %d: %s", i, bus->exists ? "" : "does not exist");
+    INFO("ATA Bus %d (cmd=0x%03x, ctl=0x%03x): %s", i, bus->cmd_block,
+          bus->ctl_block, bus->exists ? "" : "does not exist");
 
     list_foreach(drive, &bus->drives, ata_bus_link) {
       INFO("  Drive: %s (%s)", drive->exists ? drive_type_string(drive->type) : 
