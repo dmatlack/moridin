@@ -6,6 +6,24 @@
  * ATA-6 Spec:
  *   http://www.t13.org/documents/UploadedDocuments/project/d1410r3b-ATA-ATAPI-6.pdf
  *
+ * Some useful definitions (and their sections) copied from the above spec:
+ *
+ * 3.1.14 CHS (cylinder-head-sector): This term defines an obsolete method of
+ *        addressing the data on the device by cylinder number, head number,
+ *        and sector number.
+ *
+ * 3.1.25 DMA (direct memory access) data transfer: A means of data transfer
+ *        between device and host memory without host processor intervention.
+ *
+ * 3.1.30 LBA (logical block address): This term defines the addressing of data
+ *        on the device by the linear mapping of sectors.
+ *
+ * 3.1.35 PIO (programmed input/output) data transfer: PIO data transfers are
+ *        performed by the host processor utilizing accesses to the Data
+ *        register.
+ *
+ * 3.1.41 sector: A uniquely addressable set of 256 words (512 bytes).
+ *
  * @author David Matlack
  */
 #ifndef __DEV_ATA_H__
@@ -15,6 +33,8 @@
 #include <types.h>
 #include <stdint.h>
 
+#define ATA_BYTES_PER_SECTOR 512
+
 /*
  * ATA COMMAND BLOCK
  */
@@ -22,11 +42,11 @@
 #define ATA_CMD_ERROR           0x01
 #define ATA_CMD_FEATURES        0x01
 #define ATA_CMD_SECTOR_COUNT    0x02
-#define ATA_CMD_SECTOR_NUM      0x03
-#define ATA_CMD_CYLINDER_LO     0x04
-#define ATA_CMD_CYLINDER_HI     0x05
+#define ATA_CMD_LBA_LOW         0x03
+#define ATA_CMD_LBA_MID         0x04
+#define ATA_CMD_LBA_HIGH        0x05
 #define ATA_CMD_HEAD            0x06
-#define ATA_CMD_DRIVE           0x06
+#define ATA_CMD_DEVICE          0x06
 #define     ATA_SELECT_MASTER   0xA0
 #define     ATA_SELECT_SLAVE    0xB0
 #define ATA_CMD_STATUS          0x07
@@ -84,6 +104,14 @@ static inline const char *drive_type_string(enum ata_drive_type type) {
 struct ata_drive;
 list_typedef(struct ata_drive) ata_drive_list_t;
 
+struct ata_signature {
+  uint8_t sector_count;
+  uint8_t lba_low;
+  uint8_t lba_mid;
+  uint8_t lba_high;
+  uint8_t device;
+};
+
 struct ata_bus {
   /*
    * All the drives on an ATA bus share the same I/O ports, but the system
@@ -98,6 +126,7 @@ struct ata_bus {
 };
 
 struct ata_drive {
+  struct ata_signature sig;
   enum ata_drive_type type;
   uint8_t select; // ATA_SELECT_SLAVE or ATA_SELECT_MASTER
 
@@ -128,20 +157,24 @@ struct ata_drive {
    */
   unsigned sectors;
 
-  /*
-   * 0 if PIO is not supported, 3 or 4 otherwise
-   */
-  unsigned supported_pio_mode;
+#define ATA_PIO_NOT_SUPPORTED -1
+  int supported_pio_mode;
+#define ATA_DMA_NOT_SUPPORTED -1
+  int supported_dma_mode;
 
   /*
    * number of sectors per block supported by READ/WRITE MULTIPLE command
    */
   unsigned sectors_per_block;
 
+  uint16_t major_version;
+  uint16_t minor_version;
+
   struct ata_bus *bus;
   list_link(struct ata_drive) ata_bus_link;
 };
 
 int ata_new_bus(struct ata_bus *busp, unsigned cmd_block, unsigned ctl_block);
+void ata_print_drive(struct ata_drive *drive);
 
 #endif /* !__DEV_ATA_H__ */

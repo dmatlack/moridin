@@ -9,6 +9,7 @@
 #include <fmt/_printf.h>
 #include <debug/bochs.h>
 #include <debug.h>
+#include <kernel/kprintf.h>
 
 struct printf_state dprintf_state;
 

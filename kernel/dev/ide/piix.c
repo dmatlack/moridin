@@ -68,16 +68,7 @@ static int piix_ata_init(struct piix_ide_device *ide_d) {
           bus->ctl_block, bus->exists ? "" : "does not exist");
 
     list_foreach(drive, &bus->drives, ata_bus_link) {
-      INFO("  Drive: %s (%s)", drive->exists ? drive_type_string(drive->type) : 
-            "does not exist", drive->usable ? "usable" : "unusable");
-      if (drive->exists && drive->usable) {
-        INFO("    Serial Number:    %s", drive->serial);
-        INFO("    Firmware Version: %s", drive->firmware);
-        INFO("    Model Number:     %s", drive->model);
-        INFO("    sectors:          %d", drive->sectors);
-        INFO("    sectors / block:  %d", drive->sectors_per_block);
-        INFO("    PIO Mode:         %d", drive->supported_pio_mode);
-      }
+      ata_print_drive(drive);
     }
   }
 

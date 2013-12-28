@@ -13,6 +13,37 @@
 
 #include <arch/x86/io.h>
 
+void ata_print_drive(struct ata_drive *drive) {
+  if (!drive->exists) {
+    INFO("ATA %s: does not exist ",
+         drive->select == ATA_SELECT_MASTER ? "master" : "slave");
+  }
+  else if (!drive->usable) {
+    INFO("ATA %s: unusable because of type %s", 
+         drive->select == ATA_SELECT_MASTER ? "master" : "slave",
+         drive_type_string(drive->type));
+  }
+  else {
+    INFO("ATA %s: %s",
+         drive->select == ATA_SELECT_MASTER ? "master" : "slave",
+         drive_type_string(drive->type));
+  }
+
+#ifdef KDEBUG
+  if (drive->exists && drive->usable) {
+    DEBUG("    Serial Number:      %s", drive->serial);
+    DEBUG("    Firmware Version:   %s", drive->firmware);
+    DEBUG("    Model Number:       %s", drive->model);
+    DEBUG("    sectors:            %d", drive->sectors);
+    DEBUG("    sectors / block:    %d", drive->sectors_per_block);
+    DEBUG("    Supported DMA Mode: %d", drive->supported_dma_mode);
+    DEBUG("    Supported PIO Mode: %d", drive->supported_pio_mode);
+    DEBUG("    Major Version:      0x%04x", drive->major_version);
+    DEBUG("    Minor Version:      0x%04x", drive->minor_version);
+  }
+#endif
+}
+
 const char *ata_strerr(uint8_t error) {
   if (error & (1 << 2)) return "ABORT";
   else return "unknown";
@@ -30,11 +61,11 @@ bool ata_is_supported(struct ata_drive *d) {
   }
 }
 
-enum ata_drive_type get_drive_type(uint8_t clo, uint8_t chi) {
-  if (clo == 0x14 && chi == 0xEB) return ATA_PATAPI;
-  if (clo == 0x69 && chi == 0x96) return ATA_SATAPI;
-  if (clo == 0x00 && chi == 0x00) return ATA_PATA;
-  if (clo == 0x3c && chi == 0xc3) return ATA_SATA;
+enum ata_drive_type get_drive_type(struct ata_signature *s) {
+  if (s->lba_mid == 0x14 && s->lba_high == 0xEB) return ATA_PATAPI;
+  if (s->lba_mid == 0x69 && s->lba_high == 0x96) return ATA_SATAPI;
+  if (s->lba_mid == 0x00 && s->lba_high == 0x00) return ATA_PATA;
+  if (s->lba_mid == 0x3c && s->lba_high == 0xc3) return ATA_SATA;
   return ATA_UNKNOWN;
 }
 
@@ -46,7 +77,7 @@ bool does_ata_bus_exist(int cmd_block) {
  * @brief Select the provided ATA drive.
  */
 void ata_select_drive(struct ata_drive *d) {
-  outb(d->bus->cmd_block + ATA_CMD_DRIVE, d->select);
+  outb(d->bus->cmd_block + ATA_CMD_DEVICE, d->select);
 }
 
 /**
@@ -86,7 +117,7 @@ void ata_command(struct ata_drive *d, uint8_t command) {
  *    EGENERIC if the drive responds with an error to the IDENTIFY command
  */
 int ata_identify(struct ata_drive *drive, uint16_t data[256]) {
-  uint8_t idstatus, clo, chi;
+  uint8_t idstatus;
   const int timeout = 0x100000;
   int i;
 
@@ -94,13 +125,11 @@ int ata_identify(struct ata_drive *drive, uint16_t data[256]) {
 
   ata_select_drive(drive);
 
-  /*
-   * Set all the info registers (sector count, cylinders lo/hi, etc... to 0
-   */ 
   outb(drive->bus->cmd_block + ATA_CMD_SECTOR_COUNT, 0);
-  outb(drive->bus->cmd_block + ATA_CMD_SECTOR_NUM,   0);
-  outb(drive->bus->cmd_block + ATA_CMD_CYLINDER_LO,  0);
-  outb(drive->bus->cmd_block + ATA_CMD_CYLINDER_HI,  0);
+  outb(drive->bus->cmd_block + ATA_CMD_LBA_LOW,      0);
+  outb(drive->bus->cmd_block + ATA_CMD_LBA_MID,      0);
+  outb(drive->bus->cmd_block + ATA_CMD_LBA_HIGH,     0);
+  outb(drive->bus->cmd_block + ATA_CMD_DEVICE,       0);
 
   /*
    * IDENTIFY yourself, drive!
@@ -121,11 +150,15 @@ int ata_identify(struct ata_drive *drive, uint16_t data[256]) {
   RETURN_ERROR_IF_TIMEOUT(i, timeout, "ATA_BSY");
 
   /*
-   * Get the drive type based on the command block signature
+   * Get the signature of the drive
    */
-  clo = inb(drive->bus->cmd_block + ATA_CMD_CYLINDER_LO);
-  chi = inb(drive->bus->cmd_block + ATA_CMD_CYLINDER_HI);
-  drive->type = get_drive_type(clo, chi);
+  drive->sig.sector_count = inb(drive->bus->cmd_block + ATA_CMD_SECTOR_COUNT);
+  drive->sig.lba_low      = inb(drive->bus->cmd_block + ATA_CMD_LBA_LOW);
+  drive->sig.lba_mid      = inb(drive->bus->cmd_block + ATA_CMD_LBA_MID);
+  drive->sig.lba_high     = inb(drive->bus->cmd_block + ATA_CMD_LBA_HIGH);
+  drive->sig.device       = inb(drive->bus->cmd_block + ATA_CMD_DEVICE);
+
+  drive->type = get_drive_type(&drive->sig);
 
   /*
    * Continue polling until DRQ (ready to transfer data) is set or
@@ -288,13 +321,21 @@ int ata_bus_add_drive(struct ata_bus *bus, uint8_t drive_select) {
     drive->sectors = data[61] << 16 | data[60];
 
     /*
-     * Check if the drive supports PIO
+     * Check if the drive supports PIO, DMA
      */
-    drive->supported_pio_mode = 0;
+    drive->supported_dma_mode = ATA_DMA_NOT_SUPPORTED;
+    drive->supported_pio_mode = ATA_PIO_NOT_SUPPORTED;
     if ((data[53] & (1 << 1))) {
+      if (data[63] & 1)        drive->supported_dma_mode = 0;
+      if (data[63] & (1 << 1)) drive->supported_dma_mode = 1;
+      if (data[63] & (1 << 2)) drive->supported_dma_mode = 2;
+
+      if (data[64] & 1)        drive->supported_pio_mode = 3;
       if (data[64] & (1 << 1)) drive->supported_pio_mode = 4;
-      else if (data[64] & 1)   drive->supported_pio_mode = 3;
     }
+
+    drive->major_version = data[80];
+    drive->minor_version = data[81];
   }
 
   list_insert_tail(&bus->drives, drive, ata_bus_link);
