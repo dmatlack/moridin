@@ -15,17 +15,17 @@
 
 void ata_print_drive(struct ata_drive *drive) {
   if (!drive->exists) {
-    INFO("ATA %s: does not exist ",
-         drive->select == ATA_SELECT_MASTER ? "master" : "slave");
+    INFO("ATA %s Drive: does not exist ",
+         drive->select == ATA_SELECT_MASTER ? "Master" : "Slave");
   }
   else if (!drive->usable) {
-    INFO("ATA %s: unusable because of type %s", 
-         drive->select == ATA_SELECT_MASTER ? "master" : "slave",
+    INFO("ATA %s Drive: unusable because of type %s", 
+         drive->select == ATA_SELECT_MASTER ? "Master" : "Slave",
          drive_type_string(drive->type));
   }
   else {
-    INFO("ATA %s: %s",
-         drive->select == ATA_SELECT_MASTER ? "master" : "slave",
+    INFO("ATA %s Drive: %s",
+         drive->select == ATA_SELECT_MASTER ? "Master" : "Slave",
          drive_type_string(drive->type));
   }
 
@@ -344,6 +344,26 @@ int ata_bus_add_drive(struct ata_bus *bus, uint8_t drive_select) {
 }
 
 /**
+ * @brief Free all memory held by an ata_drive.
+ */
+void ata_free_drive(struct ata_drive *d) {
+  kfree(d, sizeof(struct ata_drive));
+}
+
+/**
+ * @brief Free all memory held by an ata_bus.
+ */
+void ata_free_bus(struct ata_bus *bus) {
+  struct ata_drive *d;
+
+  list_foreach(d, &bus->drives, ata_bus_link) {
+    ata_free_drive(d);
+  }
+
+  kfree(bus, sizeof(struct ata_bus));
+}
+
+/**
  * @brief Probe an ATA bus for devices.
  *
  * This function is intended to be called by the IDE code. The IDE code knows
@@ -351,12 +371,12 @@ int ata_bus_add_drive(struct ata_bus *bus, uint8_t drive_select) {
  * expected to pass these values in for each ATA bus it knows about (2 in the
  * case of PIIX), and this function will probe the bus for devices.
  *
- * Upon successful compeletion, the <busp> parameter will reference a populated
+ * Upon successful compeletion, the <bus> parameter will point to a populated
  * ata_bus struct which contains a list of ATA devices which may be useful to
  * the caller.
  *
  * @return
- *    ENOMEM if 
+ *    ENOMEM if there is not enough memory
  *
  *    0 success: otherwise (even if there is issues with the drives, we will
  *      still return success. the caller is expected to look at the ata_drive's
@@ -388,6 +408,6 @@ int ata_new_bus(struct ata_bus *bus, unsigned cmd_block, unsigned ctl_block) {
   return 0;
 
 free_and_return:
-  kfree(bus, sizeof(struct ata_bus));
+  ata_free_bus(bus);
   return ret;
 }
