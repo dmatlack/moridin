@@ -37,9 +37,12 @@ void ata_print_drive(struct ata_drive *drive) {
     DEBUG("    sectors:            %d", drive->sectors);
     DEBUG("    sectors / block:    %d", drive->sectors_per_block);
     DEBUG("    Supported DMA Mode: %d", drive->supported_dma_mode);
+    DEBUG("    Selected DMA Mode:  %d", drive->dma_mode);
     DEBUG("    Supported PIO Mode: %d", drive->supported_pio_mode);
     DEBUG("    Major Version:      0x%04x", drive->major_version);
     DEBUG("    Minor Version:      0x%04x", drive->minor_version);
+    DEBUG("    DMA Min Cylce Time: %d ns", drive->dma_min_nano);
+    DEBUG("    DMA Cylce Time:     %d ns", drive->dma_nano);
   }
 #endif
 }
@@ -323,15 +326,24 @@ int ata_bus_add_drive(struct ata_bus *bus, uint8_t drive_select) {
     /*
      * Check if the drive supports PIO, DMA
      */
+    drive->dma_nano = -1;
+    drive->dma_min_nano = -1;
+    drive->dma_mode = ATA_DMA_NOT_SUPPORTED;
     drive->supported_dma_mode = ATA_DMA_NOT_SUPPORTED;
     drive->supported_pio_mode = ATA_PIO_NOT_SUPPORTED;
     if ((data[53] & (1 << 1))) {
-      if (data[63] & 1)        drive->supported_dma_mode = 0;
-      if (data[63] & (1 << 1)) drive->supported_dma_mode = 1;
-      if (data[63] & (1 << 2)) drive->supported_dma_mode = 2;
+      if (data[63] & 1)         drive->supported_dma_mode = 0;
+      if (data[63] & (1 << 1))  drive->supported_dma_mode = 1;
+      if (data[63] & (1 << 2))  drive->supported_dma_mode = 2;
+      if (data[63] & (1 << 8))  drive->dma_mode = 0;
+      if (data[63] & (1 << 9))  drive->dma_mode = 1;
+      if (data[63] & (1 << 10)) drive->dma_mode = 2;
 
-      if (data[64] & 1)        drive->supported_pio_mode = 3;
-      if (data[64] & (1 << 1)) drive->supported_pio_mode = 4;
+      if (data[64] & 1)         drive->supported_pio_mode = 3;
+      if (data[64] & (1 << 1))  drive->supported_pio_mode = 4;
+
+      drive->dma_min_nano = data[65];
+      drive->dma_nano = data[66];
     }
 
     drive->major_version = data[80];

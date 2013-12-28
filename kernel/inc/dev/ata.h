@@ -161,6 +161,9 @@ struct ata_drive {
   int supported_pio_mode;
 #define ATA_DMA_NOT_SUPPORTED -1
   int supported_dma_mode;
+  int dma_mode;
+  int dma_min_nano;
+  int dma_nano;
 
   /*
    * number of sectors per block supported by READ/WRITE MULTIPLE command
