@@ -109,14 +109,11 @@ struct ata_signature {
 };
 
 struct ata_bus {
-  /*
-   * All the drives on an ATA bus share the same I/O ports, but the system
-   * can choose between drives using the ATA_CMD_DRIVE command.
-   */
-  unsigned cmd_block;
-  unsigned ctl_block;
-
   bool exists;
+
+  int irq;
+  unsigned cmd;
+  unsigned ctl;
 
   struct ata_drive *master;
   struct ata_drive *slave;
@@ -173,7 +170,8 @@ struct ata_drive {
   struct ata_bus *bus;
 };
 
-int ata_new_bus(struct ata_bus *busp, unsigned cmd_block, unsigned ctl_block);
 void ata_print_drive(struct ata_drive *drive);
+
+int ata_new_bus(struct ata_bus *bus, int irq, int cmd, int ctl);
 
 #endif /* !__DEV_ATA_H__ */

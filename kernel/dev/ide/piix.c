@@ -33,46 +33,6 @@ struct pci_device_driver __piix_ide_driver = {
   .new_device = piix_ide_device_init,
 };
 
-
-/**
- * @brief Initialize the ATA buses and drives conntected to our IDE
- * controller.
- *
- * @return non-zero error if the ata subsystem cannot be initialized
- */
-static int piix_ata_init(struct piix_ide_device *ide_d) {
-  int ret, i;
-
-  /*
-   * PIIX has 2 ATA buses: Primary and Secondary
-   */
-  if (0 != (ret = ata_new_bus(ide_d->ata + 0, 
-                              PRIMARY_CMD_BLOCK_OFFSET, 
-                              PRIMARY_CTL_BLOCK_OFFSET))) {
-    WARN("ata_new_bus error: %s", strerr(ret));
-    return ret;
-  }
-
-  if (0 != (ret = ata_new_bus(ide_d->ata + 1, 
-                              SECONDARY_CMD_BLOCK_OFFSET, 
-                              SECONDARY_CTL_BLOCK_OFFSET))) {
-    WARN("ata_new_bus error: %s", strerr(ret));
-    return ret;
-  }
-
-  for (i = 0; i < 2; i++) {
-    struct ata_bus *bus = ide_d->ata + i;
-
-    INFO("ATA Bus %d (cmd=0x%03x, ctl=0x%03x): %s", i, bus->cmd_block,
-          bus->ctl_block, bus->exists ? "" : "does not exist");
-
-    ata_print_drive(bus->master);
-    ata_print_drive(bus->slave);
-  }
-
-  return 0;
-}
-
 /**
  * @brief Initialize new IDE device from a PCI device.
  *
@@ -82,7 +42,8 @@ static int piix_ata_init(struct piix_ide_device *ide_d) {
  *    ENOMEM if the driver ran out of memory
  */
 int piix_ide_device_init(struct pci_device *pci_d) {
-  struct piix_ide_device *ide_d;
+  struct piix_ide_device *piix_d;
+  unsigned bm_base_addr;
   int ret;
 
   TRACE("pci_d=%p", pci_d);
@@ -102,37 +63,61 @@ int piix_ide_device_init(struct pci_device *pci_d) {
   /*
    * Make sure this device has not already been added
    */
-  list_foreach(ide_d, &__piix_ide_devices, piix_link) {
-    if (ide_d->pci_d == pci_d) {
+  list_foreach(piix_d, &__piix_ide_devices, piix_link) {
+    if (piix_d->pci_d == pci_d) {
       return EEXIST;
     }
   }
 
-  ide_d = kmalloc(sizeof(struct piix_ide_device));
-  if (NULL == ide_d) {
+  piix_d = kmalloc(sizeof(struct piix_ide_device));
+  if (NULL == piix_d) {
     return ENOMEM;
   }
 
-  ide_d->pci_d = pci_d;
+  piix_d->pci_d = pci_d;
 
   /*
-   * BAR 4 of the PCI configuration space holds the Bus Master Interface
-   * Base Address (BMIBA).
+   * BAR 4 of the PCI configuration space holds the bus master base address
    */
-  ide_d->BMIBA = pci_config_ind(pci_d, PCI_BAR4) & ~MASK(2);
-  DEBUG("Bus Master Base Address: 0x%08x", ide_d->BMIBA);
+  bm_base_addr = pci_config_ind(pci_d, PCI_BAR4) & ~MASK(2);
 
-  list_elem_init(ide_d, piix_link);
+  /*
+   * Initialize the primary IDE controller
+   */
+  piix_d->primary_bm.cmd     = bm_base_addr + PCI_BM_PRIMARY + PCI_BM_CMD;
+  piix_d->primary_bm.status  = bm_base_addr + PCI_BM_PRIMARY + PCI_BM_STATUS;
+  piix_d->primary_bm.pdtable = bm_base_addr + PCI_BM_PRIMARY + PCI_BM_PDTABLE;
   
-  if (0 != (ret = piix_ata_init(ide_d))) {
-    kfree(ide_d, sizeof(struct piix_ide_device));
-    return ret;
+  ret = ata_new_bus(&piix_d->primary_ata,
+     PIIX_PRIMARY_IRQ, PIIX_PRIMARY_ATA_CMD, PIIX_PRIMARY_ATA_CTL);
+
+  if (0 != ret) {
+    ERROR("ata_new_bus error: %s", strerr(ret));
+    goto piix_init_device_cleanup;
   }
 
   /*
-   * If we made it this far, we successfully initialized our device. So add it
-   * to the global list and return success
+   * Initialize the secondary IDE controller
    */
-  list_insert_tail(&__piix_ide_devices, ide_d, piix_link);
+  piix_d->secondary_bm.cmd     = bm_base_addr + PCI_BM_SECONDARY + PCI_BM_CMD;
+  piix_d->secondary_bm.status  = bm_base_addr + PCI_BM_SECONDARY + PCI_BM_STATUS;
+  piix_d->secondary_bm.pdtable = bm_base_addr + PCI_BM_SECONDARY + PCI_BM_PDTABLE;
+
+  ret = ata_new_bus(&piix_d->secondary_ata,
+     PIIX_SECONDARY_IRQ, PIIX_SECONDARY_ATA_CMD, PIIX_SECONDARY_ATA_CTL);
+
+  if (0 != ret) {
+    ERROR("ata_new_bus error: %s", strerr(ret));
+    goto piix_init_device_cleanup;
+  }
+
+
+
+  list_elem_init(piix_d, piix_link);
+  list_insert_tail(&__piix_ide_devices, piix_d, piix_link);
   return 0;
+
+piix_init_device_cleanup:
+  kfree(piix_d, sizeof(struct piix_ide_device));
+  return ret;
 }

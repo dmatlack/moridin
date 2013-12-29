@@ -186,6 +186,116 @@ void pci_config_outd(struct pci_device *d, int offset, uint32_t data);
 void pci_config_outw(struct pci_device *d, int offset, uint16_t data);
 void pci_config_outb(struct pci_device *d, int offset, uint8_t  data);
 
+/******************************************************************************
+ *
+ * PCI Bus Master IDE I/O Registers
+ *
+ * This is a 16-byte I/O space, pointed to by the BMIBA. Each value below
+ * is an offset from the BMIBA. All bus master IDE I/O space registers can
+ * be accessed as byte, word, or dword quantities.
+ *
+ ******************************************************************************/
+#define PCI_BM_PRIMARY   0x00
+#define PCI_BM_SECONDARY 0x08
+
+/*
+ * Bus Master IDE Primary Command (BMICOM)
+ *
+ *  7 - 4    | 3     | 2 - 1    | 0
+ *  RESERVED | RWCON | RESERVED | SSBM
+ *
+ *    RCWON: Bus Master Read/Write Control. 0=Reads, 1=Writes. This bit must
+ *      not be changed when the bus master function is active.
+ *
+ *    SSBM: Start/Stop Bus Master. 0=Stop, 1=Start. When this bit is set to 1,
+ *      the bus master operation starts. The controller transfers data between
+ *      the IDE device and memory only when this bit is set. Bust master can 
+ *      be stopped by setting this bit to 1 but all information will be lost.
+ *
+ *      If this bit is set to 0 while the bus master operation is still active
+ *      (i.e. bit 0 is 1 in the status register) and the drive has not yet
+ *      finished the data transfer (bit 2 is 0 in status register), the bus
+ *      master command is aborted. This bit is intended to be set to 0 after the
+ *      data transfer is competed, as indicated by either bit 0 or bit 2 being set
+ *      in the status register.
+ *
+ * NOTE: The register is READ/WRITE.
+ */
+#define PCI_BM_CMD 0x00
+
+/*
+ * Bus Master IDE Status Register (BMISTA)
+ *
+ *  7        | 6       | 5       | 4 - 3    | 2          | 1         | 0
+ *  RESERVED | DMA1CAP | DMA0CAP | RESERVED | IRQ STATUS | DMA ERROR | BMIDEA
+ *    
+ *    DMA{0,1}CAP: Drive X DMA Capable. 1=Drive X is capable of DMA transfers.
+ *      This bit is sofware controlled (R/W) and does not affect hardware
+ *      operation.
+ *
+ *    IRQ STATUS: This bit, when set to 1, indicates when an IDE has asserted
+ *      its interrupt line. When bit 2=1 and bit 0=0 (BMIDEA), all read data
+ *      from the IDE device has been transferred to main memory and all write
+ *      data has been transferred to the IDE device.
+ *
+ *      Software sets this bit to 0 by writing a 1 to it. (?????????????)
+ *
+ *      If this bit is set to 0 (by writing a 1), it will stay 0 until the
+ *      next interrupt arrives.
+ *
+ *    DMA ERROR: 1=PIIX/PIIX3 encountered a target abort or master abort while
+ *      transferring data on the PCI Bus.
+ *
+ *      Software set this bit to 0 by writing a 1 to it.
+ *    
+ *    BMIDEA: Bus Master IDE Active (Read-Only). The PIIX/PIIX3 sets this bit
+ *      to 1 when bit 0 on the BMICOM register is set to 1. The PIIX/PIIX3 sets
+ *      this bit to 0 when the laster transfer for a region is performed (where
+ *      EOT for that region is set in the region descriptor). The PIIX/3 also
+ *      sets this bit to 0 when bit 0 of the BMICOM register is set to 0 (FORCE
+ *      ABORT) or when the bit 1 of this register is set to 1 (DMA ERROR).
+ *
+ * Interrupt/Activity Scenarios
+ *
+ *    IRQ STATUS | BMIDEA | Description
+ *    -------------------------------------------------------------------------
+ *      0           1       DMA transfer is in progress. No interrupt.
+ *
+ *      1           0       IDE device generated an interrupt and the physical
+ *                          region descriptors exhausted. This indicates normal
+ *                          completion where the size of the physical memory
+ *                          regions is equal to the IDE device transfer size.
+ *
+ *      1           1       IDE device generated an interrupt. The controller
+ *                          has not reached the end of the end of the physical
+ *                          memory regions. This is valid completion when the
+ *                          size of the memroy regions is larger than the IDE
+ *                          device transfer size.
+ *
+ *      0           0       Error condition. If the IDE DMA error bit is set to
+ *                          1, there is a problem.
+ */
+#define PCI_BM_STATUS 0x02
+
+/*
+ * Bus Master IDE Descriptor Table Pointer Register (BMIDTP)
+ *
+ * This register provides the base memory address of the descriptor table. The
+ * descriptor table must be dword aligned and not cross a 4 KB boundary in
+ * memory.
+ *
+ * 31 - 2                         | 1 - 0
+ * Descriptor table base address  | RESERVED
+ *
+ */
+#define PCI_BM_PDTABLE 0x04
+
+struct pci_bus_master {
+  unsigned cmd;
+  unsigned status;
+  unsigned pdtable;
+};
+
 /*
  * A struct that can identify a set of devices. Used to match device drivers
  * to the devices they want to drive.
