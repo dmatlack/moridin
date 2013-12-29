@@ -413,7 +413,7 @@ int pci_init(void) {
   TRACE();
 
   list_init(&__pci_devices);
-  list_init(&__pci_devices);
+  list_init(&__pci_drivers);
 
   __pci_root = kmalloc(sizeof(struct pci_bus));
   if (NULL == __pci_root) {
