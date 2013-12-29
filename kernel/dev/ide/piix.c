@@ -62,14 +62,12 @@ static int piix_ata_init(struct piix_ide_device *ide_d) {
 
   for (i = 0; i < 2; i++) {
     struct ata_bus *bus = ide_d->ata + i;
-    struct ata_drive *drive;
 
     INFO("ATA Bus %d (cmd=0x%03x, ctl=0x%03x): %s", i, bus->cmd_block,
           bus->ctl_block, bus->exists ? "" : "does not exist");
 
-    list_foreach(drive, &bus->drives, ata_bus_link) {
-      ata_print_drive(drive);
-    }
+    ata_print_drive(bus->master);
+    ata_print_drive(bus->slave);
   }
 
   return 0;

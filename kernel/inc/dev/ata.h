@@ -29,7 +29,6 @@
 #ifndef __DEV_ATA_H__
 #define __DEV_ATA_H__
 
-#include <list.h>
 #include <types.h>
 #include <stdint.h>
 
@@ -101,9 +100,6 @@ static inline const char *drive_type_string(enum ata_drive_type type) {
 #undef DT
 }
 
-struct ata_drive;
-list_typedef(struct ata_drive) ata_drive_list_t;
-
 struct ata_signature {
   uint8_t sector_count;
   uint8_t lba_low;
@@ -122,7 +118,8 @@ struct ata_bus {
 
   bool exists;
 
-  ata_drive_list_t drives;
+  struct ata_drive *master;
+  struct ata_drive *slave;
 };
 
 struct ata_drive {
@@ -174,7 +171,6 @@ struct ata_drive {
   uint16_t minor_version;
 
   struct ata_bus *bus;
-  list_link(struct ata_drive) ata_bus_link;
 };
 
 int ata_new_bus(struct ata_bus *busp, unsigned cmd_block, unsigned ctl_block);

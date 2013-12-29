@@ -10,6 +10,7 @@
 #include <kernel.h>
 #include <errno.h>
 #include <debug.h>
+#include <string.h>
 
 #include <arch/x86/io.h>
 
@@ -197,9 +198,6 @@ int ata_identify(struct ata_drive *drive, uint16_t data[256]) {
 
 /**
  * @brief Allocate and initialize a struct ata_drive.
- *
- * (The "initialization" here is just to set some default values and init
- * the <list.h> elements of the struct.)
  */
 int ata_drive_create(struct ata_drive **drivep) {
   struct ata_drive *drive;
@@ -209,11 +207,11 @@ int ata_drive_create(struct ata_drive **drivep) {
     return ENOMEM;
   }
 
+  memset(drive, 0, sizeof(struct ata_drive));
+
   drive->bus = NULL;
   drive->type = ATA_UNKNOWN;
   drive->exists = false;
-
-  list_elem_init(drive, ata_bus_link);
 
   return 0;
 }
@@ -271,6 +269,14 @@ int ata_bus_add_drive(struct ata_bus *bus, uint8_t drive_select) {
 
   drive->select = drive_select;
   drive->bus = bus;
+
+  if (ATA_SELECT_MASTER == drive_select) {
+    bus->master = drive;
+  }
+  else {
+    ASSERT_EQUALS(ATA_SELECT_SLAVE, drive_select);
+    bus->slave = drive;
+  }
 
   /*
    * We will be using polling at first, so disable IRQs for now
@@ -350,8 +356,6 @@ int ata_bus_add_drive(struct ata_bus *bus, uint8_t drive_select) {
     drive->minor_version = data[81];
   }
 
-  list_insert_tail(&bus->drives, drive, ata_bus_link);
-
   return 0;
 }
 
@@ -366,11 +370,9 @@ void ata_free_drive(struct ata_drive *d) {
  * @brief Free all memory held by an ata_bus.
  */
 void ata_free_bus(struct ata_bus *bus) {
-  struct ata_drive *d;
 
-  list_foreach(d, &bus->drives, ata_bus_link) {
-    ata_free_drive(d);
-  }
+  if (bus->master) ata_free_drive(bus->master);
+  if (bus->slave) ata_free_drive(bus->slave);
 
   kfree(bus, sizeof(struct ata_bus));
 }
@@ -382,10 +384,6 @@ void ata_free_bus(struct ata_bus *bus) {
  * where the ATA I/O ports are (<cmd_block> and <ctl_block>). The IDE is 
  * expected to pass these values in for each ATA bus it knows about (2 in the
  * case of PIIX), and this function will probe the bus for devices.
- *
- * Upon successful compeletion, the <bus> parameter will point to a populated
- * ata_bus struct which contains a list of ATA devices which may be useful to
- * the caller.
  *
  * @return
  *    ENOMEM if there is not enough memory
@@ -399,16 +397,18 @@ int ata_new_bus(struct ata_bus *bus, unsigned cmd_block, unsigned ctl_block) {
 
   TRACE("bus=%p, cmd_block=0x%03x, ctl_block=0x%03x", bus, cmd_block, ctl_block);
 
+  memset(bus, 0, sizeof(struct ata_bus));
+
   if (!does_ata_bus_exist(cmd_block)) {
     bus->exists = false;
     return 0;
   }
-  bus->exists = true;
 
+  bus->exists = true;
   bus->cmd_block = cmd_block;
   bus->ctl_block = ctl_block;
-
-  list_init(&bus->drives);
+  bus->master = NULL;
+  bus->slave = NULL;
 
   if (0 != (ret = ata_bus_add_drive(bus, ATA_SELECT_MASTER))) {
     goto free_and_return;
