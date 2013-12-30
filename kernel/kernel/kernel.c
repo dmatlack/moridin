@@ -16,10 +16,6 @@
 
 #include <dev/pci.h>
 
-#include <arch/x86/irq.h>
-
-extern struct irq_state *__irqs;
-
 void kernel_main() {
 
   /*
@@ -73,6 +69,7 @@ void kernel_main() {
     "\n"
     "          J.R.R. Tolkien\n"
     "\n");
+
 
   enable_irqs();
 
