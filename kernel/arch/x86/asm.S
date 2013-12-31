@@ -18,8 +18,8 @@ outw:
 	out %ax, %dx
 	ret
 
-.global outd
-outd:
+.global outl
+outl:
 	movw 4(%esp), %dx
 	movl 8(%esp), %eax
 	out %eax, %dx
@@ -39,8 +39,8 @@ inw:
 	in %dx, %ax
 	ret
 
-.global ind
-ind:
+.global inl
+inl:
 	xorl %eax, %eax
 	movw 4(%esp), %dx
 	in %dx, %eax

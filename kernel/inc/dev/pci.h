@@ -178,11 +178,11 @@ struct pci_device {
 #define PCI_MIN_GRANT           0x3E
 #define PCI_MAX_LATENCY         0x3F
 
-uint32_t pci_config_ind(struct pci_device *d, int offset);
+uint32_t pci_config_inl(struct pci_device *d, int offset);
 uint16_t pci_config_inw(struct pci_device *d, int offset);
 uint8_t  pci_config_inb(struct pci_device *d, int offset);
 
-void pci_config_outd(struct pci_device *d, int offset, uint32_t data);
+void pci_config_outl(struct pci_device *d, int offset, uint32_t data);
 void pci_config_outw(struct pci_device *d, int offset, uint16_t data);
 void pci_config_outb(struct pci_device *d, int offset, uint8_t  data);
 

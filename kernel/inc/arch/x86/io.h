@@ -16,7 +16,7 @@ void outw(uint16_t port, uint16_t val);
 /** 
  * @brief write 4 byte the given port 
  */
-void outd(uint16_t port, uint32_t val);
+void outl(uint16_t port, uint32_t val);
 
 /**
  * @brief read 1 byte from the given port 
@@ -29,7 +29,7 @@ uint16_t inw(uint16_t port);
 /** 
  * @brief read 4 byte from the given port 
  */
-uint32_t ind(uint16_t port);
+uint32_t inl(uint16_t port);
 
 // Delay 1/8 microsecond
 void iodelay(void);

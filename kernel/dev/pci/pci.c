@@ -33,50 +33,50 @@ extern struct pci_device_driver __piix_ide_driver;
    ((func) << 8)    | \
    ((offset) & (MASK(6) << 2)))
 
-uint32_t pci_config_ind(struct pci_device *d, int offset) {
+uint32_t pci_config_inl(struct pci_device *d, int offset) {
   uint32_t config;
 
   config = PCI_CONFIG(d->bus, d->device, d->func, offset);
-  outd(CONFIG_ADDRESS, config);
+  outl(CONFIG_ADDRESS, config);
 
-  return ind(CONFIG_DATA);
+  return inl(CONFIG_DATA);
 }
 
 uint16_t pci_config_inw(struct pci_device *d, int offset) {
   uint32_t data;
-  data = pci_config_ind(d, offset);
+  data = pci_config_inl(d, offset);
   return (data >> ((offset % 4) * 8)) & 0xFFFF;
 }
 
 uint8_t pci_config_inb(struct pci_device *d, int offset) {
   uint32_t data;
-  data = pci_config_ind(d, offset);
+  data = pci_config_inl(d, offset);
   return (data >> ((offset % 4) * 8)) & 0xFF;
 }
 
-void pci_config_outd(struct pci_device *d, int offset, uint32_t data) {
+void pci_config_outl(struct pci_device *d, int offset, uint32_t data) {
   uint32_t config;
 
   config = PCI_CONFIG(d->bus, d->device, d->func, offset);
-  outd(CONFIG_ADDRESS, config);
-  outd(CONFIG_DATA, data);
+  outl(CONFIG_ADDRESS, config);
+  outl(CONFIG_DATA, data);
 }
 
 void pci_config_outw(struct pci_device *d, int offset, uint16_t data) {
   uint32_t dword;
 
-  dword = pci_config_ind(d, offset);
+  dword = pci_config_inl(d, offset);
   set_byte(&dword, offset % 4, data & 0xFF);
   set_byte(&dword, (offset+1) % 4, (data >> 8) & 0xFF);
-  pci_config_outd(d, offset, dword);
+  pci_config_outl(d, offset, dword);
 }
 
 void pci_config_outb(struct pci_device *d, int offset, uint8_t data) {
   uint32_t dword;
 
-  dword = pci_config_ind(d, offset);
+  dword = pci_config_inl(d, offset);
   set_byte(&dword, offset % 4, data & 0xFF);
-  pci_config_outd(d, offset, dword);
+  pci_config_outl(d, offset, dword);
 }
 
 /**
@@ -121,16 +121,16 @@ void pci_device_config_readall(struct pci_device *d) {
   d->cache_line_size = pci_config_inb(d, PCI_CACHE_LINE_SIZE);
 
   if (d->header_type == 0x00) {
-    d->bar0                = pci_config_ind(d, PCI_BAR0);
-    d->bar1                = pci_config_ind(d, PCI_BAR1);
-    d->bar2                = pci_config_ind(d, PCI_BAR2);
-    d->bar3                = pci_config_ind(d, PCI_BAR3);
-    d->bar4                = pci_config_ind(d, PCI_BAR4);
-    d->bar5                = pci_config_ind(d, PCI_BAR5);
-    d->cardbus_cis_pointer = pci_config_ind(d, PCI_CARDBUS_CIS_POINTER);
+    d->bar0                = pci_config_inl(d, PCI_BAR0);
+    d->bar1                = pci_config_inl(d, PCI_BAR1);
+    d->bar2                = pci_config_inl(d, PCI_BAR2);
+    d->bar3                = pci_config_inl(d, PCI_BAR3);
+    d->bar4                = pci_config_inl(d, PCI_BAR4);
+    d->bar5                = pci_config_inl(d, PCI_BAR5);
+    d->cardbus_cis_pointer = pci_config_inl(d, PCI_CARDBUS_CIS_POINTER);
     d->subsystem_id        = pci_config_inw(d, PCI_SUBSYSTEM_ID);
     d->subsystem_vendor_id = pci_config_inw(d, PCI_SUBSYSTEM_VENDOR_ID);
-    d->expansion_rom       = pci_config_ind(d, PCI_EXPANSION_ROM);
+    d->expansion_rom       = pci_config_inl(d, PCI_EXPANSION_ROM);
     d->capabilities        = pci_config_inb(d, PCI_CAPABILITIES);
     d->max_latency         = pci_config_inb(d, PCI_MAX_LATENCY);
     d->min_grant           = pci_config_inb(d, PCI_MIN_GRANT);

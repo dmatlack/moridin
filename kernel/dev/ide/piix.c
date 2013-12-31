@@ -79,7 +79,7 @@ int piix_ide_device_init(struct pci_device *pci_d) {
   /*
    * BAR 4 of the PCI configuration space holds the bus master base address
    */
-  bm_base_addr = pci_config_ind(pci_d, PCI_BAR4) & ~MASK(2);
+  bm_base_addr = pci_config_inl(pci_d, PCI_BAR4) & ~MASK(2);
 
   /*
    * Initialize the primary IDE controller
