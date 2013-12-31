@@ -10,6 +10,7 @@
 #include <debug/bochs.h>
 #include <debug.h>
 #include <kernel/kprintf.h>
+#include <dev/serial.h>
 
 struct printf_state dprintf_state;
 

@@ -14,14 +14,21 @@
 #include <mm/vm.h>
 #include <mm/physmem.h>
 
+#include <dev/serial.h>
 #include <dev/pci.h>
 
 void kernel_main() {
   /*
-   * Debug Logging
+   * Serial Port (needed for logging)
    */
-  SUCCEED_OR_DIE(log_init(dputchar, LOG_LEVEL_DEBUG));
+  SUCCEED_OR_DIE(serial_init());
 
+  /*
+   * Logging
+   */
+  if (log_init(dputchar, LOG_LEVEL_DEBUG, LOG_TO_SERIAL_PORT)) {
+    kprintf("ERROR: Unable to reserve a serial port for logging.\n");
+  }
   TRACE_ON;
 
   /*

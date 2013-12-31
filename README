@@ -64,7 +64,7 @@ Run
 
   To run the kernel with qemu, emulating 1GB of memory, run: 
 
-    $ qemu-system-i386 <ISO> -m 1024
+    $ qemu-system-i386 -m 1024 OS.iso -serial stdio
 
 Thanks
 -------------------------------------------------------------------------------

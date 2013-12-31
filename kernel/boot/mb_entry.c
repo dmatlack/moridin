@@ -46,13 +46,11 @@ void mb_entry(unsigned int mb_magic, struct multiboot_info *mb_info) {
           MULTIBOOT_BOOTLOADER_MAGIC, mb_magic);
   }
 
+  mb_dump(dprintf, mb_info);
+
   /* 
    * initialize the x86 exception handling facilities and install the kernel's
    * exception handler
-   *
-   * FIXME somehow implement machine independent exception handlers. this will
-   * have to be put off for a while though (until we know exactly what registers
-   * each handler needs to do what it needs to do.
    */
   if (x86_exn_init(mb_exn_handler)) {
     panic("Unable to install x86 exception handlers.\n");
