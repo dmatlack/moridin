@@ -9,7 +9,7 @@
 #include <debug.h>
 #include <errno.h>
 #include <kernel.h>
-#include <arch/x86/io.h>
+#include <kernel/io.h>
 #include <types.h>
 #include <stddef.h>
 

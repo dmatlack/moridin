@@ -17,7 +17,6 @@
 #include <dev/pci.h>
 
 void kernel_main() {
-
   /*
    * Debug Logging
    */

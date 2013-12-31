@@ -12,7 +12,7 @@
 #include <debug.h>
 #include <string.h>
 
-#include <arch/x86/io.h>
+#include <kernel/io.h>
 
 void ata_print_drive(struct ata_drive *drive) {
   if (!drive->exists) {

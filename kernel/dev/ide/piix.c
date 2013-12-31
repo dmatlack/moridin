@@ -9,7 +9,7 @@
 #include <debug.h>
 #include <assert.h>
 #include <kernel.h>
-#include <arch/x86/io.h>
+#include <kernel/io.h>
 
 piix_ide_device_list_t __piix_ide_devices;
 

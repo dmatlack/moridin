@@ -6,7 +6,7 @@
  * @author David Matlack
  */
 #include <dev/vga.h>
-#include <arch/x86/io.h>
+#include <kernel/io.h>
 
 #define OFFSET(row, col) ((row)*(VGA_COLS) + (col))
 #define ROW(offset)      ((offset)/(VGA_COLS))
