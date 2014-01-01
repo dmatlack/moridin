@@ -67,6 +67,10 @@ int pmem_bootstrap(size_t max_mem, size_t page_size,
   PMEM_ZONE_USER->size = umem_size;
   PMEM_ZONE_USER->dbgstr = "PMEM_ZONE_USER";
 
+  kprintf("Physical Memory: %d MB (kernel=%d MB, user=%d MB)\n",
+          max_mem / MB(1), PMEM_ZONE_KERNEL->size / MB(1),
+          PMEM_ZONE_USER->size / MB(1));
+
   return 0;
 }
 

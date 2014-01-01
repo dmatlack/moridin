@@ -51,6 +51,8 @@
  *   Bit 7       Blinking or background intensity
  *
  */
+#define VGA_COLOR(fg, bg) (fg | (bg << 4))
+
 #define VGA_BLACK      0x0
 #define VGA_BLUE       0x1
 #define VGA_GREEN      0x2

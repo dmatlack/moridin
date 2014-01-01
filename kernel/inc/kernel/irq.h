@@ -53,6 +53,22 @@ struct irq_handler {
 
 list_typedef(struct irq_handler) irq_handler_list_t;
 
+struct irq_state {
+  /**
+   * @brief The list of handlers that are register to receive this interrupt.
+   */
+  irq_handler_list_t handlers;
+  /**
+   * @brief The number of times this interrupt has occured.
+   */
+  int count;
+  /**
+   * @brief Incremented upon receiving an interrupt, decremented after all
+   * handlers have been run.
+   */
+  int in_irq;
+};
+
 int irq_init(void);
 void generate_irq(int irq);
 void handle_irq(int irq);

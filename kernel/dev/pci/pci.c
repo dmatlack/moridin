@@ -408,6 +408,7 @@ int pci_register_driver(struct pci_device_driver *driver) {
  *    0 otherwise
  */
 int pci_init(void) {
+  struct pci_device *d;
   int ret;
 
   TRACE();
@@ -434,11 +435,18 @@ int pci_init(void) {
 
   lspci();
 
+  kprintf("PCI: \n");
+  list_foreach(d, &__pci_devices, global_link) {
+    kprintf("    %02x:%02x.%02x %s, %s, %s\n",
+       d->bus, d->device, d->func,
+       d->device_desc, d->classcode_desc, d->subclass_desc);
+  }
   /*
    * register the default drivers
    */
   pci_register_driver(&__piix_ide_driver);
   //TODO add more drivers ...
+  
 
   return 0;
 }

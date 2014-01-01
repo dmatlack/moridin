@@ -36,10 +36,13 @@ extern void kernel_main(void);
  */
 void mb_entry(unsigned int mb_magic, struct multiboot_info *mb_info) {
 
-  if (vga_init()) {
-    panic("Unable to initialize the VGA device.\n");
-  }
+  vga_init();
+  vga_set_color(VGA_WHITE);
   kputchar_set(vga_putbyte);
+
+  kprintf("\n"
+          "Booting kernel...\n"
+          "\n");
 
   if (mb_magic != MULTIBOOT_BOOTLOADER_MAGIC) {
     panic("Multiboot magic (eax) incorrect: expected 0x%08x, got 0x%08x\n",

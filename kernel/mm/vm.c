@@ -26,7 +26,7 @@
 #include <errno.h>
 #include <debug.h>
 
-#include <kernel/kmalloc.h>
+#include <kernel.h>
 #include <stddef.h>
 #include <math.h>
 
@@ -73,7 +73,7 @@ int vm_bootstrap(void) {
   VM_ZONE_KERNEL->address  = 0;
   VM_ZONE_KERNEL->size     = CONFIG_KERNEL_VM_SIZE;
   VM_ZONE_USER->address    = CONFIG_KERNEL_VM_SIZE;
-  VM_ZONE_USER->size       = (size_t) 0 - PAGE_SIZE - VM_ZONE_USER->size;
+  VM_ZONE_USER->size       = (size_t) 0 - PAGE_SIZE - VM_ZONE_KERNEL->size;
 
   LOG_VM_ZONE(VM_ZONE_KERNEL);
   LOG_VM_ZONE(VM_ZONE_USER);
@@ -81,6 +81,17 @@ int vm_bootstrap(void) {
   if (0 != (ret = machine->bootstrap(PAGE_SIZE))) {
     return ret;
   }
+
+  kprintf("Virtual Memory:\n");
+  kprintf("    VM_ZONE_USER: [0x%08x, 0x%08x) (%d MB)\n",
+          VM_ZONE_USER->address, 
+          VM_ZONE_USER->address + VM_ZONE_USER->size,
+          VM_ZONE_USER->size / MB(1));
+
+  kprintf("    VM_ZONE_KERNEL: [0x%08x, 0x%08x) (%d MB)\n",
+          VM_ZONE_KERNEL->address, 
+          VM_ZONE_KERNEL->address + VM_ZONE_KERNEL->size,
+          VM_ZONE_KERNEL->size / MB(1));
 
   return 0;
 }

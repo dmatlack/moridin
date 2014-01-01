@@ -9,6 +9,8 @@
 #include <stdarg.h>      // for va_list, va_start, va_end
 #include <fmt/_printf.h> // for _vprintf
 
+#include <debug.h>
+
 // statically allocate the state for our kernel's printer
 struct printf_state kprintf_state;
 void (*__kputchar)(char c);
@@ -25,6 +27,8 @@ int kputchar(int c) {
 int kprintf(const char *fmt, ...) {
   va_list args;
   int err;
+
+  TRACE("fmt=\"%s\"", fmt);
 
   // here we specify our putchar method
   kprintf_state.putchar = kputchar;

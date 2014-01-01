@@ -15,22 +15,6 @@
 #include <list.h>
 #include <errno.h>
 
-struct irq_state {
-  /**
-   * @brief The list of handlers that are register to receive this interrupt.
-   */
-  irq_handler_list_t handlers;
-  /**
-   * @brief The number of times this interrupt has occured.
-   */
-  int count;
-  /**
-   * @brief Incremented upon receiving an interrupt, decremented after all
-   * handlers have been run.
-   */
-  int in_irq;
-};
-
 int __max_irqs;
 struct irq_state *__irqs;
 
@@ -97,20 +81,6 @@ void handle_irq(int irq) {
 
   state->in_irq--;
   acknowledge_irq(irq);
-
-  /*
-   * Print some info about interrupts on the bottom line of the console
-   */
-  {
-    int row,col;
-    int i;
-    vga_get_cursor(&row, &col);
-    vga_set_cursor(24, 0);
-    for (i = 0; i < 16; i++) { 
-      if (__irqs[i].count > 0) kprintf("%d:%d ", i, __irqs[i].count);
-    }
-    vga_set_cursor(row, col);
-  }
 }
 
 void register_irq(int irq, struct irq_handler *new_handler) {
@@ -119,11 +89,11 @@ void register_irq(int irq, struct irq_handler *new_handler) {
 
   list_elem_init(new_handler, link);
 
-  //TODO disable_interrupts
+  //TODO disable_interrupts spinlock
 
   list_insert_tail(&__irqs[irq].handlers, new_handler, link);
 
-  //TODO restore_interrupts
+  //TODO restore_interrupts spinlock
 }
 
 void enable_irqs(void) {

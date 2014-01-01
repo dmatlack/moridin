@@ -60,6 +60,8 @@ int piix_ide_device_init(struct pci_device *pci_d) {
           pci_d->bus, pci_d->device, pci_d->func,
           pci_d->device_id);
 
+  kprintf("PIIX IDE Controller:\n");
+
   /*
    * Make sure this device has not already been added
    */
@@ -111,13 +113,12 @@ int piix_ide_device_init(struct pci_device *pci_d) {
     goto piix_init_device_cleanup;
   }
 
-
-
   list_elem_init(piix_d, piix_link);
   list_insert_tail(&__piix_ide_devices, piix_d, piix_link);
   return 0;
 
 piix_init_device_cleanup:
+  kprintf("    error: %s", strerr(ret));
   kfree(piix_d, sizeof(struct piix_ide_device));
   return ret;
 }

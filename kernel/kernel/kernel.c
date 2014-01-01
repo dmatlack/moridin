@@ -14,8 +14,12 @@
 #include <mm/vm.h>
 #include <mm/physmem.h>
 
+#include <dev/vga.h>
 #include <dev/serial.h>
 #include <dev/pci.h>
+
+extern int __max_irqs;
+extern struct irq_state *__irqs;
 
 void kernel_main() {
   /*
@@ -63,25 +67,28 @@ void kernel_main() {
    */
   SUCCEED_OR_DIE(timer_init());
 
-  kprintf(
-    "\n"
-    "  All that is gold does not glitter,\n"
-    "  Not all those who wander are lost;\n"
-    "  The old that is strong does not wither,\n"
-    "  Deep roots are not reached by the frost.\n"
-    "\n"
-    "  From the ashes a fire shall be woken,\n"
-    "  A light from the shadows shall spring;\n"
-    "  Renewed shall be blade that was broken,\n"
-    "  The crownless again shall be king\n"
-    "\n"
-    "          J.R.R. Tolkien\n"
-    "\n");
-
-
   enable_irqs();
 
+  vga_set_color(VGA_COLOR(VGA_WHITE, VGA_BLUE));
+  vga_set_cursor(24, 0);
+  kprintf("                                                                               "); 
   while (1) {
-    continue;
+    // FIXME
+    //  Kernel Crash if you uncomment out the following lines!!!
+#if 0
+    int i;
+    vga_set_cursor(24, 0);
+    kprintf("IRQ: ");
+    for (i = 0; i < __max_irqs; i++) {
+      int count;
+     
+      disable_irqs();
+      count = __irqs[i].count;
+      if (count > 0) {
+        kprintf("%d: %d ", i, count);
+      }
+      enable_irqs();
+    }
+#endif
   }
 }

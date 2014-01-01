@@ -247,6 +247,15 @@ static void ata_read_identify_string(uint16_t *data, char *buffer,
     buffer[2*i + 1] = (word >> 0) & 0xff;
   }
 
+  /*
+   * ATA drives pad their strings with spaces. So find the last character
+   * that is not a space and add a null terminator to the string.
+   */
+  for (i = length - 1; i > 0; i--) {
+    if (buffer[i] != ' ') break;
+  }
+  buffer[i+1] = 0;
+
   buffer[length] = (char) 0;
 }
 
@@ -354,6 +363,11 @@ int ata_bus_add_drive(struct ata_bus *bus, uint8_t drive_select) {
 
     drive->major_version = data[80];
     drive->minor_version = data[81];
+  }
+
+  if (drive->exists && drive->usable) {
+    kprintf("    HDD: %s %s, %d MB\n", drive_type_string(drive->type),
+            drive->model, drive->sectors * 512 / MB(1));
   }
 
   return 0;
