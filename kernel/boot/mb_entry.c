@@ -21,6 +21,8 @@
 
 extern char __kernel_image_start[];
 extern char __kernel_image_end[];
+extern char boot_stack_top[];
+extern char boot_stack_bottom[];
 
 extern void kernel_main(void);
 
@@ -43,6 +45,8 @@ void mb_entry(unsigned int mb_magic, struct multiboot_info *mb_info) {
   kprintf("\n"
           "Booting kernel...\n"
           "\n");
+
+  kprintf("Kernel Boot Stack: [0x%08x, 0x%08x]\n", boot_stack_bottom, boot_stack_top);
 
   if (mb_magic != MULTIBOOT_BOOTLOADER_MAGIC) {
     panic("Multiboot magic (eax) incorrect: expected 0x%08x, got 0x%08x\n",

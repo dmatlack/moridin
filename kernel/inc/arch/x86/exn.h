@@ -106,6 +106,8 @@ struct __attribute__((__packed__)) x86_exn_args {
  */
 int x86_exn_init(void (*handler)(struct x86_exn_args *exn));
 
+void x86_exn_set_handler(void (*handler)(struct x86_exn_args *));
+
 /**
  * @brief The handler for all exceptions. This is NOT the handler installed
  * in the IDT for exceptions. Instead, all of those handlers call into this

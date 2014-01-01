@@ -140,6 +140,11 @@ set_cr4:
     movl %eax, %cr4
     ret
 
+.global get_esp
+get_esp:
+    movl %esp, %eax
+    ret
+
 .global __enable_interrupts
 __enable_interrupts:
   sti

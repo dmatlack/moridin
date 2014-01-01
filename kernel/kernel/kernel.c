@@ -10,6 +10,7 @@
 #include <kernel/kmalloc.h>
 #include <kernel/irq.h>
 #include <kernel/timer.h>
+#include <kernel/exn.h>
 
 #include <mm/vm.h>
 #include <mm/physmem.h>
@@ -18,10 +19,8 @@
 #include <dev/serial.h>
 #include <dev/pci.h>
 
-extern int __max_irqs;
-extern struct irq_state *__irqs;
-
 void kernel_main() {
+  
   /*
    * Serial Port (needed for debug logging)
    */
@@ -36,6 +35,11 @@ void kernel_main() {
    * Logging
    */
   SUCCEED_OR_DIE(log_init(debug_putchar, LOG_LEVEL_DEBUG));
+
+  /*
+   * Exception Handling
+   */
+  SUCCEED_OR_DIE(exn_init());
 
   /*
    * Virtual Memory Bootstrap
@@ -69,26 +73,7 @@ void kernel_main() {
 
   enable_irqs();
 
-  vga_set_color(VGA_COLOR(VGA_WHITE, VGA_BLUE));
-  vga_set_cursor(24, 0);
-  kprintf("                                                                               "); 
   while (1) {
-    // FIXME
-    //  Kernel Crash if you uncomment out the following lines!!!
-#if 0
-    int i;
-    vga_set_cursor(24, 0);
-    kprintf("IRQ: ");
-    for (i = 0; i < __max_irqs; i++) {
-      int count;
-     
-      disable_irqs();
-      count = __irqs[i].count;
-      if (count > 0) {
-        kprintf("%d: %d ", i, count);
-      }
-      enable_irqs();
-    }
-#endif
+    kprintf("CRASH!");
   }
 }

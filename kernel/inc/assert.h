@@ -7,6 +7,7 @@
 #define _ASSERT_H_
 
 #include <stddef.h>
+#include <debug.h>
 
 /**
  * @brief Print a message to the screen, disable interrupts, and then

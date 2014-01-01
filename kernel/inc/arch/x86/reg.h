@@ -25,9 +25,15 @@ struct __attribute__ ((__packed__)) x86_iret_stack {
   uint32_t eip;
   uint32_t cs;
   uint32_t eflags;
+  /*
+   * These only get pushed if we call a trap/interrupt gate from
+   * user context (PL3).
+   */
   uint32_t esp;
   uint32_t ss;
 };
+
+uint32_t get_esp();
 
 /*
  *

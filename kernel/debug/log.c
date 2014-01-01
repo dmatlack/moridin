@@ -58,11 +58,13 @@ int log(int log_level, const char *fmt, ...) {
   va_list args;
   int err;
 
+  va_start(args, fmt);
+
   if (log_level <= __log_level) {
-    va_start(args, fmt);
     err = _vprintf(&__log_printf_state, fmt, args);
-    va_end(args);
   }
+
+  va_end(args);
 
   return err;
 }
@@ -74,11 +76,13 @@ int trace(const char *fmt, ...) {
   va_list args;
   int err;
 
+  va_start(args, fmt);
+
   if (__log_trace> 0) {
-    va_start(args, fmt);
     err = _vprintf(&__log_printf_state, fmt, args);
-    va_end(args);
   }
+
+  va_end(args);
 
   return err;
 }

@@ -8,11 +8,22 @@
 #include <dev/vga.h>
 #include <kernel/io.h>
 
+#include <assert.h>
+#include <debug.h>
+
 #define OFFSET(row, col) ((row)*(VGA_COLS) + (col))
 #define ROW(offset)      ((offset)/(VGA_COLS))
 #define COL(offset)      ((offset) - (VGA_COLS*ROW(offset)))
 
 #define EMPTY_CHAR ' ' 
+
+#define VGA_ASSERTS(_row, _col) \
+  do { \
+    ASSERT_GREATEREQ(_row, 0);   \
+    ASSERT_LESS(_row, VGA_ROWS); \
+    ASSERT_GREATEREQ(_col, 0);   \
+    ASSERT_LESS(_col, VGA_COLS); \
+  } while (0)
 
 struct {
   int cursor_row;
@@ -22,22 +33,27 @@ struct {
 } vga;
 
 static inline char *addr(int row, int col) {
+  VGA_ASSERTS(row, col);
   return (char *)(VGA_COLOR_TEXT_BUFFER_ADDR + 2*OFFSET(row, col));
 }
 static inline char get_char(int row, int col) {
+  VGA_ASSERTS(row, col);
   return *(addr(row, col) + 0);
 }
 static inline void set_char(int row, int col, char ch) {
+  VGA_ASSERTS(row, col);
   *(addr(row, col) + 0) = ch;
 }
 static inline void set_color(int row, int col, char color) {
+  VGA_ASSERTS(row, col);
   *(addr(row, col) + 1) = color;
 }
 
 /**
  * @brief draw the character at the given position, with the current color.
  */
-static inline void draw_char(int row, int col, char ch, char color) {
+static void draw_char(int row, int col, char ch, char color) {
+  VGA_ASSERTS(row, col);
   set_char(row, col, ch);
   set_color(row, col, color);
 }
@@ -45,8 +61,15 @@ static inline void draw_char(int row, int col, char ch, char color) {
 /**
  * @brief Copy a row.
  */
-static inline void copy_row(int from, int to) {
+static void copy_row(int from, int to) {
   int col;
+
+  ASSERT_GREATEREQ(from, 0);
+  ASSERT_LESS(from, VGA_COLS);
+  ASSERT_GREATEREQ(to, 0);
+  ASSERT_LESS(to, VGA_COLS);
+
+  if (from == to) return;
 
   for (col = 0; col < VGA_COLS; col++) {
     draw_char(to, col, get_char(from, col), vga.color);
@@ -56,8 +79,10 @@ static inline void copy_row(int from, int to) {
 /**
  * @brief Scroll the screen by i lines.
  */
-static inline void scroll(int i) {
+static void scroll(int i) {
   int row, col;
+
+  ASSERT_GREATEREQ(i, 0);
 
   for (row = i; row < VGA_ROWS; row++) {
     copy_row(row, row - i);
@@ -75,7 +100,7 @@ static inline void scroll(int i) {
  * @brief Put the cursor at the beginning of the next line, scrolling
  * if necessary.
  */
-static inline void draw_newline(void) {
+static void draw_newline(void) {
   vga.cursor_col = 0;
 
   if (vga.cursor_row == (VGA_ROWS-1)) {
@@ -97,7 +122,7 @@ static inline void draw_newline(void) {
  * Attempting to increment the cursor to a position past the end of the screen
  * will cause the screen to scroll forward.
  */
-static inline void increment_cursor(int i) {
+static void increment_cursor(int i) {
   int offset = OFFSET(vga.cursor_row, vga.cursor_col);
   int overflow;
 
@@ -121,7 +146,8 @@ static inline void increment_cursor(int i) {
 /**
  * @brief Draw the character to the screen.
  */
-static inline void putbyte(char ch) {
+static void putbyte(char ch) {
+  VGA_ASSERTS(vga.cursor_row, vga.cursor_col);
   switch (ch) {
     case '\n':
       draw_newline();
@@ -149,8 +175,10 @@ static inline void putbyte(char ch) {
  * This function updates both our internal copy of the cursor's location
  * AND the actualy cursor's location on the screen.
  */
-static inline void crtc_set_cursor(int row, int col) {
+static void crtc_set_cursor(int row, int col) {
   int offset = OFFSET(row, col);
+
+  VGA_ASSERTS(row, col);
 
   // update our copy
   vga.cursor_row = row;
@@ -167,7 +195,7 @@ static inline void crtc_set_cursor(int row, int col) {
  * @brief Update the CRT cursor with whatever our current copy of the
  * cursor's location is.
  */
-static inline void crtc_update_cursor(void) {
+static void crtc_update_cursor(void) {
   crtc_set_cursor(vga.cursor_row, vga.cursor_col);
 }
 
@@ -186,11 +214,13 @@ void vga_putbyte(char ch) {
 void vga_putbytes(const char* s, int len) {
   int i;
 
+  ASSERT_NOT_NULL(s);
+  ASSERT_GREATEREQ(len, 0);
+
   for (i = 0; i < len; i++) {
     putbyte(s[i]);
   }
   crtc_update_cursor();
-
 }
 
 char vga_set_color(char color) {
@@ -207,6 +237,10 @@ char vga_get_color(void) {
 }
 
 void vga_set_cursor(int row, int col) {
+  if (row < 0 || row >= VGA_ROWS || col < 0 || col >= VGA_COLS) {
+    WARN("%s: invalid (row, col): (%d, %d)", __func__, row, col);
+    return;
+  }
   crtc_set_cursor(row, col);
 }
 
@@ -218,8 +252,8 @@ void vga_get_cursor(int* row, int* col) {
 void vga_clear(void) {
   int row, col;
 
-  for (row = 0; row < VGA_SIZE; row++) {
-    for (col = 0; col < VGA_SIZE; col++) {
+  for (row = 0; row < VGA_ROWS; row++) {
+    for (col = 0; col < VGA_COLS; col++) {
       draw_char(row, col, EMPTY_CHAR, vga.color);
     }
   }
@@ -227,11 +261,20 @@ void vga_clear(void) {
 }
 
 void vga_draw_char(int row, int col, char ch, char color) {
+  if (row < 0 || row >= VGA_ROWS || col < 0 || col >= VGA_COLS) {
+    WARN("%s: invalid (row, col): (%d, %d)", __func__, row, col);
+    return;
+  }
   draw_char(row, col, ch, color);
 }
 
 char vga_get_char(int row, int col) {
   char c;
+
+  if (row < 0 || row >= VGA_ROWS || col < 0 || col >= VGA_COLS) {
+    WARN("%s: invalid (row, col): (%d, %d)", __func__, row, col);
+    return 0;
+  }
 
   c = get_char(row, col);
 

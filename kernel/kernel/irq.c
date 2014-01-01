@@ -6,8 +6,7 @@
  * @author David Matlack
  */
 #include <kernel/irq.h>
-
-#include <dev/vga.h>
+#include <kernel/atomic.h>
 
 #include <kernel.h>
 #include <debug.h>
@@ -29,7 +28,9 @@ int irq_init(void) {
   int i;
   int ret;
 
-  TRACE("");
+  TRACE();
+  ASSERT_NOT_NULL(__machine_irq_system);
+  ASSERT_NOT_NULL(__machine_irq_system->init);
 
   if (0 != (ret = __machine_irq_system->init(&irq_info))) {
     return ret;
@@ -37,9 +38,10 @@ int irq_init(void) {
 
   __max_irqs = irq_info.max_irqs;
 
+  ASSERT_EQUALS(__max_irqs, 16);
+
   __irqs = kmalloc(sizeof(struct irq_state) * __max_irqs);
   if (NULL == __irqs) {
-    kprintf("NULL == __irqs\n");
     return ENOMEM;
   }
   
@@ -65,27 +67,27 @@ void handle_irq(int irq) {
   struct irq_context context;
   struct irq_state *state;
   struct irq_handler *handler;
+  int prev_in_irq;
 
   state = &__irqs[irq];
+  atomic_add(&state->count, 1);
 
-  //FIXME atomic test and set
-  ASSERT_EQUALS(0, state->in_irq);
-  state->in_irq++;
-  state->count++;
-
+  prev_in_irq = atomic_add(&state->in_irq, 1);
+  ASSERT_EQUALS(prev_in_irq, 0);
+  
   context.irq = irq;
-
   list_foreach(handler, &state->handlers, link) {
-    if (NULL != handler->top_handler) handler->top_handler(&context);
+    if (handler->top_handler) handler->top_handler(&context);
   }
 
-  state->in_irq--;
+  atomic_add(&state->in_irq, -1);
+
   acknowledge_irq(irq);
 }
 
 void register_irq(int irq, struct irq_handler *new_handler) {
   ASSERT_GREATEREQ(irq, 0);
-  ASSERT_LESSEQ(irq, 15);
+  ASSERT_LESS(irq, __max_irqs);
 
   list_elem_init(new_handler, link);
 

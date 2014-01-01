@@ -132,8 +132,10 @@ lidt:
 .section .data
 
 # Allocate room for a small temporary stack
+.global boot_stack_bottom
 boot_stack_bottom:
   .space 4096
+.global boot_stack_top
 boot_stack_top:
 
 #undef ASM_FILE
