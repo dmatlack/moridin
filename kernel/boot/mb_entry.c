@@ -46,8 +46,6 @@ void mb_entry(unsigned int mb_magic, struct multiboot_info *mb_info) {
           MULTIBOOT_BOOTLOADER_MAGIC, mb_magic);
   }
 
-  mb_dump(dprintf, mb_info);
-
   /* 
    * initialize the x86 exception handling facilities and install the kernel's
    * exception handler

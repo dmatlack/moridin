@@ -40,7 +40,7 @@ struct serial_port {
 };
 
 int serial_init(void);
-struct serial_port *request_serial_port(const char *purpose);
+struct serial_port *reserve_serial_port(const char *purpose);
 void serial_putchar(struct serial_port *s, char c);
 
 #endif /* !__DEV_SERIAL_H__ */

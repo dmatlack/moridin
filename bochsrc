@@ -699,7 +699,7 @@ debug: action=ignore, pci=report # report BX_DEBUG from module 'pci'
 #   com4: enabled=1, mode=pipe-client, dev=\\.\pipe\mypipe
 #   com4: enabled=1, mode=pipe-server, dev=\\.\pipe\mypipe
 #=======================================================================
-#com1: enabled=1, mode=term, dev=/dev/ttyp9
+#com1: enabled=1, mode=file, dev=bochs.com1
 # }}}
 # {{{ PARPORT1, PARPORT2:
 #=======================================================================

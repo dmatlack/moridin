@@ -19,17 +19,19 @@
 
 void kernel_main() {
   /*
-   * Serial Port (needed for logging)
+   * Serial Port (needed for debug logging)
    */
   SUCCEED_OR_DIE(serial_init());
 
   /*
+   * Debugging
+   */
+  SUCCEED_OR_DIE(debug_init());
+
+  /*
    * Logging
    */
-  if (log_init(dputchar, LOG_LEVEL_DEBUG, LOG_TO_SERIAL_PORT)) {
-    kprintf("ERROR: Unable to reserve a serial port for logging.\n");
-  }
-  TRACE_ON;
+  SUCCEED_OR_DIE(log_init(debug_putchar, LOG_LEVEL_DEBUG));
 
   /*
    * Virtual Memory Bootstrap

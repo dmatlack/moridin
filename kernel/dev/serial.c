@@ -55,16 +55,12 @@ int serial_init(void) {
       /*
        * FIFO transmission buffering
        */
-#if 0
       outb(s->port + SERIAL_PORT_FIFO_CTL,
             (1 << 0) |          // FIFO enable
             (1 << 1) |          // Clear receiver FIFO
             (1 << 2) |          // Clear transmitter FIFO
             (1 << 6) | (1 << 7) // Receiver FIFO trigger level 14
           );
-#else
-      outb(s->port + SERIAL_PORT_FIFO_CTL, 0x00);
-#endif
 
       outb(s->port + SERIAL_PORT_IRQ, 0x0B);
     }
@@ -73,7 +69,7 @@ int serial_init(void) {
   return 0;
 }
 
-struct serial_port *request_serial_port(const char *purpose) {
+struct serial_port *reserve_serial_port(const char *purpose) {
   struct serial_port *s;
 
   for (s = __serial_ports; s < __serial_ports + arraylen(__serial_ports); s++) {
