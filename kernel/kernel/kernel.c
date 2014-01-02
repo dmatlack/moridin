@@ -74,7 +74,6 @@ void kernel_main() {
   enable_irqs();
 
   while (1) {
-    kprintf("CRASH!");
-    //INFO("CRASH!");
+    kprintf("WORKING!");
   }
 }

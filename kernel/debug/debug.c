@@ -15,7 +15,6 @@ int debug_putchar(int c) {
 #ifdef BOCHS
   bochs_putchar(c);
 #endif
-
   return c;
 }
 
@@ -23,7 +22,7 @@ int debug_init(void) {
 
   debug_serial_port = reserve_serial_port("debug");
   if (!debug_serial_port) {
-    kprintf("Could not reserve serial port for debugging.");
+    kprintf("Could not reserve serial port for debugging.\n");
   }
 
   return 0;

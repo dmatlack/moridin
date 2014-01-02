@@ -71,8 +71,11 @@ int serial_init(void) {
 
 struct serial_port *reserve_serial_port(const char *purpose) {
   struct serial_port *s;
+  unsigned i;
 
-  for (s = __serial_ports; s < __serial_ports + arraylen(__serial_ports); s++) {
+  for (i = 0; i < arraylen(__serial_ports); i++) {
+    s = __serial_ports + i;
+
     if (!s->reserved && 0 != s->port) {
       s->purpose = purpose;
       s->reserved = true;

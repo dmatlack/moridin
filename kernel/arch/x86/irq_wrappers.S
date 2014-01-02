@@ -6,9 +6,19 @@
 
 .global __irq\irq
 __irq\irq:
-  pushl $\irq
-  call x86_handle_irq
-  popl %eax
+  pusha
+  pushl %gs             # push all data segment registers
+  pushl %fs
+  pushl %es
+  pushl %ds
+  pushl $\irq           # push the irq number
+  call x86_handle_irq   # call the central handler
+  addl $4, %esp         # pop the irq number
+  popl %ds              # pop the data segment registers off the stack
+  popl %es
+  popl %fs
+  popl %gs
+  popa
   iret
 
 .endm

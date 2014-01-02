@@ -50,7 +50,7 @@ INCLUDES := -I$(PWD)/inc/lib -I$(PWD)/inc
 
 all: $(OBJFILES) $(HFILES) linker.ld
 	$(CC) -T linker.ld -o KERNEL.o -ffreestanding -O2 -nostdlib $(OBJFILES) -lgcc
-	objdump -DglF KERNEL.o > KERNEL.S
+	objdump -DgFS KERNEL.o > KERNEL.S
 
 clean:
 	rm -rf KERNEL.S

@@ -56,21 +56,21 @@ x86_exn_handle_\vector:
 
   call x86_exn_handle_all
 
-  popl %eax             # pop the vector off the stack
+  addl $4, %esp         # pop the vector off the stack
   
-  popl %eax             # pop the contol registers off the stack
-  popl %eax
-  popl %eax
-  popl %eax
+  addl $4, %esp         # pop the contol registers off the stack
+  addl $4, %esp
+  addl $4, %esp
+  addl $4, %esp
   
-  popl %eax             # pop the data segment registers off the stack
-  popl %eax
-  popl %eax
-  popl %eax
+  popl %ds              # pop the data segment registers off the stack
+  popl %es
+  popl %fs
+  popl %gs
 
   popa                  # popa the pusha
 
-  popl %eax             # pop off the error code
+  addl $4, %esp         # pop off the error code
   
   iret                  # and return to user land!
 .endm

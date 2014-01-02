@@ -41,11 +41,9 @@ static inline char get_char(int row, int col) {
   return *(addr(row, col) + 0);
 }
 static inline void set_char(int row, int col, char ch) {
-  VGA_ASSERTS(row, col);
   *(addr(row, col) + 0) = ch;
 }
 static inline void set_color(int row, int col, char color) {
-  VGA_ASSERTS(row, col);
   *(addr(row, col) + 1) = color;
 }
 
