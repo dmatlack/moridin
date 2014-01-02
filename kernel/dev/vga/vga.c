@@ -100,8 +100,10 @@ static void scroll(int i) {
  * @brief Put the cursor at the beginning of the next line, scrolling
  * if necessary.
  */
-static void draw_newline(void) {
+static void do_newline(void) {
   vga.cursor_col = 0;
+
+  VGA_ASSERTS(vga.cursor_row, vga.cursor_col);
 
   if (vga.cursor_row == (VGA_ROWS-1)) {
     scroll(1);
@@ -122,12 +124,12 @@ static void draw_newline(void) {
  * Attempting to increment the cursor to a position past the end of the screen
  * will cause the screen to scroll forward.
  */
-static void increment_cursor(int i) {
+static void move_cursor(int i) {
   int offset = OFFSET(vga.cursor_row, vga.cursor_col);
   int overflow;
 
   offset += i;
-  overflow = offset - VGA_SIZE;
+  overflow = offset - (VGA_SIZE - 1);
 
   if (offset < 0) {
     offset = 0;
@@ -150,11 +152,11 @@ static void putbyte(char ch) {
   VGA_ASSERTS(vga.cursor_row, vga.cursor_col);
   switch (ch) {
     case '\n':
-      draw_newline();
+      do_newline();
       break;
     case '\b':
-      increment_cursor(-1);
-      if (vga.cursor_row != 0 || vga.cursor_col != 0) {
+      if (!(0 == vga.cursor_row && 0 == vga.cursor_col)) {
+        move_cursor(-1);
         draw_char(vga.cursor_row, vga.cursor_col, EMPTY_CHAR, vga.color);
       }
       break;
@@ -163,7 +165,7 @@ static void putbyte(char ch) {
       break;
     default:
       draw_char(vga.cursor_row, vga.cursor_col, ch, vga.color);
-      increment_cursor(1);
+      move_cursor(1);
       break;
   }
 }
