@@ -22,7 +22,6 @@ void mb_exn_handler(struct x86_exn_args *args) {
   "%d %s %s (cause: %s)\n"
   "-------------------------------------------------------------------\n"
   "eip: 0x%08x\n"
-  "esp: 0x%08x\n"
   "ebp: 0x%08x\n"
   "\n"
   "edi: 0x%08x esi: 0x%08x\n"
@@ -43,7 +42,6 @@ void mb_exn_handler(struct x86_exn_args *args) {
   "-------------------------------------------------------------------\n",
     exn->vector, exn->mnemonic, exn->description, exn->cause,
     iret->eip,
-    iret->esp,
     pusha->ebp,
     pusha->edi, pusha->esi,
     pusha->eax, pusha->ebx,

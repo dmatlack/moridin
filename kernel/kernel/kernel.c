@@ -75,5 +75,6 @@ void kernel_main() {
 
   while (1) {
     kprintf("CRASH!");
+    //INFO("CRASH!");
   }
 }
