@@ -14,6 +14,9 @@
 #include <list.h>
 #include <errno.h>
 
+#include <dev/vga.h>
+#include <string.h>
+
 int __max_irqs;
 struct irq_state *__irqs;
 
@@ -104,4 +107,31 @@ void enable_irqs(void) {
 
 void disable_irqs(void) {
   __machine_irq_system->disable_irqs();
+}
+
+/**
+ * @brief Print bar of text accross a row of the console with some useful
+ * information about IRQs.
+ *
+ * @param bar_row The row to draw the bar.
+ */
+void irq_status_bar(int bar_row) {
+  int old_row, old_col;
+  char old_color;
+  int i;
+
+  vga_get_cursor(&old_row, &old_col);
+  old_color = vga_get_color();
+
+  vga_set_color(VGA_COLOR(VGA_WHITE, VGA_BLUE));
+  
+  vga_set_cursor(bar_row, 0);
+  kprintf("IRQs: ");
+  for (i = 0; i < __max_irqs; i++) {
+    if (__irqs[i].count > 0)
+      kprintf("%d:%d ", i, __irqs[i].count);
+  }
+
+  vga_set_cursor(old_row, old_col);
+  vga_set_color(old_color);
 }

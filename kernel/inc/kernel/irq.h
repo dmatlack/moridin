@@ -75,5 +75,6 @@ void handle_irq(int irq);
 void register_irq(int irq, struct irq_handler *new_handler);
 void enable_irqs(void);
 void disable_irqs(void);
+void irq_status_bar(int bar_row);
 
 #endif /* !__KERNEL_IRQ_H__ */

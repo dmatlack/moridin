@@ -74,6 +74,6 @@ void kernel_main() {
   enable_irqs();
 
   while (1) {
-    kprintf("WORKING!");
+    irq_status_bar(VGA_ROWS - 1);
   }
 }
