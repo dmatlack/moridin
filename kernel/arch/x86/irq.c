@@ -69,7 +69,7 @@ void x86_generate_irq(int irq) {
     __int(IDT_PIC_MASTER_OFFSET + irq);
   }
   else if (irq < 16) {
-    __int(IDT_PIC_SLAVE_OFFSET + irq);
+    __int(IDT_PIC_SLAVE_OFFSET + (irq - 8));
   }
 }
 
