@@ -88,10 +88,15 @@ void pic_imr_clear(uint8_t irq) {
 }
 
 static inline uint16_t pic_get_reg(uint8_t ocw3) {
-  outb(PIC_MASTER_CMD, ocw3);
-  outb(PIC_SLAVE_CMD, ocw3);
+  uint8_t master, slave;
 
-  return inb(PIC_MASTER_CMD) | (inb(PIC_SLAVE_CMD) << 8);
+  outb(PIC_MASTER_CMD, ocw3);
+  master = inb(PIC_MASTER_CMD);
+
+  outb(PIC_SLAVE_CMD, ocw3);
+  slave = inb(PIC_SLAVE_CMD);
+
+  return (slave << 8) | (master);
 }
 
 uint16_t pic_get_isr(void) {

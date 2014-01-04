@@ -8,6 +8,7 @@
 #include <dev/ata.h>
 
 #include <kernel.h>
+#include <kernel/irq.h>
 #include <errno.h>
 #include <debug.h>
 #include <string.h>
@@ -366,8 +367,11 @@ int ata_bus_add_drive(struct ata_bus *bus, uint8_t drive_select) {
   }
 
   if (drive->exists && drive->usable) {
-    kprintf("    HDD: %s %s, %d MB\n", drive_type_string(drive->type),
-            drive->model, drive->sectors * 512 / MB(1));
+    kprintf("    0x%03x: %s, %s, %d MB (irq %d)\n", 
+            drive->bus->cmd, drive->model,
+            drive_type_string(drive->type),
+            drive->sectors * 512 / MB(1),
+            drive->bus->irq);
   }
 
   return 0;

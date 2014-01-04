@@ -43,7 +43,7 @@ void mb_entry(unsigned int mb_magic, struct multiboot_info *mb_info) {
   kputchar_set(vga_putbyte);
 
   kprintf("\n"
-          "Booting kernel...\n"
+          "    Booting kernel...\n"
           "\n");
 
   kprintf("Kernel Boot Stack: [0x%08x, 0x%08x]\n", boot_stack_bottom, boot_stack_top);

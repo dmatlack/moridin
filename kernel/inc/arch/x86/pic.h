@@ -146,8 +146,8 @@ void pic_imr_clear(uint8_t irq);
  * The ISR and IRR are each 8 bits, and there is one of each for the master
  * and slave.
  */
-#define PIC_READ_ISR 0x0a
-#define PIC_READ_IRR 0x0b
+#define PIC_READ_IRR 0x0A
+#define PIC_READ_ISR 0x0B
 
 /** @brief Return the PICs' In-Service Register */
 uint16_t pic_get_isr(void);

@@ -89,7 +89,7 @@ bool is_spurious_irq(int irq) {
 
   isr = pic_get_isr();
 
-  return isr & (1 << irq); 
+  return !(isr & (1 << irq));
 }
 
 /**
@@ -114,7 +114,7 @@ void x86_handle_irq(int irq) {
      * If the spurious IRQ is from the slave PIC, we still need to send an
      * EOI to the master.
      */
-    if (15 == irq) outb(PIC_MASTER_CMD, PIC_EOI);
+    if (irq >= 8) outb(PIC_MASTER_CMD, PIC_EOI);
     return;
   }
 
