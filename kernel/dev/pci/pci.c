@@ -343,6 +343,14 @@ bool pci_device_match(struct pci_device_id *id, struct pci_device *d) {
   return true;
 }
 
+/**
+ * @brief Attempt to assign a driver to a device. The device and driver
+ * are assumed to already have been matched using the pci_device_id
+ * struct.
+ *
+ * If the device cannot support any more drivers or the driver fails
+ * to accept the device, this function will essentially be a NOP.
+ */
 void pci_device_add_driver(struct pci_device *d, 
                            struct pci_device_driver *driver) {
   int ret;

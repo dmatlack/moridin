@@ -31,6 +31,7 @@
 
 #include <types.h>
 #include <stdint.h>
+#include <dev/ide/lba.h>
 
 #define ATA_BYTES_PER_SECTOR 512
 
@@ -39,6 +40,13 @@
  */
 #define ATA_CMD_DATA            0x00
 #define ATA_CMD_ERROR           0x01
+#define     ATA_NM              (1 << 1)
+#define     ATA_ABRT            (1 << 2)
+#define     ATA_MCR             (1 << 3)
+#define     ATA_IDNF            (1 << 4)
+#define     ATA_MC              (1 << 5)
+#define     ATA_UNC             (1 << 6)
+#define     ATA_ICRC            (1 << 7)
 #define ATA_CMD_FEATURES        0x01
 #define ATA_CMD_SECTOR_COUNT    0x02
 #define ATA_CMD_LBA_LOW         0x03
@@ -46,8 +54,9 @@
 #define ATA_CMD_LBA_HIGH        0x05
 #define ATA_CMD_HEAD            0x06
 #define ATA_CMD_DEVICE          0x06
-#define     ATA_SELECT_MASTER   0xA0
-#define     ATA_SELECT_SLAVE    0xB0
+#define     ATA_SELECT_MASTER   (0 << 4)
+#define     ATA_SELECT_SLAVE    (1 << 4)
+#define     ATA_DEVICE_LBA      (1 << 6)
 #define ATA_CMD_STATUS          0x07
 #define     ATA_ERR             (1 << 0)
 #define     ATA_DRQ             (1 << 3)
@@ -79,6 +88,11 @@
 #define     ATA_HOB             (1 << 7) // high order byte
 #define ATA_CTL_DEVICE_CTL      0x02
 #define ATA_CTL_TO_ISA          0x03
+
+#define ATA_WARN(_drive, fmt, ...) \
+  WARN("ATA %s Drive: "fmt, \
+       (_drive)->select & ATA_SELECT_MASTER ? "Master" : "Slave", \
+       ##__VA_ARGS__)
 
 enum ata_drive_type {
   ATA_PATAPI,
@@ -173,5 +187,7 @@ struct ata_drive {
 void ata_print_drive(struct ata_drive *drive);
 
 int ata_new_bus(struct ata_bus *bus, int irq, int cmd, int ctl);
+void ata_read_dma(struct ata_drive *drive, lba28_t lba, uint8_t sectors);
+int ata_read_dma_done(struct ata_drive *drive);
 
 #endif /* !__DEV_ATA_H__ */

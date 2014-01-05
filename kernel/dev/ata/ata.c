@@ -198,6 +198,86 @@ int ata_identify(struct ata_drive *drive, uint16_t data[256]) {
 }
 
 /**
+ * @brief Issue the READ DMA command to the given drive, LBA, and sector count
+ *
+ * @param lba The logical block address of the sectors to read.
+ * @param sectors The number of sectors to read (0 == 256)
+ */
+void ata_read_dma(struct ata_drive *d, lba28_t lba, uint8_t sectors) {
+  ASSERT_NOT_NULL(d);
+  ASSERT_LESS(lba, (1 << 29));
+  
+  outb(d->bus->cmd + ATA_CMD_SECTOR_COUNT, sectors);
+  outb(d->bus->cmd + ATA_CMD_LBA_LOW,  (lba >>  0) & MASK(8));
+  outb(d->bus->cmd + ATA_CMD_LBA_MID,  (lba >>  8) & MASK(8));
+  outb(d->bus->cmd + ATA_CMD_LBA_HIGH, (lba >> 16) & MASK(8));
+  outb(d->bus->cmd + ATA_CMD_DEVICE,
+       d->select | ATA_DEVICE_LBA | ((lba >> 25) & MASK(4)));
+
+  outb(d->bus->cmd + ATA_CMD_COMMAND, ATA_READ_DMA);
+}
+
+/**
+ * @brief This function should be called after a DMA READ request completes
+ * (either due to error or an IRQ).
+ *
+ * @return
+ *    EINVAL if the wrong drive was provided as an argument (e.g. the slave
+ *      drive was doing DMA but the master drive was provided as the
+ *      argument.
+ *
+ *    EBUSY if the drive is still busy
+ *
+ *    EIO if an unrecoverable error occured during the request
+ *
+ *    EFAULT if the LBA was invalid
+ *
+ *    0 if the request completed successfully
+ */
+int ata_read_dma_done(struct ata_drive *drive) {
+  uint8_t status, error;
+
+  if (!(drive->select & inb(drive->bus->cmd + ATA_CMD_DEVICE))) {
+    ATA_WARN(drive, "Invalid Drive after READ DMA.");
+    return EINVAL;
+  }
+
+  status = inb(drive->bus->cmd + ATA_CMD_STATUS);
+
+  if (!(status & ATA_BSY) && (status & ATA_RDY) &&
+      !(status & ATA_DF) && !(status & ATA_DRQ) &&
+      !(status & ATA_ERR)) {
+    return 0;
+  }
+
+  if (status & ATA_BSY) {
+    return EBUSY;
+  }
+
+  if (status & ATA_DF) {
+    ATA_WARN(drive, "Device Fault after READ DMA.");
+  }
+
+  /*
+   * The address of the sector where the first unrecoverable error occured
+   * is stored in the LBA registers (same as input).
+   *
+   * TODO if we need to know that sector, read it and return in to the
+   * caller.
+   */
+
+  error = inb(drive->bus->cmd + ATA_CMD_ERROR);
+
+  if (error & ATA_IDNF) {
+    ATA_WARN(drive, "Invalid LBA for DMA READ.");
+    return EFAULT;
+  }
+
+  ATA_WARN(drive, "Error following READ DMA: 0x%02x", error);
+  return EIO;
+}
+
+/**
  * @brief Allocate and initialize a struct ata_drive.
  */
 int ata_drive_create(struct ata_drive **drivep) {
