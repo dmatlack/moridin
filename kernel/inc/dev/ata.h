@@ -46,6 +46,7 @@
 #define     ATA_IDNF            (1 << 4)
 #define     ATA_MC              (1 << 5)
 #define     ATA_UNC             (1 << 6)
+#define     ATA_WP              (1 << 6)
 #define     ATA_ICRC            (1 << 7)
 #define ATA_CMD_FEATURES        0x01
 #define ATA_CMD_SECTOR_COUNT    0x02
@@ -78,6 +79,14 @@
 #define     ATA_PACKET          0xA0
 #define     ATA_IDENTIFY_PACKET 0xA1
 #define     ATA_IDENTIFY        0xEC
+#define     ATA_SET_FEATURES    0xEF
+
+/* 
+ * SET FEATURES
+ */
+#define ATA_TRANSFER_MODE_SUBCMD 0x03
+#define ATA_DMA_MODE(_mode) (1 << 5) | (_mode)
+
 
 /*
  * ATA CONTROL BLOCK
@@ -93,6 +102,32 @@
   WARN("ATA %s Drive: "fmt, \
        (_drive)->select & ATA_SELECT_MASTER ? "Master" : "Slave", \
        ##__VA_ARGS__)
+
+#define ATA_MAX_TIMEOUT 0x1000
+#define ATA_WAIT(_cmd, _status, _timeout, _error, _fault) \
+do { \
+  _timeout = 0; \
+  _error = 0; \
+  _fault = 0; \
+  while (_timeout++ < ATA_MAX_TIMEOUT) { \
+    _status = inb(_cmd + ATA_CMD_STATUS); \
+     \
+    if (_status & ATA_ERR) { \
+      _error = inb(_cmd + ATA_CMD_ERROR); \
+      _timeout = 0; \
+      break; \
+    } \
+    if (_status & ATA_DF) { \
+      _fault = 1; \
+      _timeout = 0; \
+      break; \
+    } \
+    if (!(_status & ATA_BSY) && (_status & ATA_RDY) && !(_status & ATA_DRQ)) { \
+      _timeout = 0; \
+      break; \
+    } \
+  } \
+} while (0)
 
 enum ata_drive_type {
   ATA_PATAPI,
@@ -184,10 +219,13 @@ struct ata_drive {
   struct ata_bus *bus;
 };
 
-void ata_print_drive(struct ata_drive *drive);
-
 int ata_new_bus(struct ata_bus *bus, int irq, int cmd, int ctl);
+
+/*
+ * DMA reqests to ATA drives
+ */
 void ata_read_dma(struct ata_drive *drive, lba28_t lba, uint8_t sectors);
-int ata_read_dma_done(struct ata_drive *drive);
+void ata_write_dma(struct ata_drive *d, lba28_t lba, uint8_t sectors);
+int  ata_dma_done(struct ata_drive *drive);
 
 #endif /* !__DEV_ATA_H__ */

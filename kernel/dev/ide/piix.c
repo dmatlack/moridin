@@ -13,6 +13,14 @@
 
 piix_ide_device_list_t __piix_ide_devices;
 
+//TODO add support for the device id: 0x1230
+struct pci_device_driver __piix_ide_driver = {
+  .name       = "piix_ide",
+  .id         = STRUCT_PCI_DEVICE_ID(0x8086, 0x7010, 0x1, 0x1),
+  .init       = piix_ide_init,
+  .new_device = piix_ide_device_init,
+};
+
 /**
  * @brief Global initializer for the PIIX IDE driver subsystem.
  *
@@ -24,14 +32,14 @@ int piix_ide_init(void) {
   return 0;
 }
 
-
-//TODO add support for the device id: 0x1230
-struct pci_device_driver __piix_ide_driver = {
-  .name       = "piix_ide",
-  .id         = STRUCT_PCI_DEVICE_ID(0x8086, 0x7010, 0x1, 0x1),
-  .init       = piix_ide_init,
-  .new_device = piix_ide_device_init,
-};
+/**
+ * @brief Initialize the pci_bus_master struct
+ */
+static void piix_init_bm(struct pci_bus_master *bm, unsigned ioblock) {
+  bm->cmd = ioblock + PCI_BM_CMD;
+  bm->status = ioblock + PCI_BM_STATUS;
+  bm->pdtable = ioblock + PCI_BM_PDTABLE;
+}
 
 /**
  * @brief Initialize new IDE device from a PCI device.
@@ -86,10 +94,7 @@ int piix_ide_device_init(struct pci_device *pci_d) {
   /*
    * Initialize the primary IDE controller
    */
-  piix_d->primary_bm.cmd     = bm_base_addr + PCI_BM_PRIMARY + PCI_BM_CMD;
-  piix_d->primary_bm.status  = bm_base_addr + PCI_BM_PRIMARY + PCI_BM_STATUS;
-  piix_d->primary_bm.pdtable = bm_base_addr + PCI_BM_PRIMARY + PCI_BM_PDTABLE;
-  
+  piix_init_bm(&piix_d->primary_bm, bm_base_addr + PCI_BM_PRIMARY);
   ret = ata_new_bus(&piix_d->primary_ata,
      PIIX_PRIMARY_IRQ, PIIX_PRIMARY_ATA_CMD, PIIX_PRIMARY_ATA_CTL);
 
@@ -101,9 +106,7 @@ int piix_ide_device_init(struct pci_device *pci_d) {
   /*
    * Initialize the secondary IDE controller
    */
-  piix_d->secondary_bm.cmd     = bm_base_addr + PCI_BM_SECONDARY + PCI_BM_CMD;
-  piix_d->secondary_bm.status  = bm_base_addr + PCI_BM_SECONDARY + PCI_BM_STATUS;
-  piix_d->secondary_bm.pdtable = bm_base_addr + PCI_BM_SECONDARY + PCI_BM_PDTABLE;
+  piix_init_bm(&piix_d->secondary_bm, bm_base_addr + PCI_BM_SECONDARY);
 
   ret = ata_new_bus(&piix_d->secondary_ata,
      PIIX_SECONDARY_IRQ, PIIX_SECONDARY_ATA_CMD, PIIX_SECONDARY_ATA_CTL);
@@ -118,7 +121,6 @@ int piix_ide_device_init(struct pci_device *pci_d) {
   return 0;
 
 piix_init_device_cleanup:
-  kprintf("    error: %s", strerr(ret));
   kfree(piix_d, sizeof(struct piix_ide_device));
   return ret;
 }

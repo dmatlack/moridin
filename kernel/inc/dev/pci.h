@@ -22,6 +22,8 @@
 
 #include <stdint.h>
 #include <list.h>
+#include <kernel/kmalloc.h>
+#include <mm/physmem.h>
 
 /*
  * Write to this address to configure/select a device
@@ -295,6 +297,21 @@ struct pci_bus_master {
   unsigned status;
   unsigned pdtable;
 };
+
+/*
+ * A PRD Table address must fit into a 32-bit word.
+ */
+typedef uint32_t prdt_addr_t;
+
+#if 0
+static prdt_addr_t prdt_alloc(void) {
+  return (prdt_addr_t) kmemalign(PAGE_SIZE, PAGE_SIZE);
+}
+
+static void prdt_free(prdt_addr_t prdt) {
+  kfree((void *) prdt, PAGE_SIZE);
+}
+#endif
 
 /*
  * A struct that can identify a set of devices. Used to match device drivers
