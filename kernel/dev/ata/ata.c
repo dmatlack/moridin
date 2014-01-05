@@ -15,7 +15,7 @@
 
 #include <kernel/io.h>
 
-void ata_print_drive(struct ata_drive *drive) {
+void ata_log_drive(struct ata_drive *drive) {
   if (!drive->exists) {
     INFO("ATA %s Drive: does not exist ",
          drive->select == ATA_SELECT_MASTER ? "Master" : "Slave");
@@ -333,25 +333,6 @@ int ata_dma_done(struct ata_drive *drive) {
   return EIO;
 }
 
-/**
- * @brief Allocate and initialize a struct ata_drive.
- */
-int ata_drive_create(struct ata_drive **drivep) {
-  struct ata_drive *drive;
-
-  *drivep = drive = kmalloc(sizeof(struct ata_drive));
-  if (NULL == drive) {
-    return ENOMEM;
-  }
-
-  memset(drive, 0, sizeof(struct ata_drive));
-
-  drive->bus = NULL;
-  drive->type = ATA_UNKNOWN;
-  drive->exists = false;
-
-  return 0;
-}
 
 /**
  * @brief Disable IRQs of a specific drive.
@@ -463,28 +444,18 @@ static void ata_parse_identify(struct ata_drive *drive, uint16_t data[256]) {
  * @brief Create a new ata_drive struct and add it to the provided ata_bus
  * struct.
  *
- * @return 
- *    ENOMEM if the kernel ran out of memory
- *    0 otherwise
+ * @return 0
  */
-int ata_bus_add_drive(struct ata_bus *bus, uint8_t drive_select) {
-  struct ata_drive *drive;
+int ata_init_drive(struct ata_drive *drive, struct ata_bus *bus, 
+                   uint8_t drive_select) {
   uint16_t data[256];
-  int ret, identify_ret;
+  int identify_ret;
 
-  if (0 != (ret = ata_drive_create(&drive))) {
-    return ret;
-  }
-
-  drive->select = drive_select;
+  memset(drive, 0, sizeof(struct ata_drive));
   drive->bus = bus;
-  if (ATA_SELECT_MASTER == drive_select) {
-    bus->master = drive;
-  }
-  else {
-    ASSERT_EQUALS(ATA_SELECT_SLAVE, drive_select);
-    bus->slave = drive;
-  }
+  drive->type = ATA_UNKNOWN;
+  drive->exists = false;
+  drive->select = drive_select;
 
   /*
    * We will be using polling at first, so disable IRQs for now
@@ -519,7 +490,6 @@ int ata_bus_add_drive(struct ata_bus *bus, uint8_t drive_select) {
   ata_identify(drive, data);
   ata_parse_identify(drive, data);
 
-
   /*
    * Do some printing for the boot screen.
    */
@@ -533,18 +503,8 @@ int ata_bus_add_drive(struct ata_bus *bus, uint8_t drive_select) {
 /**
  * @brief Free all memory held by an ata_drive.
  */
-void ata_free_drive(struct ata_drive *d) {
-  kfree(d, sizeof(struct ata_drive));
-}
-
-/**
- * @brief Free all the memory associated with an ata_bus struct.
- *
- * WARN: This function does not free the bus itself.
- */
-void ata_destroy_bus(struct ata_bus *bus) {
-  kfree(bus->master, sizeof(struct ata_drive));
-  kfree(bus->slave, sizeof(struct ata_drive));
+void ata_destroy_drive(struct ata_drive *d) {
+  (void) d;
 }
 
 /**
@@ -556,8 +516,6 @@ void ata_destroy_bus(struct ata_bus *bus) {
  * case of PIIX), and this function will probe the bus for devices.
  *
  * @return
- *    ENOMEM if there is not enough memory
- *
  *    0 success: otherwise (even if there is issues with the drives, we will
  *      still return success. the caller is expected to look at the ata_drive's
  *      and make sure they're all ok).
@@ -578,23 +536,28 @@ int ata_init_bus(struct ata_bus *bus, int irq, int cmd, int ctl) {
   bus->cmd = cmd;
   bus->ctl = ctl;
   bus->irq = irq;
-  bus->master = NULL;
-  bus->slave = NULL;
 
-  if (0 != (ret = ata_bus_add_drive(bus, ATA_SELECT_MASTER))) {
-    goto ata_new_bus_cleanup;
+  if (0 != (ret = ata_init_drive(&bus->master, bus, ATA_SELECT_MASTER))) {
+    goto ata_master_cleanup;
   }
-  if (0 != (ret = ata_bus_add_drive(bus, ATA_SELECT_SLAVE))) {
-    goto ata_new_bus_cleanup;
+  if (0 != (ret = ata_init_drive(&bus->slave, bus, ATA_SELECT_SLAVE))) {
+    goto ata_slave_cleanup;
   }
 
-  ata_print_drive(bus->master);
-  ata_print_drive(bus->slave);
+  ata_log_drive(&bus->master);
+  ata_log_drive(&bus->slave);
 
   return 0;
 
-ata_new_bus_cleanup:
-  if (bus->master) ata_free_drive(bus->master);
-  if (bus->slave) ata_free_drive(bus->slave);
+ata_slave_cleanup:
+  ata_destroy_drive(&bus->master);
+ata_master_cleanup:
   return ret;
+}
+
+/**
+ * @brief Free all the memory associated with an ata_bus struct.
+ */
+void ata_destroy_bus(struct ata_bus *bus) {
+  (void) bus;
 }

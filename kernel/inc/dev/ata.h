@@ -157,17 +157,6 @@ struct ata_signature {
   uint8_t device;
 };
 
-struct ata_bus {
-  bool exists;
-
-  int irq;
-  unsigned cmd;
-  unsigned ctl;
-
-  struct ata_drive *master;
-  struct ata_drive *slave;
-};
-
 struct ata_drive {
   struct ata_signature sig;
   enum ata_drive_type type;
@@ -217,6 +206,17 @@ struct ata_drive {
   uint16_t minor_version;
 
   struct ata_bus *bus;
+};
+
+struct ata_bus {
+  bool exists;
+
+  int irq;
+  unsigned cmd;
+  unsigned ctl;
+
+  struct ata_drive master;
+  struct ata_drive slave;
 };
 
 int  ata_init_bus(struct ata_bus *bus, int irq, int cmd, int ctl);
