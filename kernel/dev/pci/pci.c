@@ -12,13 +12,20 @@
 #include <kernel/io.h>
 #include <types.h>
 #include <stddef.h>
+#include <mm/physmem.h>
 
 struct pci_bus *__pci_root;
 
 pci_device_list_t __pci_devices;
 pci_device_driver_list_t __pci_drivers;
 
-extern struct pci_device_driver __piix_ide_driver;
+extern struct pci_device_driver piix_ide_driver;
+
+/******************************************************************************
+ *
+ * PCI Config Space I/O Functions
+ *
+ *****************************************************************************/
 
 /*
  * The CONFIG_ADDRESS register has the following structure:
@@ -139,6 +146,52 @@ void pci_device_config_readall(struct pci_device *d) {
   }
 }
 
+/******************************************************************************
+ *
+ * PCI IDE Bus Master
+ *
+ *****************************************************************************/
+
+/**
+ * @brief Initialize the pci_bus_master struct
+ *
+ * @param io The io port for this bus master (including primary
+ * or secondary offset).
+ *
+ * @return
+ *    0 on success
+ *    ENOMEM if there is no memory to create the prdt
+ */
+int pci_init_bm(struct pci_bus_master *bm, unsigned io) {
+  bm->cmd = io + PCI_BM_CMD;
+  bm->status = io + PCI_BM_STATUS;
+  bm->prdtreg = io + PCI_BM_PDTABLE;
+
+  /*
+   * We give the prdt a memory page, aligned to a memory page so that
+   * we do no cross a 64 KB boundary (64 KB is page aligned).
+   */
+  ASSERT(IS_PAGE_ALIGNED(KB(64)));
+  bm->prdt = (prdt_addr_t) kmemalign(PAGE_SIZE, PAGE_SIZE);
+  if (!bm->prdt) return ENOMEM;
+
+  return 0;
+}
+
+/**
+ * @brief Free the memory held by a pci_bus_master struct, but do no free
+ * the struct itself.
+ */
+void pci_destroy_bm(struct pci_bus_master *bm) {
+  kfree((void *) bm->prdt, PAGE_SIZE);
+}
+
+/******************************************************************************
+ *
+ * PCI Bus/Tree (data structure creation)
+ *
+ *****************************************************************************/
+
 /**
  * @brief Create a pci_device struct from the device identified from the tuple
  * (bus, device, func).
@@ -239,6 +292,12 @@ int pci_scan_bus(struct pci_bus *b) {
   return 0;
 }
 
+/******************************************************************************
+ *
+ * PCI Debug Functions
+ *
+ *****************************************************************************/
+
 void pci_print_device(struct pci_device *d) {
 
 #ifdef KDEBUG
@@ -327,6 +386,12 @@ void lspci(void) {
   __lspci(__pci_root, 0);
 }
 
+/******************************************************************************
+ *
+ * PCI Device Drivers Control
+ *
+ *****************************************************************************/
+
 /**
  * @brief Return true if the given device <d> matches the pci_device_id
  * struct <id>.
@@ -406,6 +471,12 @@ int pci_register_driver(struct pci_device_driver *driver) {
   return 0;
 }
 
+/******************************************************************************
+ *
+ * PCI Subsystem Initialization
+ *
+ *****************************************************************************/
+
 /**
  * @brief Initialize the PCI subsystem. This initialization will build
  * the PCI bus tree, and call driver initializers on all devices that have
@@ -452,7 +523,7 @@ int pci_init(void) {
   /*
    * register the default drivers
    */
-  pci_register_driver(&__piix_ide_driver);
+  pci_register_driver(&piix_ide_driver);
   //TODO add more drivers ...
   
 

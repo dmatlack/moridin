@@ -24,6 +24,7 @@
 #include <list.h>
 #include <kernel/kmalloc.h>
 #include <mm/physmem.h>
+#include <mm/vm.h>
 
 /*
  * Write to this address to configure/select a device
@@ -223,7 +224,9 @@ void pci_config_outb(struct pci_device *d, int offset, uint8_t  data);
  *
  * NOTE: The register is READ/WRITE.
  */
-#define PCI_BM_CMD 0x00
+#define PCI_BM_CMD    0x00
+#define     SSBM      (1 << 0)
+#define     RWCON     (1 << 3)
 
 /*
  * Bus Master IDE Status Register (BMISTA)
@@ -278,6 +281,11 @@ void pci_config_outb(struct pci_device *d, int offset, uint8_t  data);
  *                          1, there is a problem.
  */
 #define PCI_BM_STATUS 0x02
+#define     BMIDEA    (1 << 0)
+#define     DMAERR    (1 << 1)
+#define     IRQSTATUS (1 << 2)
+#define     DMA0CAP   (1 << 5)
+#define     DMA1CAP   (1 << 6)
 
 /*
  * Bus Master IDE Descriptor Table Pointer Register (BMIDTP)
@@ -292,26 +300,28 @@ void pci_config_outb(struct pci_device *d, int offset, uint8_t  data);
  */
 #define PCI_BM_PDTABLE 0x04
 
-struct pci_bus_master {
-  unsigned cmd;
-  unsigned status;
-  unsigned pdtable;
-};
-
 /*
  * A PRD Table address must fit into a 32-bit word.
  */
 typedef uint32_t prdt_addr_t;
 
-#if 0
-static prdt_addr_t prdt_alloc(void) {
-  return (prdt_addr_t) kmemalign(PAGE_SIZE, PAGE_SIZE);
-}
+struct pci_bus_master {
 
-static void prdt_free(prdt_addr_t prdt) {
-  kfree((void *) prdt, PAGE_SIZE);
-}
-#endif
+  /*
+   * I/O registers
+   */
+  unsigned cmd;
+  unsigned status;
+  unsigned prdtreg;
+
+  /*
+   * The actual Physical Region Descriptor Table
+   */
+  prdt_addr_t prdt;
+};
+
+int  pci_init_bm(struct pci_bus_master *bm, unsigned io);
+void pci_destroy_bm(struct pci_bus_master *bm);
 
 /*
  * A struct that can identify a set of devices. Used to match device drivers

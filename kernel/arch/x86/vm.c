@@ -18,7 +18,7 @@
 #include <assert.h>
 #include <debug.h>
 
-#define IS_PAGE_ALIGNED(addr)\
+#define X86_IS_PAGE_ALIGNED(addr)\
   (FLOOR(X86_PAGE_SIZE, addr) == addr)
 
 /*
@@ -123,8 +123,8 @@ int x86_map_page(struct entry_table *pd, size_t vpage, size_t ppage,
   size_t vtop;
   entry_t *pde, *pte;
 
-  ASSERT(IS_PAGE_ALIGNED(vpage));
-  ASSERT(IS_PAGE_ALIGNED(ppage));
+  ASSERT(X86_IS_PAGE_ALIGNED(vpage));
+  ASSERT(X86_IS_PAGE_ALIGNED(ppage));
 
   pde = get_pde(pd, vpage);
 

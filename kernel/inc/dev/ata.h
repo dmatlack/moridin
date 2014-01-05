@@ -219,7 +219,8 @@ struct ata_drive {
   struct ata_bus *bus;
 };
 
-int ata_new_bus(struct ata_bus *bus, int irq, int cmd, int ctl);
+int  ata_init_bus(struct ata_bus *bus, int irq, int cmd, int ctl);
+void ata_destroy_bus(struct ata_bus *bus);
 
 /*
  * DMA reqests to ATA drives

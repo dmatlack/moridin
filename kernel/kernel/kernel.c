@@ -66,12 +66,13 @@ void kernel_main() {
    */
   SUCCEED_OR_DIE(timer_init());
 
+  enable_irqs();
+  
   /*
    * Peripheral Component Interconnect
    */
   SUCCEED_OR_DIE(pci_init());
 
-  enable_irqs();
   while (1) {
     irq_status_bar(VGA_ROWS - 1);
   }

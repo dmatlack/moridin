@@ -538,6 +538,16 @@ void ata_free_drive(struct ata_drive *d) {
 }
 
 /**
+ * @brief Free all the memory associated with an ata_bus struct.
+ *
+ * WARN: This function does not free the bus itself.
+ */
+void ata_destroy_bus(struct ata_bus *bus) {
+  kfree(bus->master, sizeof(struct ata_drive));
+  kfree(bus->slave, sizeof(struct ata_drive));
+}
+
+/**
  * @brief Probe an ATA bus for devices.
  *
  * This function is intended to be called by the IDE code. The IDE code knows
@@ -552,7 +562,7 @@ void ata_free_drive(struct ata_drive *d) {
  *      still return success. the caller is expected to look at the ata_drive's
  *      and make sure they're all ok).
  */
-int ata_new_bus(struct ata_bus *bus, int irq, int cmd, int ctl) {
+int ata_init_bus(struct ata_bus *bus, int irq, int cmd, int ctl) {
   int ret;
 
   TRACE("bus=%p, cmd=0x%03x, ctl=0x%03x", bus, cmd, ctl);

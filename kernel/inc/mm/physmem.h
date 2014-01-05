@@ -84,6 +84,7 @@ extern struct pmem_map __pmem;
 
 #define PAGE_ALIGN_UP(n) CEIL(PAGE_SIZE, n)
 #define PAGE_ALIGN_DOWN(n) FLOOR(PAGE_SIZE, n)
+#define IS_PAGE_ALIGNED(n) (PAGE_ALIGN_DOWN(n) == n)
 
 #define LOG_PMEM_ZONE( zone_macro )\
   DEBUG(#zone_macro": address=0x%08x, size=0x%08x (%d MB)",\
