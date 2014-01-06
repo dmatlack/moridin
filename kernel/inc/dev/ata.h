@@ -55,9 +55,9 @@
 #define ATA_CMD_LBA_HIGH        0x05
 #define ATA_CMD_HEAD            0x06
 #define ATA_CMD_DEVICE          0x06
-#define     ATA_SELECT_MASTER   (0 << 4)
-#define     ATA_SELECT_SLAVE    (1 << 4)
-#define     ATA_DEVICE_LBA      (1 << 6)
+#define     ATA_SELECT_MASTER   ((1 << 7) | (1 << 5) |(0 << 4))
+#define     ATA_SELECT_SLAVE    ((1 << 7) | (1 << 5) |(1 << 4))
+#define     ATA_DEVICE_LBA      ((1 << 7) | (1 << 5) |(1 << 6))
 #define ATA_CMD_STATUS          0x07
 #define     ATA_ERR             (1 << 0)
 #define     ATA_DRQ             (1 << 3)
@@ -157,6 +157,15 @@ struct ata_signature {
   uint8_t device;
 };
 
+
+/*
+ * ATA DRIVE
+ *
+ *  An ATA drive is a physical storage device that conforms to the ATA
+ *  standard. This device could be a hard disk, or a removable media like
+ *  a CD-ROM. Either way, each drive is shares a single ATA BUS with 
+ *  another drive.
+ */
 struct ata_drive {
   struct ata_signature sig;
   enum ata_drive_type type;
@@ -208,6 +217,21 @@ struct ata_drive {
   struct ata_bus *bus;
 };
 
+/*
+ * DMA reqests to ATA drives
+ */
+void ata_drive_read_dma(struct ata_drive *drive, lba28_t lba, uint8_t sectors);
+void ata_drive_write_dma(struct ata_drive *d, lba28_t lba, uint8_t sectors);
+int  ata_drive_dma_done(struct ata_drive *drive);
+
+/*
+ * ATA BUS
+ *
+ *  An ATA bus is a logical grouping of 2 ata drives (master and slave).
+ *  These drives share the same IRQ and I/O ports. The software controls
+ *  individual drives by selecting between the two via a command register.
+ *
+ */
 struct ata_bus {
   bool exists;
 
@@ -219,14 +243,7 @@ struct ata_bus {
   struct ata_drive slave;
 };
 
-int  ata_init_bus(struct ata_bus *bus, int irq, int cmd, int ctl);
-void ata_destroy_bus(struct ata_bus *bus);
-
-/*
- * DMA reqests to ATA drives
- */
-void ata_read_dma(struct ata_drive *drive, lba28_t lba, uint8_t sectors);
-void ata_write_dma(struct ata_drive *d, lba28_t lba, uint8_t sectors);
-int  ata_dma_done(struct ata_drive *drive);
+int  ata_bus_init(struct ata_bus *bus, int irq, int cmd, int ctl);
+void ata_bus_destroy(struct ata_bus *bus);
 
 #endif /* !__DEV_ATA_H__ */

@@ -15,7 +15,7 @@
 
 #include <kernel/io.h>
 
-void ata_log_drive(struct ata_drive *drive) {
+static void print_drive(struct ata_drive *drive) {
   if (!drive->exists) {
     INFO("ATA %s Drive: does not exist ",
          drive->select == ATA_SELECT_MASTER ? "Master" : "Slave");
@@ -49,17 +49,12 @@ void ata_log_drive(struct ata_drive *drive) {
 #endif
 }
 
-const char *ata_strerr(uint8_t error) {
-  if (error & (1 << 2)) return "ABORT";
-  else return "unknown";
-}
-
 /**
  * @brief Return true if this driver supports a given type of device. We
  * can use this to make sure we don't try to send commands and mess up
  * any unsopported devices.
  */
-bool ata_is_supported(struct ata_drive *d) {
+static bool is_drive_supported(struct ata_drive *d) {
   switch (d->type) {
     case ATA_PATA: return true;
     default: return false;
@@ -74,33 +69,12 @@ enum ata_drive_type get_drive_type(struct ata_signature *s) {
   return ATA_UNKNOWN;
 }
 
-bool does_ata_bus_exist(int cmd) {
+static bool does_bus_exist(int cmd) {
   return inb(cmd + ATA_CMD_STATUS) != 0xff;
-}
-
-/**
- * @brief Select the provided ATA drive.
- */
-void ata_select_drive(struct ata_drive *d) {
-  outb(d->bus->cmd + ATA_CMD_DEVICE, d->select);
-}
-
-/**
- * @brief Send a command to an ATA drive.
- */
-void ata_command(struct ata_drive *d, uint8_t command) {
-  int i;
-
-  ata_select_drive(d);
-
-  outb(d->bus->cmd + ATA_CMD_COMMAND, command);
-
-  for (i = 0; i < 4; i++) iodelay(); // spin for 400ns
 }
 
 #define RETURN_ERROR_IF_TIMEOUT(_count, _timeout, _culprit_string) \
   do { \
-    DEBUG("  %s poll: %d cycles", _culprit_string, _count); \
     if ((_count) == (_timeout)) { \
       WARN("ATA drive timed out waiting for %s!", _culprit_string); \
       return ETIMEDOUT; \
@@ -126,20 +100,16 @@ int ata_identify(struct ata_drive *drive, uint16_t data[256]) {
   const int timeout = 0x100000;
   int i;
 
-  TRACE("drive=%p", drive);
-
-  ata_select_drive(drive);
-
   outb(drive->bus->cmd + ATA_CMD_SECTOR_COUNT, 0);
   outb(drive->bus->cmd + ATA_CMD_LBA_LOW,      0);
   outb(drive->bus->cmd + ATA_CMD_LBA_MID,      0);
   outb(drive->bus->cmd + ATA_CMD_LBA_HIGH,     0);
-  outb(drive->bus->cmd + ATA_CMD_DEVICE,       0);
+  outb(drive->bus->cmd + ATA_CMD_DEVICE,       drive->select);
 
   /*
    * IDENTIFY yourself, drive!
    */
-  ata_command(drive, ATA_IDENTIFY);
+  outb(drive->bus->cmd + ATA_CMD_COMMAND, ATA_IDENTIFY);
 
   idstatus = inb(drive->bus->cmd + ATA_CMD_STATUS);
   if (0 == idstatus) return ENODEV;
@@ -183,8 +153,8 @@ int ata_identify(struct ata_drive *drive, uint16_t data[256]) {
   if (idstatus & ATA_ERR) {
     uint8_t error;
     error = inb(drive->bus->cmd + ATA_CMD_ERROR);
-    DEBUG("Error occured while waiting for ATA_DRQ after IDENTIFY: 0x%02x (%s)",
-          error, ata_strerr(error));
+    DEBUG("Error occured while waiting for ATA_DRQ after IDENTIFY: 0x%02x",
+          error);
     return EGENERIC;
   }
 
@@ -209,11 +179,10 @@ int ata_set_features(struct ata_drive *d) {
   int timeout;
   bool fault;
 
-  ata_select_drive(d);
-
   ASSERT_GREATEREQ(d->supported_dma_mode, 0);
   outb(d->bus->cmd + ATA_CMD_FEATURES, ATA_TRANSFER_MODE_SUBCMD);
   outb(d->bus->cmd + ATA_CMD_SECTOR_COUNT, ATA_DMA_MODE(0));
+  outb(d->bus->cmd + ATA_CMD_DEVICE, d->select);
   outb(d->bus->cmd + ATA_CMD_COMMAND, ATA_SET_FEATURES);
 
   ATA_WAIT(d->bus->cmd, status, timeout, error, fault);
@@ -227,7 +196,7 @@ int ata_set_features(struct ata_drive *d) {
   return 0;
 }
 
-static void __ata_dma_setup(struct ata_drive *d, lba28_t lba, uint8_t sectors) {
+static void ata_dma_setup(struct ata_drive *d, lba28_t lba, uint8_t sectors) {
   outb(d->bus->cmd + ATA_CMD_SECTOR_COUNT, sectors);
   outb(d->bus->cmd + ATA_CMD_LBA_LOW,  (lba >>  0) & MASK(8));
   outb(d->bus->cmd + ATA_CMD_LBA_MID,  (lba >>  8) & MASK(8));
@@ -242,11 +211,11 @@ static void __ata_dma_setup(struct ata_drive *d, lba28_t lba, uint8_t sectors) {
  * @param lba The logical block address of the sectors to read.
  * @param sectors The number of sectors to read (0 == 256)
  */
-void ata_read_dma(struct ata_drive *d, lba28_t lba, uint8_t sectors) {
+void ata_drive_read_dma(struct ata_drive *d, lba28_t lba, uint8_t sectors) {
   ASSERT_NOT_NULL(d);
   ASSERT_LESS(lba, (1 << 29));
   
-  __ata_dma_setup(d, lba, sectors);
+  ata_dma_setup(d, lba, sectors);
 
   outb(d->bus->cmd + ATA_CMD_COMMAND, ATA_READ_DMA);
 }
@@ -257,11 +226,11 @@ void ata_read_dma(struct ata_drive *d, lba28_t lba, uint8_t sectors) {
  * @param lba The logical block address of the sectors to read.
  * @param sectors The number of sectors to read (0 == 256).
  */
-void ata_write_dma(struct ata_drive *d, lba28_t lba, uint8_t sectors) {
+void ata_drive_write_dma(struct ata_drive *d, lba28_t lba, uint8_t sectors) {
   ASSERT_NOT_NULL(d);
   ASSERT_LESS(lba, (1 << 29));
 
-  __ata_dma_setup(d, lba, sectors);
+  ata_dma_setup(d, lba, sectors);
 
   outb(d->bus->cmd + ATA_CMD_COMMAND, ATA_WRITE_DMA);
 }
@@ -285,7 +254,7 @@ void ata_write_dma(struct ata_drive *d, lba28_t lba, uint8_t sectors) {
  *
  *    0 if the request completed successfully
  */
-int ata_dma_done(struct ata_drive *drive) {
+int ata_drive_dma_done(struct ata_drive *drive) {
   uint8_t status, error;
 
   if (!(drive->select & inb(drive->bus->cmd + ATA_CMD_DEVICE))) {
@@ -338,7 +307,7 @@ int ata_dma_done(struct ata_drive *drive) {
  * @brief Disable IRQs of a specific drive.
  */
 void ata_disable_irqs(struct ata_drive *d) {
-  ata_select_drive(d);
+  outb(d->bus->ctl + ATA_CMD_DEVICE, d->select);
   outb(d->bus->ctl + ATA_CTL_ALT_STATUS, ATA_NIEN);
 }
 
@@ -349,8 +318,8 @@ void ata_disable_irqs(struct ata_drive *d) {
  * This is useful because the result of IDENTIFY DEVICE contains strings
  * such as the firmware version and serial number of the device.
  */
-static void ata_read_identify_string(uint16_t *data, char *buffer,
-                                     unsigned offset, unsigned length) {
+static void read_identify_string(uint16_t *data, char *buffer,
+                                 unsigned offset, unsigned length) {
   uint16_t word;
   unsigned i;
 
@@ -395,13 +364,13 @@ static void ata_parse_identify(struct ata_drive *drive, uint16_t data[256]) {
    */
   if (data[0] & (1 << 2)) drive->usable = false;
 
-  ata_read_identify_string(data, drive->serial,
+  read_identify_string(data, drive->serial,
                            ATA_IDENTIFY_SERIAL_WORD_OFFSET,
                            ATA_IDENTIFY_SERIAL_WORD_LENGTH);
-  ata_read_identify_string(data, drive->firmware,
+  read_identify_string(data, drive->firmware,
                            ATA_IDENTIFY_FIRMWARE_WORD_OFFSET,
                            ATA_IDENTIFY_FIRMWARE_WORD_LENGTH);
-  ata_read_identify_string(data, drive->model,
+  read_identify_string(data, drive->model,
                            ATA_IDENTIFY_MODEL_WORD_OFFSET,
                            ATA_IDENTIFY_MODEL_WORD_LENGTH);
 
@@ -446,11 +415,14 @@ static void ata_parse_identify(struct ata_drive *drive, uint16_t data[256]) {
  *
  * @return 0
  */
-int ata_init_drive(struct ata_drive *drive, struct ata_bus *bus, 
+int ata_drive_init(struct ata_drive *drive, struct ata_bus *bus, 
                    uint8_t drive_select) {
   uint16_t data[256];
   int identify_ret;
 
+  TRACE("drive=%p, bus=%p, drive_select=0x%02x", drive, bus, drive_select);
+
+  memset(data, 0, 512);
   memset(drive, 0, sizeof(struct ata_drive));
   drive->bus = bus;
   drive->type = ATA_UNKNOWN;
@@ -472,7 +444,7 @@ int ata_init_drive(struct ata_drive *drive, struct ata_bus *bus,
   drive->usable = (0 == identify_ret);
   
   if (!drive->exists) return 0;
-  if (!ata_is_supported(drive)) return 0;
+  if (!is_drive_supported(drive)) return 0;
 
   ata_parse_identify(drive, data);
 
@@ -503,7 +475,7 @@ int ata_init_drive(struct ata_drive *drive, struct ata_bus *bus,
 /**
  * @brief Free all memory held by an ata_drive.
  */
-void ata_destroy_drive(struct ata_drive *d) {
+void ata_drive_destroy(struct ata_drive *d) {
   (void) d;
 }
 
@@ -520,37 +492,36 @@ void ata_destroy_drive(struct ata_drive *d) {
  *      still return success. the caller is expected to look at the ata_drive's
  *      and make sure they're all ok).
  */
-int ata_init_bus(struct ata_bus *bus, int irq, int cmd, int ctl) {
+int ata_bus_init(struct ata_bus *bus, int irq, int cmd, int ctl) {
   int ret;
 
   TRACE("bus=%p, cmd=0x%03x, ctl=0x%03x", bus, cmd, ctl);
 
   memset(bus, 0, sizeof(struct ata_bus));
 
-  if (!does_ata_bus_exist(cmd)) {
+  if (!does_bus_exist(cmd)) {
     bus->exists = false;
     return 0;
   }
 
   bus->exists = true;
+  bus->irq = irq;
   bus->cmd = cmd;
   bus->ctl = ctl;
-  bus->irq = irq;
 
-  if (0 != (ret = ata_init_drive(&bus->master, bus, ATA_SELECT_MASTER))) {
-    goto ata_master_cleanup;
-  }
-  if (0 != (ret = ata_init_drive(&bus->slave, bus, ATA_SELECT_SLAVE))) {
-    goto ata_slave_cleanup;
-  }
+  ret = ata_drive_init(&bus->master, bus, ATA_SELECT_MASTER);
+  if (ret) goto ata_master_cleanup;
 
-  ata_log_drive(&bus->master);
-  ata_log_drive(&bus->slave);
+  ret = ata_drive_init(&bus->slave, bus, ATA_SELECT_SLAVE);
+  if (ret) goto ata_slave_cleanup;
 
+
+  print_drive(&bus->master);
+  print_drive(&bus->slave);
   return 0;
 
 ata_slave_cleanup:
-  ata_destroy_drive(&bus->master);
+  ata_drive_destroy(&bus->master);
 ata_master_cleanup:
   return ret;
 }
@@ -558,6 +529,6 @@ ata_master_cleanup:
 /**
  * @brief Free all the memory associated with an ata_bus struct.
  */
-void ata_destroy_bus(struct ata_bus *bus) {
+void ata_bus_destroy(struct ata_bus *bus) {
   (void) bus;
 }

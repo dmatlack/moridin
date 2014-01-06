@@ -25,7 +25,7 @@ int ide_init(struct ide_device *ide, unsigned bm_offset, int irq,
   /*
    * Initialize the ata bus
    */
-  ret = ata_init_bus(&ide->ata, irq, ata_cmd, ata_ctl);
+  ret = ata_bus_init(&ide->ata, irq, ata_cmd, ata_ctl);
   if (ret) goto cleanup_ata;
 
   /*
@@ -35,15 +35,14 @@ int ide_init(struct ide_device *ide, unsigned bm_offset, int irq,
   if (ret) goto cleanup_bm;
 
   return 0;
-
 cleanup_bm:
-  ata_destroy_bus(&ide->ata);
+  ata_bus_destroy(&ide->ata);
 cleanup_ata:
   return ret;
 }
 
 /**
- * @brief Free all memory helf by an ide_device struct. Do not free the
+ * @brief Free all memory held by an ide_device struct. Do not free the
  * ide_device struct itself.
  */
 void ide_destroy(struct ide_device *ide) {

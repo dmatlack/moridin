@@ -73,13 +73,11 @@ int piix_ide_device_init(struct pci_device *pci_d) {
    * both and look for drives in each.
    */
 
-  if (!(ret = ide_init(&piix_pri_ide, bm_base_addr + 0x0, 14, 0x1F0, 0x3F4))) {
-    return ret;
-  }
+  ret = ide_init(&piix_pri_ide, bm_base_addr + 0x0, 14, 0x1F0, 0x3F4);
+  if (ret) return ret;
 
-  if (!(ret = ide_init(&piix_sec_ide, bm_base_addr + 0x8, 15, 0x170, 0x374))) {
-    goto cleanup_pri_ide;
-  }
+  ret = ide_init(&piix_sec_ide, bm_base_addr + 0x8, 15, 0x170, 0x374);
+  if (ret) goto cleanup_pri_ide;
 
   return 0;
 cleanup_pri_ide:
