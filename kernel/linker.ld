@@ -9,7 +9,8 @@ SECTIONS
     /* Begin putting sections at 1 MiB, a conventional place for kernels to be
        loaded at by the bootloader. */
     . = 1M;
-    __kernel_image_start = .;
+    kimg_start = .;
+    ktext_start = .;
 
     /* First put the multiboot header, as it is required to be put very early
        early in the image or the bootloader won't recognize the file format.
@@ -20,17 +21,27 @@ SECTIONS
         *(.text)
     }
 
+    ktext_end = .;
+    krodata_start = .;
+
     /* Read-only data. */
     .rodata BLOCK(4K) : ALIGN(4K)
     {
         *(.rodata)
     }
 
+    krodata_end = .;
+    kdata_start = .;
+
     /* Read-write data (initialized) */
     .data BLOCK(4K) : ALIGN(4K)
     {
+        *(.bpgdir)
         *(.data)
     }
+
+    kdata_end = .;
+    kbss_start = .;
 
     /* Read-write data (uninitialized) and stack */
     .bss BLOCK(4K) : ALIGN(4K)
@@ -40,7 +51,8 @@ SECTIONS
         *(.bootstrap_stack)
     }
 
-    __kernel_image_end = .;
+    kbss_end = .;
+    kimg_end = .;
 
     /* The compiler may produce other sections, by default it will put them in
        a segment with the same name. Simply add stuff here as needed. */

@@ -4,14 +4,8 @@
 #ifndef _MALLOC_WRAPPERS_H_
 #define _MALLOC_WRAPPERS_H_
 
-void kmalloc_heap_dump(void);
+void kmalloc_early_init(size_t start, size_t stop);
 
-int   kmalloc_init(void);
-//void *kmalloc(size_t size);
-//void *kmemalign(size_t alignment, size_t size);
-//void *kcalloc(size_t nelt, size_t eltsize);
-//void *krealloc(void *buf, size_t new_size);
-//void  kfree(void *buf);
 void *kmalloc(size_t size);
 void *kmemalign(size_t alignment, size_t size);
 void  kfree(void *buf, size_t size);

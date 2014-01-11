@@ -14,15 +14,11 @@
 #include <arch/x86/page.h>
 #include <stdint.h>
 #include <assert.h>
-#include <mm/physmem.h>
+#include <mm/memory.h>
 #include <arch/x86/cpu.h>
 #include <arch/x86/reg.h>
 #include <arch/x86/exn.h>
 
-extern char __kernel_image_start[];
-extern char __kernel_image_end[];
-extern char boot_stack_top[];
-extern char boot_stack_bottom[];
 
 extern void kernel_main(void);
 
@@ -46,7 +42,8 @@ void mb_entry(unsigned int mb_magic, struct multiboot_info *mb_info) {
           "    Booting kernel...\n"
           "\n");
 
-  kprintf("Kernel Boot Stack: [0x%08x, 0x%08x]\n", boot_stack_bottom, boot_stack_top);
+  kprintf("boot_stack: [0x%08x, 0x%08x]\n", boot_stack_bottom, boot_stack_top);
+  kprintf("boot_page_dir: 0x%08x\n", boot_page_dir);
 
   if (mb_magic != MULTIBOOT_BOOTLOADER_MAGIC) {
     panic("Multiboot magic (eax) incorrect: expected 0x%08x, got 0x%08x\n",
@@ -54,19 +51,20 @@ void mb_entry(unsigned int mb_magic, struct multiboot_info *mb_info) {
   }
 
   /* 
-   * initialize the x86 exception handling facilities and install the kernel's
-   * exception handler
+   * Initialize the exception handlers in the IDT incase an exception occurs
+   * during system setup.
    */
-  if (x86_exn_init(mb_exn_handler)) {
-    panic("Unable to install x86 exception handlers.\n");
-  }
+  x86_exn_setup_idt();
 
-  if (pmem_bootstrap(MB(1) + (1024 * mb_info->mem_upper), X86_PAGE_SIZE,
-                     __kernel_image_start, __kernel_image_end)) {
-    panic("Unable to initialize memory constructs\n");
-  }
-
+  /*
+   * Disable the floating point unit
+   */
   x86_disable_fpu();
+
+  /*
+   * Use the mb_info struct to learn about the physical memory layout
+   */
+  mem_mb_init(mb_info);
 
   /*
    * And finally enter the kernel

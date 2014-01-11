@@ -12,7 +12,7 @@
 #include <kernel/io.h>
 #include <types.h>
 #include <stddef.h>
-#include <mm/physmem.h>
+#include <mm/memory.h>
 
 struct pci_bus *__pci_root;
 

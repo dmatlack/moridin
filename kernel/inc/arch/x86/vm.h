@@ -237,16 +237,7 @@ static inline entry_t* get_pte(struct entry_table *pt, size_t vaddr) {
   return &(pt->entries[PT_OFFSET(vaddr)]);
 }
 
-/*
- * x86 implementation of the vm_machine_interface.
- */
-int x86_vm_bootstrap(size_t kernel_page_size);
-int x86_vm_init(void);
-int x86_vm_init_object(struct vm_machine_object **object);
-int x86_vm_map(struct vm_machine_object *object, size_t *vpages,
-            size_t *ppages, int num_pages, vm_flags_t flags);
-//TODO unmap
-extern struct vm_machine_interface x86_vm_machine_interface;
+int x86_init_page_dir(struct entry_table **object);
 
 bool x86_vtop(struct entry_table *pd,  size_t vaddr, size_t *paddrp);
 

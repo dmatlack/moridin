@@ -104,7 +104,7 @@ struct __attribute__((__packed__)) x86_exn_args {
  * @brief Initialize the x86 exception handling by installing base 
  * handlers into the IDT.
  */
-int x86_exn_init(void (*handler)(struct x86_exn_args *exn));
+void x86_exn_setup_idt(void);
 
 void x86_exn_set_handler(void (*handler)(struct x86_exn_args *));
 

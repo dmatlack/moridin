@@ -10,43 +10,25 @@
 #include <arch/x86/reg.h>
 #include <arch/x86/cpu.h>
 
-#include <mm/physmem.h>
-#include <mm/vm.h>
 #include <kernel/kmalloc.h>
+
+#include <mm/memory.h>
+#include <mm/vm.h>
 
 #include <stddef.h>
 #include <assert.h>
 #include <debug.h>
+#include <errno.h>
 
 #define X86_IS_PAGE_ALIGNED(addr)\
   (FLOOR(X86_PAGE_SIZE, addr) == addr)
 
-/*
- * The kernel page tables are used to map the kernel's virtual address
- * space. They are statically allocated because we need to initialize
- * virtual memory before we can use dynamic memory allocation. It is ok
- * that they are statically allocated because all processes will reuse
- * these page tables when mapping the kernel into their address space.
- */
-struct entry_table kernel_pgtbls[NUM_KERNEL_PGTBLS]
-  __attribute__((aligned(X86_PAGE_SIZE)));
-
-struct vm_machine_interface x86_vm_machine_interface = {
-  .bootstrap   = x86_vm_bootstrap,
-  .init        = NULL,
-  .init_object = x86_vm_init_object,
-  .map         = x86_vm_map,
-  .unmap       = NULL,
-};
-
-int x86_vm_init_object(struct vm_machine_object **object) {
+int x86_init_page_dir(struct entry_table **object) {
   struct entry_table *page_directory;
   int ret;
 
   page_directory = entry_table_alloc();
-  if (NULL == page_directory) {
-    return ALLOC_FAILED;
-  }
+  if (NULL == page_directory) return ENOMEM;
 
   ret = entry_table_init(page_directory);
   if (0 != ret) {
@@ -54,14 +36,8 @@ int x86_vm_init_object(struct vm_machine_object **object) {
     return ret;
   }
 
-  *object = (struct vm_machine_object *) page_directory;
+  *object = page_directory;
   return 0;
-}
-
-int x86_vm_map(struct vm_machine_object *object, size_t *vpages, 
-               size_t *ppages, int num_pages, vm_flags_t flags) {
-  return x86_map_pages((struct entry_table *) object, vpages, ppages,
-                       num_pages, flags);
 }
 
 /**

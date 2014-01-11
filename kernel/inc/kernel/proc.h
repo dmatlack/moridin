@@ -7,7 +7,7 @@
 #define __KERNEL_PROC_H__
 
 #include <list.h>
-#include <mm/physmem.h>
+#include <mm/memory.h>
 
 
 struct thread_struct;

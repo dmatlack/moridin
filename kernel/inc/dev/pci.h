@@ -23,8 +23,6 @@
 #include <stdint.h>
 #include <list.h>
 #include <kernel/kmalloc.h>
-#include <mm/physmem.h>
-#include <mm/vm.h>
 
 /*
  * Write to this address to configure/select a device

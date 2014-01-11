@@ -22,15 +22,12 @@ static int __get_next_pid() {
 }
 
 int proc_init(struct proc_struct *proc) {
-  int ret;
-
   ASSERT(NULL != proc);
 
   list_init(&proc->children);
   proc->parent = NULL;
 
-  ret = vm_address_space_create(&proc->vm);
-  if (0 != ret) { return ret; }
+  //TODO initialize address space
 
   list_init(&proc->threads);
 

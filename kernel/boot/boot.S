@@ -16,6 +16,9 @@
 #include <boot/multiboot.h>
 #include <arch/x86/seg.h>
 
+.global boot_page_dir
+.global boot_stack_bottom
+.global boot_stack_top
 .global lgdt
 .global lidt
 .global _start
@@ -75,6 +78,8 @@ _start:
   movl $SEGSEL_TSS, %eax      # set up a hardware task
   ltr %ax
 
+  call boot_paging_init
+
   movl %ebp, %esp             # restore the stack
   call mb_entry               # mb_entry(multiboot_magic, multiboot_info)
 
@@ -84,6 +89,44 @@ _start:
   hlt                         # halt the cpu until the next interrupt arrives
 .Lhang:                       # create a local label rather than a real symbol
   jmp .Lhang                  # loop endlessly
+
+###
+# boot_paging_init -- Set up the boot_page_dir to direct map the first
+# 16 MB of memory.
+###
+.global boot_paging_init
+boot_paging_init:
+  #
+  # Enable 4 MB pages by setting the PSE flag of cr4
+  #
+  movl %cr4, %eax
+  orl $0x10, %eax
+  movl %eax, %cr4
+
+  #
+  # Set up the page directory
+  #
+  movl $boot_page_dir, %eax    # eax now points to the page directory
+  movl $0x00000083, 0x0(%eax)  # Map [0, 4MB]
+  movl $0x00400083, 0x4(%eax)  # Map [4MB, 8MB]
+  movl $0x00800083, 0x8(%eax)  # Map [8MB, 12MB]
+  movl $0x00C00083, 0xC(%eax)  # Map [12MB, 16MB]
+
+  # NOTE: to implement a high half kernel, we can extend the above
+  # functionality and map [3 GB, 3 GB + 16 MB] to [0 MB, 16 MB]
+  # (which is what Linux does). This makes it easy to still address
+  # things like the the video memory because you can still use 
+  # physical addresses
+
+  #
+  # Set cr3 to set the page directory, then enable paging in cr0
+  #
+  movl %eax, %cr3
+  movl %cr0, %eax
+  orl $0x80000000, %eax
+  movl %eax, %cr0
+
+  ret
 
 ###
 # lgdt -- Load the Global Descriptor Table
@@ -125,17 +168,19 @@ lidt:
   addl $6, %esp         # clean up our local stack
   ret
 
-# Set the size of the _start symbol to the current location '.' minus its start.
-# This is useful when debugging or when you implement call tracing.
-.size _start, . - _start
+#
+# Create a page directory to use to enable paging early in the boot
+# process.
+#
+.section .bpgdir
+boot_page_dir:
+  .space 4096
 
 .section .data
 
 # Allocate room for a small temporary stack
-.global boot_stack_bottom
 boot_stack_bottom:
   .space 4096
-.global boot_stack_top
 boot_stack_top:
 
 #undef ASM_FILE

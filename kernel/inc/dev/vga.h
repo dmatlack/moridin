@@ -108,7 +108,7 @@
 /**
  * @brief Initialize the VGA device driver.
  */
-int vga_init(void);
+void vga_init(void);
 
 /**
  * @brief Print the character ch to the screen at the cursor's location.
