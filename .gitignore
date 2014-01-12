@@ -9,3 +9,4 @@ kernel/KERNEL.S
 TODO
 kernel/tags
 tags
+user/bin/

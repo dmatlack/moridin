@@ -3,14 +3,14 @@
 # Operating System Makefile
 #
 #
-.PHONY: default kernel iso clean
+.PHONY: default kernel user iso clean
 
 default: iso
 
 #
 # Create an .iso (CDROM image) that can boot the os
 #
-iso: kernel boot/grub.cfg
+iso: kernel user boot/grub.cfg
 	mkdir -p iso
 	mkdir -p iso/boot
 	cp kernel/KERNEL.o iso/boot/KERNEL.o
@@ -24,8 +24,15 @@ iso: kernel boot/grub.cfg
 kernel:
 	make -C kernel/
 
+#
+# Build the user progams into executables compatable with kernel
+#
+user:
+	make -C user/
+
 
 clean:
 	make -C kernel/ clean
+	make -C user/ clean
 	rm -rf iso
 	rm -rf OS.iso
