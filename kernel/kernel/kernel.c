@@ -4,9 +4,6 @@
  * @author David Matlack
  */
 #include <kernel.h>
-#include <assert.h>
-#include <debug.h>
-
 #include <kernel/kmalloc.h>
 #include <kernel/irq.h>
 #include <kernel/timer.h>
@@ -19,7 +16,15 @@
 #include <dev/serial.h>
 #include <dev/pci.h>
 
+#include <assert.h>
+#include <debug.h>
+
 void kernel_main() {
+
+  serial_port_init();
+  debug_init();
+  log_init(debug_putchar, LOG_LEVEL_DEBUG);
+  
   /*
    * Set up kmalloc to only allocate dynamic memory in the first 16 MB of
    * memory. This will allow us to use kmalloc during early startup.
@@ -29,21 +34,6 @@ void kernel_main() {
    */
   kmalloc_early_init((size_t) kimg_end, MB(16));
   
-  /*
-   * Serial Port (needed for debug logging)
-   */
-  SUCCEED_OR_DIE(serial_init());
-
-  /*
-   * Debugging
-   */
-  SUCCEED_OR_DIE(debug_init());
-
-  /*
-   * Logging
-   */
-  SUCCEED_OR_DIE(log_init(debug_putchar, LOG_LEVEL_DEBUG));
-
   /*
    * Page management
    */

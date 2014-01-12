@@ -39,7 +39,7 @@ struct serial_port {
   const char *purpose;
 };
 
-int serial_init(void);
+void serial_port_init(void);
 struct serial_port *reserve_serial_port(const char *purpose);
 void serial_putchar(struct serial_port *s, char c);
 

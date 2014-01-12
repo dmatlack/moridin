@@ -11,7 +11,7 @@
 #ifndef __DEBUG_H__
 #define __DEBUG_H__
 
-int debug_init(void);
+void debug_init(void);
 int debug_putchar(int c);
 
 #endif /* !__DEBUG_H__ */

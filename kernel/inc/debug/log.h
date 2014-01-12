@@ -18,7 +18,7 @@ extern struct printf_state __log_printf_state;
 extern int                 __log_level;
 extern int                 __log_trace;
 
-int  log_init(int (*putchar)(int), int level);
+void log_init(int (*putchar)(int), int level);
 void log_setputchar(int (*putchar)(int));
 void log_setlevel(int level);
 

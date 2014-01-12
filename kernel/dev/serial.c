@@ -19,7 +19,7 @@ struct serial_port __serial_ports[4];
 /**
  * @brief Find and initialize all serial ports connected to the computer.
  */
-int serial_init(void) {
+void serial_port_init(void) {
   struct serial_port *s;
   unsigned i;
 
@@ -65,8 +65,6 @@ int serial_init(void) {
       outb(s->port + SERIAL_PORT_IRQ, 0x0B);
     }
   }
-
-  return 0;
 }
 
 struct serial_port *reserve_serial_port(const char *purpose) {

@@ -9,12 +9,15 @@
 #include <types.h>
 #include <stdarg.h>
 #include <errno.h>
+#include <assert.h>
 
 #include <kernel/kprintf.h>
 
 struct printf_state __log_printf_state;
 int                 __log_level;
 int                 __log_trace;
+#define LOG_MAGIC 0xBAD104
+int                 __log_magic = 0;
 
 /**
  * @brief Initialize the logging system.
@@ -26,11 +29,11 @@ int                 __log_trace;
  *
  * @return 0
  */
-int log_init(int (*putchar)(int), int level) {
+void log_init(int (*putchar)(int), int level) {
   __log_printf_state.putchar = putchar;
   __log_level = level;
   __log_trace = 1;
-  return 0;
+  __log_magic = LOG_MAGIC;
 }
 
 /**
@@ -58,6 +61,8 @@ int log(int log_level, const char *fmt, ...) {
   va_list args;
   int err;
 
+  if (__log_magic != LOG_MAGIC) return 0;
+
   va_start(args, fmt);
 
   if (log_level <= __log_level) {
@@ -75,6 +80,8 @@ int log(int log_level, const char *fmt, ...) {
 int trace(const char *fmt, ...) {
   va_list args;
   int err;
+
+  if (__log_magic != LOG_MAGIC) return 0;
 
   va_start(args, fmt);
 
