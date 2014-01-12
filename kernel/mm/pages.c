@@ -22,11 +22,11 @@ struct page {
 /*
  * A struct page for every physical page on the system.
  */
-struct page *pages;
+struct page *__pages;
 
-static int  npages;       /* size of pages */
-static int  nfree_pages;  /* number of available pages in pages */
-static int  pages_index;  /* last used lookup index in pages */
+static unsigned __npages;   /* size of __pages */
+static unsigned __nfree;    /* number of available pages in __pages */
+static unsigned __index;    /* last used lookup index in __pages */
 
 /**
  * @breif Initialize the physical page management system.
@@ -34,25 +34,92 @@ static int  pages_index;  /* last used lookup index in pages */
 int pages_init(void) {
   size_t p;
 
-  npages = phys_mem_bytes / PAGE_SIZE;
-  nfree_pages = npages;
-  pages_index = 0;
+  __npages = phys_mem_bytes / PAGE_SIZE;
+  __nfree = __npages;
+  __index = 0;
 
-  pages = kmalloc(sizeof(struct page) * npages);
-  if (NULL == pages) return ENOMEM;
+  __pages = kmalloc(sizeof(struct page) * __npages);
+  if (NULL == __pages) return ENOMEM;
 
-  memset(pages, 0, sizeof(struct page) * npages);
+  memset(__pages, 0, sizeof(struct page) * __npages);
 
   /*
    * Since the boot code maps the first 16 MB of memory, we'll set each
    * refcount for those pages to 1.
    */
   for (p = 0; p < MB(16) / PAGE_SIZE; p++) {
-    pages[p].count = 1;
+    __pages[p].count = 1;
   }
-  nfree_pages -= MB(16) / PAGE_SIZE;
+  __index = p;
+  __nfree -= MB(16) / PAGE_SIZE;
 
-  kprintf("system page table: %d entries (%d KB)\n", npages,
-          npages * sizeof(struct page) / KB(1));
+  kprintf("system page table: %d entries (%d KB)\n", __npages,
+          __npages * sizeof(struct page) / KB(1));
   return 0;
+}
+
+size_t page_address(struct page *p) {
+  return (((size_t) p - (size_t) __pages) / sizeof(struct page)) * PAGE_SIZE;
+}
+
+struct page *get_page(size_t address) {
+  return __pages + (address / PAGE_SIZE);
+}
+
+/**
+ * @brief Request <n> arbitrarily placed pages throughout physical memory.
+ *
+ * @param n the number of pages to allocate
+ * @param pages a buffer in which to store the physical address of each
+ *  page allocated
+ *
+ * @return
+ *    ENOMEM if there are no available pages
+ *    0 on success
+ */
+int alloc_pages(unsigned n, size_t *pages) {
+  unsigned count, iter;
+
+  TRACE("n=%d, pages=%p", n, pages);
+
+  if (n > __nfree) {
+    return ENOMEM;
+  }
+  if (0 == n) {
+    return 0;
+  }
+
+  for (count = iter = 0; iter < __npages; iter++) {
+    if (0 == __pages[__index].count) {
+      pages[count] = page_address(__pages + __index);
+      count++;
+      if (count == n) break;
+    }
+
+    __index = (__index + 1) % __npages;
+  }
+
+  if (iter == __npages) {
+    free_pages(count, pages);
+    return ENOMEM;
+  }
+
+  return 0;
+}
+
+/**
+ * @brief Free <n> pages by decrementing their reference count.
+ *
+ * @param n The number of pages to free.
+ * @param pages The physical address of the pages to free
+ */
+void free_pages(unsigned n, size_t *pages) {
+  unsigned i;
+
+  TRACE("n=%d, pages=%p", n, pages);
+
+  for (i = 0; i < n; i++) {
+    (get_page(pages[i]))->count--;
+  }
+  
 }

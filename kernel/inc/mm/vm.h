@@ -1,6 +1,8 @@
 /**
  * @file mm/vm.h
  *
+ * @brief Virtual Memory Manager
+ *
  * @author David Matlack
  */
 #ifndef __MM_VM_H__
