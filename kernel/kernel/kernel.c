@@ -19,20 +19,16 @@
 #include <assert.h>
 #include <debug.h>
 
+#include <boot/multiboot.h>
+struct multiboot_info *__mb_info;
+
 void kernel_main() {
 
   serial_port_init();
   debug_init();
   log_init(debug_putchar, LOG_LEVEL_DEBUG);
-  
-  /*
-   * Set up kmalloc to only allocate dynamic memory in the first 16 MB of
-   * memory. This will allow us to use kmalloc during early startup.
-   *
-   * NOTE: if we use a higher half kernel we'll have to offset these
-   * values
-   */
-  kmalloc_early_init((size_t) kimg_end, MB(16));
+
+  mb_dump(__log, __mb_info);
   
   /*
    * Page management

@@ -22,6 +22,7 @@ void log_init(int (*putchar)(int), int level);
 void log_setputchar(int (*putchar)(int));
 void log_setlevel(int level);
 
+int __log(const char *fmt, ...);
 int log(int log_level, const char *fmt, ...);
 int trace(const char *fmt, ...);
 

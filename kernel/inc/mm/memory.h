@@ -23,6 +23,9 @@ extern char kdata_end[];
 extern char kbss_start[];
 extern char kbss_end[];
 
+extern char *kheap_start;
+extern char *kheap_end;
+
 extern char boot_stack_top[];
 extern char boot_stack_bottom[];
 extern char boot_page_dir[];

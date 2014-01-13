@@ -13,7 +13,7 @@ AUTOSTART := $(shell rm -f KERNEL.S)
 ###############################################################################
 
 # directories with source code
-PROJDIRS := arch boot lib dev kernel debug mm
+PROJDIRS := arch boot fs lib dev kernel debug mm
 
 # source files by type
 CFILES = $(shell find $(PWD)/$(PROJDIRS) -type f -name "*.c")

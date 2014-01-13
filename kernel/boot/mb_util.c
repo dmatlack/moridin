@@ -12,6 +12,11 @@
 #include <kernel/kprintf.h>
 #include <arch/x86/exn.h>
 
+size_t mb_mod_start(struct multiboot_info *mb_info, int index) {
+  return (size_t)
+    (((multiboot_module_t *) mb_info->mods_addr) + index)->mod_start;
+}
+
 /**
  * @brief Dump the contents of the multiboot_info struct using the given
  * printf function.
@@ -22,8 +27,6 @@
 void mb_dump(printf_f p, struct multiboot_info *mb_info) {
   uint32_t flags = mb_info->flags;
 
-  ASSERT(p == kprintf);
-  
   p("struct multiboot_info *: %p\n\n", mb_info);
   p("spec: http://www.gnu.org/software/grub/manual/multiboot/multiboot.txt\n");
 
@@ -45,8 +48,19 @@ void mb_dump(printf_f p, struct multiboot_info *mb_info) {
   }
 
   IF_FLAGS( MULTIBOOT_INFO_MODS ) {
+    unsigned i;
+
     p("  mods_count = %d\n", mb_info->mods_count);
     p("  mods_addr = 0x%08x\n", mb_info->mods_addr);
+
+    for (i = 0; i < mb_info->mods_count; i++) {
+      multiboot_module_t *mod;
+
+      mod = ((multiboot_module_t *) mb_info->mods_addr) + i;
+      p("    %d: start=0x%08x, end=0x%08x, size=0x%x, cmdline=%s\n",
+          i, mod->mod_start, mod->mod_end, mod->mod_end - mod->mod_start,
+          (char *) mod->cmdline);
+    }
   }
 
   IF_FLAGS( MULTIBOOT_INFO_AOUT_SYMS ) {

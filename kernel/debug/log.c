@@ -50,6 +50,21 @@ void log_setlevel(int level) {
   __log_level = level;
 }
 
+int __log(const char *fmt, ...) {
+  va_list args;
+  int err;
+
+  if (__log_magic != LOG_MAGIC) return 0;
+
+  va_start(args, fmt);
+
+  err = _vprintf(&__log_printf_state, fmt, args);
+
+  va_end(args);
+
+  return err;
+}
+
 /**
  * @brief Log a formatted string.
  *

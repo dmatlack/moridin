@@ -12,6 +12,9 @@
  */
 size_t phys_mem_bytes;
 
+char *kheap_start;
+char *kheap_end;
+
 /**
  * @brief Initialize basic memory contructs from the multiboot environment
  */
@@ -26,5 +29,25 @@ void mem_mb_init(struct multiboot_info *mb_info) {
 
   kprintf("RAM: %d MB\n", phys_mem_bytes / MB(1));
 
-  //TODO maybe parse the mmap
+  /*
+   * The kernel heap starts after the kernel image in memory
+   */
+  kheap_start = (char *) PAGE_ALIGN_UP(kimg_end);
+
+  /*
+   * If there are any modules installed (e.g. ramdisk) then we need to make
+   * sure the kernel heap doesn't overwrite any modules.
+   */
+  if (mb_info->flags & MULTIBOOT_INFO_MODS) {
+    unsigned i;
+
+    for (i = 0; i < mb_info->mods_count; i++) {
+      multiboot_module_t *m = ((multiboot_module_t *) mb_info->mods_addr) + i;
+      if (m->mod_end > (size_t) kheap_start) {
+        kheap_start = (char *) PAGE_ALIGN_UP(m->mod_end);
+      }
+    }
+  }
+
+  kheap_end = (char *) MB(16);
 }
