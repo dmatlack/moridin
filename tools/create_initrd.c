@@ -1,5 +1,13 @@
+/**
+ * @file tools/create_initrc.c
+ *
+ * @brief A utility to create an initial ramdisk
+ *
+ * @author David Matlack
+ */
+
 // BEGIN KERNEL INCLUDES
-#include <initrd.h>
+#include "../kernel/inc/fs/initrd.h"
 // END KERNEL INCLUDES
 
 #include <stdio.h>
@@ -37,9 +45,11 @@ int main(int argc, char **argv) {
     fail("Couldn't create "INITRD_FNAME);
   }
 
+  /*
+   * Write the initrd filesystem header to the beginning of the ramdisk
+   */
   hdr.magic = INITRD_MAGIC;
   hdr.nfiles = nfiles;
-
   WRITE(&hdr, sizeof(struct initrd_hdr), 1, rdisk);
 
   data_offset = sizeof(struct initrd_hdr) + nfiles * sizeof(struct initrd_file);
@@ -51,7 +61,7 @@ int main(int argc, char **argv) {
     char *fname = argv[i], *cp;
     FILE *f = fopen(fname, "r");
     if (!f) {
-      fail("Couldn't open file");
+      fail("Couldn't open file %s", fname);
     }
 
     /*
@@ -63,14 +73,14 @@ int main(int argc, char **argv) {
       cp--;
     }
 
-    printf("Adding file %s\n", cp);
-    
     memcpy(rfile.name, cp, strlen(cp) + 1);
     fseek(f, 0, SEEK_END);
     rfile.length = ftell(f);
     rfile.data = data_offset;
-
     fclose(f);
+
+    printf("Adding file %s (length=0x%x, data=0x%x)\n",
+           rfile.name, rfile.length, rfile.data);
     WRITE(&rfile, sizeof(struct initrd_file), 1, rdisk);
 
     data_offset += rfile.length;

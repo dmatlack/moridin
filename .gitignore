@@ -10,3 +10,4 @@ TODO
 kernel/tags
 tags
 user/bin/
+tools/create_initrd

@@ -32,13 +32,14 @@ user:
 	make -C user/
 
 initrd: tools
-	tools/initrd/create user/bin/*
+	tools/create_initrd user/bin/*
 
 tools:
-	make -C tools/initrd/
+	make -C tools/
 
 clean:
 	make -C kernel/ clean
 	make -C user/ clean
+	make -C tools/ clean
 	rm -rf iso
 	rm -rf OS.iso
