@@ -11,3 +11,4 @@ kernel/tags
 tags
 user/bin/
 tools/create_initrd
+initrd

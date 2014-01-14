@@ -17,20 +17,48 @@
 
 #define INITRD_FNAME "initrd"
 
+#define USAGE \
+  "Usage: ./create_initrc files ...\n" \
+  "   -h,--help  For this help message.\n" \
+  "\n" \
+  "Pass the utility a list of 0 or more files and it will create a\n" \
+  "that can be used as an initial ramdisk.\n"
+ 
+
 #define fail(_fmt, ...) \
   do { \
     printf(_fmt"\n", ##__VA_ARGS__); \
     exit(1); \
   } while (0)
 
-#define WRITE(_buf, _size, _num, _stream) \
+#define WRITE(_buf, _size, _stream) \
   do { \
     int __ret; \
-    if (_num != (__ret = fwrite((void *) _buf, _size, _num, _stream))) { \
+    if (_size != (__ret = fwrite((void *) _buf, 1, _size, _stream))) { \
       fclose(_stream); \
       fail("Write failed: %s:%d (returned %d)", __FILE__, __LINE__, __ret); \
     } \
   } while (0)
+
+void copy_file(FILE *to, FILE *from) {
+#define BUFSIZE 128
+  char buf[BUFSIZE];
+  int bytes;
+  int error;
+
+  while (0 != (bytes = fread(buf, 1, BUFSIZE, from))) {
+    if (bytes < 0) {
+      fclose(from);
+      fclose(to);
+      fail("Failed fread() in %s: %d", __func__, bytes);
+    }
+    if (0 > (error = fwrite(buf, 1, bytes, to))) {
+      fclose(from);
+      fclose(to);
+      fail("Failed fwrite() in %s: %d", __func__, error);
+    }
+  }
+}
 
 int main(int argc, char **argv) {
   FILE *f, *rdisk;
@@ -38,7 +66,13 @@ int main(int argc, char **argv) {
   unsigned i;
   struct initrd_hdr hdr;
   struct initrd_file rfile;
-  unsigned data_offset = 0;
+  unsigned data_start, data_offset;
+
+  if (argc > 1 &&
+      (!strncmp(argv[1], "-h", 2) || !strncmp(argv[1], "--help", 5))) {
+    printf(USAGE);
+    exit(0);
+  }
 
   rdisk = fopen(INITRD_FNAME, "wb");
   if (!rdisk) {
@@ -50,9 +84,10 @@ int main(int argc, char **argv) {
    */
   hdr.magic = INITRD_MAGIC;
   hdr.nfiles = nfiles;
-  WRITE(&hdr, sizeof(struct initrd_hdr), 1, rdisk);
+  WRITE(&hdr, sizeof(struct initrd_hdr), rdisk);
 
-  data_offset = sizeof(struct initrd_hdr) + nfiles * sizeof(struct initrd_file);
+  data_start = sizeof(struct initrd_hdr) + nfiles * sizeof(struct initrd_file);
+  data_offset = data_start;
 
   /*
    * First write out all the files headers to the ramdisk
@@ -61,7 +96,7 @@ int main(int argc, char **argv) {
     char *fname = argv[i], *cp;
     FILE *f = fopen(fname, "r");
     if (!f) {
-      fail("Couldn't open file %s", fname);
+      fail("Couldn't open file %s to write header.", fname);
     }
 
     /*
@@ -81,7 +116,7 @@ int main(int argc, char **argv) {
 
     printf("Adding file %s (length=0x%x, data=0x%x)\n",
            rfile.name, rfile.length, rfile.data);
-    WRITE(&rfile, sizeof(struct initrd_file), 1, rdisk);
+    WRITE(&rfile, sizeof(struct initrd_file), rdisk);
 
     data_offset += rfile.length;
   }
@@ -89,9 +124,15 @@ int main(int argc, char **argv) {
   /*
    * Then write the actual file data to the ramdisk
    */
-   //
-   //
-   // TODO
-   //
-   //
+  for (i = 1; i <= nfiles; i++) {
+    char *fname = argv[i], *cp;
+    FILE *f = fopen(fname, "r");
+    if (!f) {
+      fail("Couldn't open file %s to write data.", fname);
+    }
+
+    copy_file(rdisk, f);
+  }
+
+  return 0;
 }
