@@ -1,34 +1,38 @@
 /**
- * @file fs/vfs.h
+ * @vfs_file fs/vfs.h
  *
- * @brief Virtual Filesystem
+ * @brief Virtual vfs_filesystem
  *
  * based on JamesM's tutorial at
  *  http://www.jamesmolloy.co.uk/tutorial_html/8.-The%20VFS%20and%20the%20initrd.html
- *
+ * and the Linux Virtual vfs_filesystem
  */
 #ifndef __FS_VFS_H__
 #define __FS_VFS_H__
 
+#include <types.h>
 #include <stdint.h>
 #include <debug.h>
+#include <list.h>
 
-extern struct vfs_node *vfs_root;
+struct vfs_inode;
+struct vfs_dirent;
+struct vfs_file;
 
-#define VFS_NAMESIZE 128
+list_typedef(struct vfs_inode)  vfs_inode_list_t;
+list_typedef(struct vfs_dirent) vfs_dirent_list_t;
+list_typedef(struct vfs_file)   vfs_file_list_t;
 
-struct dirent {
-  char name[VFS_NAMESIZE];
-  uint32_t inode;
-};
-
-struct vfs_node {
-  char name[VFS_NAMESIZE];
+/*
+ * Represents a physical file that is stored somewhere.
+ */
+struct vfs_inode {
+  unsigned long inode;
 
 #define VFS_R 0x1
 #define VFS_W 0x2
 #define VFS_X 0x4
-  uint32_t perm;   // permissions
+  unsigned int perm;   // permissions
 
 #define VFS_FILE         1
 #define VFS_DIRECTORY    2
@@ -38,40 +42,57 @@ struct vfs_node {
 #define VFS_SYMLINK      6
 #define VFS_TYPE(flags) (flags & 0x7)
 #define MOUNTPOINT       8
-  uint32_t flags;   // node type
-  uint32_t inode;   // device-specific identification number
-  uint32_t length;  // size of file in bytes
+  unsigned int flags;   // node type
 
+  size_t length;
+  vfs_dirent_list_t dirents; // all the dirents referring to this file
+};
 
-  void (*open)(struct vfs_node *f);
-  void (*close)(struct vfs_node *f);
+/*
+ * Represents a unique path in the Virtual Filesystem to a given inode.
+ * (e.g. two different dirents can point to the same inode, this is called
+ * a hard link)
+ */
+struct vfs_dirent {
+#define VFS_NAMESIZE 128
+  char name[VFS_NAMESIZE];
+  struct vfs_inode *inode;
+  struct vfs_dirent *parent;  // containing directory
+  vfs_dirent_list_t children; // NULL if vfs_file, list of children if directory
+  list_link(struct vfs_dirent) sibling_link; // other vfs_files in the same directory
+  list_link(struct vfs_dirent) inode_link; // hardlink brethren
+};
 
-  uint32_t (*read)(struct vfs_node *f, uint32_t off, uint32_t size, uint8_t *buf);
-  uint32_t (*write)(struct vfs_node *f, uint32_t off, uint32_t size, uint8_t *buf);
+/*
+ * Represents an open file (per process, per inode).
+ */
+struct vfs_file {
+  struct vfs_dirent *dirent;
+  size_t offset; // read/write offset into the file
+  struct vfs_file_ops *ops;
+};
 
-  struct dirent *(*readdir)(struct vfs_node *f, uint32_t index);
-  struct vfs_node *(*finddir)(struct vfs_node *d, char* name);
+struct vfs_file_ops {
+  void (*open)(struct vfs_file *);
+  void (*close)(struct vfs_file *);
 
+  ssize_t (*read)(struct vfs_file *, char *, size_t size, size_t off);
+  ssize_t (*write)(struct vfs_file *, char *, size_t size, size_t off);
 
-  struct vfs_node *ptr; // symbolic links
+  struct vfs_dirent *(*readdir)(struct vfs_file *);
 };
 
 #define VFS_ERROR(_f, _fmt, ...) \
-  ERROR("FS file %s: "_fmt, _f->name, ##__VA_ARGS__)
+  ERROR("FS vfs_file %s: "_fmt, _f->name, ##__VA_ARGS__)
 
 #define VFS_WARN(_f, _fmt, ...) \
-  WARN("FS file %s: "_fmt, _f->name, ##__VA_ARGS__)
+  WARN("FS vfs_file %s: "_fmt, _f->name, ##__VA_ARGS__)
 
 /*
  * 
- * The Virtual Filesystem Inferface
+ * The Virtual vfs_filesystem Inferface
  *
  */
-void vfs_open(struct vfs_node *f);
-void vfs_close(struct vfs_node *f);
-uint32_t vfs_read(struct vfs_node *f, uint32_t off, uint32_t size, uint8_t *buf);
-uint32_t vfs_write(struct vfs_node *f, uint32_t off, uint32_t size, uint8_t *buf);
-struct dirent *vfs_readdir(struct vfs_node *f, uint32_t index);
-struct vfs_node *vfs_finddir(struct vfs_node *d, char* name);
+void vfs_chroot(struct vfs_dirent *root);
 
 #endif /* !__FS_VFS_H__ */

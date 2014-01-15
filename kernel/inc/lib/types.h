@@ -8,6 +8,7 @@
 #define LIB_TYPES_H
 
 typedef unsigned int size_t;
+typedef int ssize_t;
 typedef unsigned long ptrdiff_t;
 
 /* WRAPPERS */
