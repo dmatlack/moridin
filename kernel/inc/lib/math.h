@@ -12,4 +12,14 @@ static inline bool check_overlap(unsigned int a_start, unsigned int a_len,
          (b_start >= a_start && b_start <= a_start + a_len);
 }
 
+static inline bool __umin(unsigned a, unsigned b) {
+  return a < b ? a : b;
+}
+#define umin(a, b) __umin((unsigned) (a), (unsigned) (b))
+
+static inline bool __smin(int a, int b) {
+  return a < b ? a : b;
+}
+#define smin(a, b) __smin((unsigned) (a), (unsigned) (b))
+
 #endif /* !__LIB_MATH_H__ */

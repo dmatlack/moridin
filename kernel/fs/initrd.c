@@ -37,6 +37,38 @@ static struct vfs_dirent *initrd_dirents;
 static struct vfs_dirent *initrd_root_dirent;
 static size_t initrd_dirents_size;
 
+/**
+ * @brief Open a file in the initial ramdisk. This function does
+ * nothing because the initial ramdisk is already in memory.
+ */
+void initrd_open(struct vfs_file *f) {
+  TRACE("f=%p", f);
+  (void) f;
+}
+
+/**
+ * @brief Close a file in the initial ramdisk. This function does
+ * nothing because the initail ramdisk is already in memory.
+ */
+void initrd_close(struct vfs_file *f) {
+  TRACE("f=%p");
+  (void) f;
+}
+
+ssize_t initrd_read(struct vfs_file *f, char *buf, size_t size, size_t off) {
+  (void) f; (void) buf; (void) size; (void) off;
+  //TODO
+  return -1;
+}
+
+struct vfs_dirent *initrd_readdir(struct vfs_file *f, unsigned int index) {
+  (void) index;
+  if (VFS_TYPE(f->dirent->inode->flags) != VFS_DIRECTORY) {
+    return NULL;
+  }
+  return NULL;
+}
+
 /*
  * The file operations supported by initrd.
  */
@@ -99,7 +131,7 @@ int initrd_init(size_t address) {
 
   list_insert_tail(&cur_inode->dirents, cur_dirent, inode_link);
   initrd_root_inode = cur_inode;
-  initrd_root_dirent = dirent;
+  initrd_root_dirent = cur_dirent;
 
   /*
    * Now create a dirent and an inode for every file in th ramdisk
@@ -111,7 +143,7 @@ int initrd_init(size_t address) {
     cur_inode++;
     cur_dirent++;
 
-    memcpy(cur_dirent->name, ramfile->name, min(VFS_NAMESIZE, INITRD_NAMESIZE));
+    memcpy(cur_dirent->name, ramfile->name, umin(VFS_NAMESIZE, INITRD_NAMESIZE));
     cur_dirent->name[VFS_NAMESIZE-1] = (char) 0;
     cur_dirent->inode   = cur_inode;
     cur_dirent->parent  = initrd_root_dirent;
@@ -132,14 +164,14 @@ int initrd_init(size_t address) {
   }
   kprintf("\n");
 
-  memset(&initrd_fops, 0, sizeof(file_ops));
+  memset(&initrd_fops, 0, sizeof(struct vfs_file_ops));
   initrd_fops.open = initrd_open;
   initrd_fops.close = initrd_close;
   initrd_fops.read = initrd_read;
   initrd_fops.write = NULL;
   initrd_fops.readdir = initrd_readdir;
 
-  vfs_chroot(&initrd_vroot);
+  vfs_chroot(initrd_root_dirent);
   return 0;
 }
 
@@ -147,37 +179,10 @@ static inline struct initrd_file *initrd_find(struct vfs_file *f) {
   struct initrd_file *r;
 
   for (r = initrd_files; r < initrd_files + initrd->nfiles; r++) {
-    if (!strncmp(f->name, r->name, min(VFS_NAMESIZE, INITRD_NAMESIZE))) {
+    if (!strncmp(f->dirent->name, r->name, umin(VFS_NAMESIZE, INITRD_NAMESIZE))) {
       return r;
     }
   }
 
   return NULL;
-}
-
-/**
- * @brief Open a file in the initial ramdisk. This function does
- * nothing because the initial ramdisk is already in memory.
- */
-void initrd_open(struct vfs_file *f) {
-  TRACE("f=%p", f);
-}
-
-/**
- * @brief Close a file in the initial ramdisk. This function does
- * nothing because the initail ramdisk is already in memory.
- */
-void initrd_close(struct vfs_file *f) {
-  TRACE("f=%p");
-}
-
-ssize_t initrd_read(struct vfs_file *f, char *buf, size_t size, size_t off) {
-  //TODO
-  return -1;
-}
-
-struct dirent *initrd_readdir(struct vfs_file *f, unsigned int index) {
-  if (VFS_TYPE(f->dirent-inode->flags) != VFS_DIRECTORY) {
-    return NULL;
-  }
 }

@@ -64,7 +64,7 @@ struct vfs_dirent {
 };
 
 /*
- * Represents an open file (per process, per inode).
+ * Represents an open file (may be shared by multiple processes).
  */
 struct vfs_file {
   struct vfs_dirent *dirent;
@@ -79,7 +79,7 @@ struct vfs_file_ops {
   ssize_t (*read)(struct vfs_file *, char *, size_t size, size_t off);
   ssize_t (*write)(struct vfs_file *, char *, size_t size, size_t off);
 
-  struct vfs_dirent *(*readdir)(struct vfs_file *);
+  struct vfs_dirent *(*readdir)(struct vfs_file *, unsigned int index);
 };
 
 #define VFS_ERROR(_f, _fmt, ...) \

@@ -10,7 +10,7 @@
 #include <stdint.h>
 #include <types.h>
 
-struct dirent *__vfs_root;
+struct vfs_dirent *__vfs_root_dirent;
 
 /**
  * @brief Set the root of the filesystem. This is like "mounting" a filesystem
@@ -18,10 +18,6 @@ struct dirent *__vfs_root;
  *
  * After calling this function, the filesystem rooted at <root>, will be the VFS.
  */
-void vfs_chroot(struct dirent *root) {
+void vfs_chroot(struct vfs_dirent *root) {
   __vfs_root_dirent = root;
-}
-
-static inline bool isdir(struct vfs_node *f) {
-  return VFS_TYPE(f->flags) == VFS_DIRECTORY;
 }
