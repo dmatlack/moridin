@@ -80,13 +80,13 @@ void kernel_main() {
   vfs_test((char *)"/fail");
   vfs_test((char *)"/spin/foo");
   vfs_test((char *)"/not/a/legit/path");
+  vfs_test((char *)"/spin/");
 
   /*
    * These should work
    */
   vfs_test((char *)"/");
   vfs_test((char *)"/spin");
-  vfs_test((char *)"/spin/");
   
 
   while (1) {

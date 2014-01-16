@@ -115,6 +115,12 @@ struct vfs_dirent *vfs_get_dirent(char *path) {
     if (!*next) break;
     cur = next = next + 1;
   }
+  
+  if (*(next - 1) == VFS_PATH_DELIM && !dirent_isdir(d)) {
+    WARN("%s is not a directory. Paths ending in %c should be directories.",
+         path, VFS_PATH_DELIM);
+    return NULL;
+  }
 
   return d;
 }
