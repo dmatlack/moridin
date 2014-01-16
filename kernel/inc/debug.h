@@ -7,6 +7,7 @@
  */
 #include <debug/log.h>
 #include <debug/bochs.h>
+#include <assert.h>
 
 #ifndef __DEBUG_H__
 #define __DEBUG_H__

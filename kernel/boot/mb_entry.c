@@ -14,6 +14,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <assert.h>
+#include <errno.h>
 
 #include <dev/vga.h>
 
@@ -40,6 +41,8 @@ struct multiboot_info *__mb_info;
  * @param mb_info ebx, the multiboot_info struct 
  */
 void mb_entry(unsigned int mb_magic, struct multiboot_info *mb_info) {
+  int ret;
+
   __mb_info = mb_info;
 
   vga_init();
@@ -79,7 +82,10 @@ void mb_entry(unsigned int mb_magic, struct multiboot_info *mb_info) {
    *
    * ASSUMPTION: initrd is the 0th module loaded by GRUB
    */
-  initrd_init(mb_mod_start(mb_info, 0));
+  if ((ret = initrd_init(mb_mod_start(mb_info, 0)))) {
+    panic("Failed to initialize the initial ramdisk: %s (%s)",
+          ret, strerr(ret));
+  }
 
   /* 
    * Initialize the exception handlers in the IDT incase an exception occurs

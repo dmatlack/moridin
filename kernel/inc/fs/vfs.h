@@ -15,6 +15,8 @@
 #include <debug.h>
 #include <list.h>
 
+#define VFS_PATH_DELIM '/'
+
 struct vfs_inode;
 struct vfs_dirent;
 struct vfs_file;
@@ -63,6 +65,11 @@ struct vfs_dirent {
   list_link(struct vfs_dirent) inode_link; // hardlink brethren
 };
 
+static inline bool dirent_isdir(struct vfs_dirent *dirent) {
+  return VFS_TYPE(dirent->inode->flags) == VFS_DIRECTORY;
+}
+
+
 /*
  * Represents an open file (may be shared by multiple processes).
  */
@@ -94,5 +101,8 @@ struct vfs_file_ops {
  *
  */
 void vfs_chroot(struct vfs_dirent *root);
+
+struct vfs_file *vfs_get_file(char *path);
+void vfs_put_file(struct vfs_file *file);
 
 #endif /* !__FS_VFS_H__ */

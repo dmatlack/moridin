@@ -20,8 +20,8 @@ struct initrd_hdr {
   uint32_t nfiles;
 };
 
-#define INITRD_NAMESIZE 128
 struct initrd_file {
+#define INITRD_NAMESIZE 128
   char name[INITRD_NAMESIZE];
   uint32_t data;
   uint32_t length;

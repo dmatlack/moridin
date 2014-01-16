@@ -116,9 +116,9 @@ int initrd_init(size_t address) {
   cur_dirent = initrd_dirents;
   cur_inode = initrd_inodes;
 
-  cur_dirent->name[0] = (char) 0;
-  cur_dirent->inode   = cur_inode;
-  cur_dirent->parent  = cur_dirent;
+  memset(cur_dirent->name, 0, VFS_NAMESIZE);
+  cur_dirent->inode = cur_inode;
+  cur_dirent->parent = cur_dirent;
   list_init(&cur_dirent->children);
   list_elem_init(cur_dirent, sibling_link);
   list_elem_init(cur_dirent, inode_link);
@@ -140,13 +140,14 @@ int initrd_init(size_t address) {
   for (i = 0; i < initrd->nfiles; i++) {
     struct initrd_file *ramfile = initrd_files + i;
 
-    cur_inode++;
     cur_dirent++;
+    cur_inode++;
 
     memcpy(cur_dirent->name, ramfile->name, umin(VFS_NAMESIZE, INITRD_NAMESIZE));
+
     cur_dirent->name[VFS_NAMESIZE-1] = (char) 0;
-    cur_dirent->inode   = cur_inode;
-    cur_dirent->parent  = initrd_root_dirent;
+    cur_dirent->inode = cur_inode;
+    cur_dirent->parent = initrd_root_dirent;
     list_init(&cur_dirent->children);
     list_elem_init(cur_dirent, sibling_link);
     list_elem_init(cur_dirent, inode_link);
@@ -160,7 +161,7 @@ int initrd_init(size_t address) {
     list_insert_tail(&cur_inode->dirents, cur_dirent, inode_link);
     list_insert_tail(&initrd_root_dirent->children, cur_dirent, sibling_link);
 
-    kprintf("%s ", cur_dirent->name);
+    kprintf("%s:%d ", cur_dirent->name, cur_inode->inode);
   }
   kprintf("\n");
 
