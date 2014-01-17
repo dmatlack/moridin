@@ -20,6 +20,7 @@
 struct vfs_inode;
 struct vfs_dirent;
 struct vfs_file;
+struct vfs_file_ops;
 
 list_typedef(struct vfs_inode)  vfs_inode_list_t;
 list_typedef(struct vfs_dirent) vfs_dirent_list_t;
@@ -47,6 +48,7 @@ struct vfs_inode {
   unsigned int flags;   // node type
 
   size_t length;
+  struct vfs_file_ops *fops;
   vfs_dirent_list_t dirents; // all the dirents referring to this file
 };
 
