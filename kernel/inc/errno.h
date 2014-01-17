@@ -20,13 +20,7 @@
 #ifndef _ERRNO_H                /* check if <errno.h> is already included */
 #define _ERRNO_H                /* it is not included; note that fact */
 
-/* Now define _SIGN as "" or "-" depending on _SYSTEM. */
-#ifdef _SYSTEM
-#   define _SIGN         -
-#   define OK            0
-#else
-#   define _SIGN         
-#endif
+#define _SIGN
 
 extern int errno;                 /* place where the error numbers go */
 

@@ -23,7 +23,14 @@ struct initrd_hdr {
 struct initrd_file {
 #define INITRD_NAMESIZE 128
   char name[INITRD_NAMESIZE];
+  /*
+   * The location of the files data as an offset from the beginning of
+   * the ramdisk.
+   */
   uint32_t data;
+  /*
+   * The length of the data in bytes
+   */
   uint32_t length;
 };
 

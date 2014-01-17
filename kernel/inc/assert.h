@@ -36,21 +36,21 @@ ASSERT_FUNCTION_PROTOTYPE(__assert_greater);
 ASSERT_FUNCTION_PROTOTYPE(__assert_greatereq);
 
 #define ASSERT_EQUALS(left, right)\
-  __assert_equals(__FILE__, __func__, __LINE__, left, #left, right, #right)
+  __assert_equals(__FILE__, __func__, __LINE__, (int)left, #left, (int)right, #right)
 
 #define ASSERT_NOTEQUALS(left, right)\
-  __assert_notequals(__FILE__, __func__, __LINE__, left, #left, right, #right)
+  __assert_notequals(__FILE__, __func__, __LINE__, (int)left, #left, (int)right, #right)
 
 #define ASSERT_LESS(left, right)\
-  __assert_less(__FILE__, __func__, __LINE__, left, #left, right, #right)
+  __assert_less(__FILE__, __func__, __LINE__, (int)left, #left, (int)right, #right)
 
 #define ASSERT_LESSEQ(left, right)\
-  __assert_lesseq(__FILE__, __func__, __LINE__, left, #left, right, #right)
+  __assert_lesseq(__FILE__, __func__, __LINE__, (int)left, #left, (int)right, #right)
 
 #define ASSERT_GREATER(left, right)\
-  __assert_greater(__FILE__, __func__, __LINE__, left, #left, right, #right)
+  __assert_greater(__FILE__, __func__, __LINE__, (int)left, #left, (int)right, #right)
 
 #define ASSERT_GREATEREQ(left, right)\
-  __assert_greatereq(__FILE__, __func__, __LINE__, left, #left, right, #right)
+  __assert_greatereq(__FILE__, __func__, __LINE__, (int)left, #left, (int)right, #right)
 
 #endif /* _ASSERT_H_ */

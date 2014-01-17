@@ -21,7 +21,7 @@
 #define DECLARE_LIST_LINK                                                     \
   {                                                                           \
     .prev = NULL,                                                             \
-    .next = NULL,                                                             \
+    .next = NULL                                                              \
   }
 
 
@@ -36,7 +36,7 @@
   {                                                                           \
     .head = NULL,                                                             \
     .tail = NULL,                                                             \
-    .size = 0,                                                                \
+    .size = 0                                                                 \
   }
 
 #define list_swap_ptr(list_to_ptr, list_from_ptr)                             \

@@ -5,7 +5,7 @@
 
 const char *strerr(int err) {
 #define STRERR(errorcode) case (errorcode): return #errorcode;
-  switch (err) {
+  switch (err < 0 ? -err : err) {
     STRERR(EGENERIC);
     STRERR(EPERM);
     STRERR(ENOENT);

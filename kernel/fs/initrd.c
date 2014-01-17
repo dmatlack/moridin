@@ -10,6 +10,8 @@
 #include <errno.h>
 #include <string.h>
 #include <math.h>
+#include <assert.h>
+#include <debug.h>
 
 /*
  * initrdfs specific metadata
@@ -37,42 +39,104 @@ static struct vfs_dirent *initrd_dirents;
 static struct vfs_dirent *initrd_root_dirent;
 static size_t initrd_dirents_size;
 
-/**
- * @brief Open a file in the initial ramdisk. This function does
- * nothing because the initial ramdisk is already in memory.
- */
-void initrd_open(struct vfs_file *f) {
-  TRACE("f=%p", f);
-  (void) f;
-}
-
-/**
- * @brief Close a file in the initial ramdisk. This function does
- * nothing because the initail ramdisk is already in memory.
- */
-void initrd_close(struct vfs_file *f) {
-  TRACE("f=%p");
-  (void) f;
-}
-
-ssize_t initrd_read(struct vfs_file *f, char *buf, size_t size, size_t off) {
-  (void) f; (void) buf; (void) size; (void) off;
-  //TODO
-  return -1;
-}
-
-struct vfs_dirent *initrd_readdir(struct vfs_file *f, unsigned int index) {
-  (void) index;
-  if (VFS_TYPE(f->dirent->inode->flags) != VFS_DIRECTORY) {
-    return NULL;
-  }
-  return NULL;
-}
 
 /*
  * The file operations supported by initrd.
  */
-struct vfs_file_ops initrd_fops;
+static struct vfs_file_ops initrd_fops;
+static struct vfs_file_ops initrd_root_fops;
+
+void initrd_open(struct vfs_file *f) {
+  TRACE("f=%p", f);
+  /*
+   * Do nothing because the ramdisk is already in memory...
+   */
+  (void) f;
+}
+
+void initrd_close(struct vfs_file *f) {
+  TRACE("f=%p");
+  /*
+   * Do nothing because the ramdisk is already in memory...
+   */
+  (void) f;
+}
+
+ssize_t initrd_read(struct vfs_file *file, char *buf, size_t size,
+                    size_t off) {
+  struct initrd_file *ramfile = (struct initrd_file *) 
+                                file->dirent->inode->object;
+  ssize_t bytes;
+
+  if (off >= ramfile->length) {
+    return 0;
+  }
+
+  bytes = umin(size, ramfile->length - off);
+  memcpy(buf, (void *) ((size_t) initrd + ramfile->data), bytes);
+  return bytes;
+}
+
+struct vfs_dirent *initrd_readdir(struct vfs_file *f, unsigned int index) {
+  ASSERT(dirent_isdir(f->dirent));
+  ASSERT_EQUALS(initrd_root_dirent, f->dirent);
+
+  /*
+   * + 1 because initrd_dirents[0] is initrd_root_dirent
+   */
+  return initrd_dirents + 1 + index;
+}
+
+static void initrd_init_fops(void) {
+  memset(&initrd_fops, 0, sizeof(struct vfs_file_ops));
+  initrd_fops.open    = initrd_open;
+  initrd_fops.close   = initrd_close;
+  initrd_fops.read    = initrd_read;
+  initrd_fops.write   = NULL;
+  initrd_fops.readdir = NULL;
+
+  memset(&initrd_root_fops, 0, sizeof(struct vfs_file_ops));
+  initrd_root_fops.open    = initrd_open;
+  initrd_root_fops.close   = initrd_close;
+  initrd_root_fops.read    = NULL;
+  initrd_root_fops.write   = NULL;
+  initrd_root_fops.readdir = initrd_readdir;
+}
+
+static void initrd_init_root(struct vfs_dirent *d, struct vfs_inode *i) {
+  initrd_root_inode = i;
+  initrd_root_dirent = d;
+
+  dirent_init(d, (char *) "");
+  d->inode  = i;
+  d->parent = d;
+
+  inode_init(i, initrd_next_inode++);
+  i->perm   = VFS_R;
+  i->flags  = VFS_DIRECTORY;
+  i->length = 0;
+  i->fops   = &initrd_root_fops;
+  i->object = NULL;
+
+  list_insert_tail(&i->dirents, d, hardlink_link);
+}
+
+static void initrd_init_file(struct vfs_dirent *d, struct vfs_inode *i,
+                             struct initrd_file *ramfile) {
+  dirent_init(d, ramfile->name);
+  d->inode  = i;
+  d->parent = initrd_root_dirent;
+
+  inode_init(i, initrd_next_inode++);
+  i->perm   = VFS_R;
+  i->flags  = VFS_FILE;
+  i->length = ramfile->length;
+  i->fops   = &initrd_fops;
+  i->object = (void *) ramfile;
+
+  list_insert_tail(&i->dirents, d, hardlink_link);
+  list_insert_tail(&initrd_root_dirent->children, d, sibling_link);
+}
 
 /**
  * @brief Initialize the initial ramdisk.
@@ -108,69 +172,30 @@ int initrd_init(size_t address) {
     return ENOMEM;
   }
 
+  initrd_init_fops();
+
   initrd_next_inode = 0;
+  cur_dirent = initrd_dirents;
+  cur_inode = initrd_inodes;
 
   /*
    * Create an inode and dirent for the "root"
    */
-  cur_dirent = initrd_dirents;
-  cur_inode = initrd_inodes;
-
-  memset(cur_dirent->name, 0, VFS_NAMESIZE);
-  cur_dirent->inode = cur_inode;
-  cur_dirent->parent = cur_dirent;
-  list_init(&cur_dirent->children);
-  list_elem_init(cur_dirent, sibling_link);
-  list_elem_init(cur_dirent, inode_link);
-
-  cur_inode->inode = initrd_next_inode++;
-  cur_inode->perm = VFS_R;
-  cur_inode->flags = VFS_DIRECTORY;
-  cur_inode->length = 0;
-  list_init(&cur_inode->dirents);
-
-  list_insert_tail(&cur_inode->dirents, cur_dirent, inode_link);
-  initrd_root_inode = cur_inode;
-  initrd_root_dirent = cur_dirent;
+  initrd_init_root(cur_dirent, cur_inode);
 
   /*
    * Now create a dirent and an inode for every file in th ramdisk
    */
   kprintf("initrd: ");
   for (i = 0; i < initrd->nfiles; i++) {
-    struct initrd_file *ramfile = initrd_files + i;
-
     cur_dirent++;
     cur_inode++;
 
-    memcpy(cur_dirent->name, ramfile->name, umin(VFS_NAMESIZE, INITRD_NAMESIZE));
-
-    cur_dirent->name[VFS_NAMESIZE-1] = (char) 0;
-    cur_dirent->inode = cur_inode;
-    cur_dirent->parent = initrd_root_dirent;
-    list_init(&cur_dirent->children);
-    list_elem_init(cur_dirent, sibling_link);
-    list_elem_init(cur_dirent, inode_link);
-
-    cur_inode->inode = initrd_next_inode++;
-    cur_inode->perm = VFS_R;
-    cur_inode->flags = VFS_FILE;
-    cur_inode->length = ramfile->length;
-    list_init(&cur_inode->dirents);
-
-    list_insert_tail(&cur_inode->dirents, cur_dirent, inode_link);
-    list_insert_tail(&initrd_root_dirent->children, cur_dirent, sibling_link);
+    initrd_init_file(cur_dirent, cur_inode, initrd_files + i);
 
     kprintf("%s:%d ", cur_dirent->name, cur_inode->inode);
   }
   kprintf("\n");
-
-  memset(&initrd_fops, 0, sizeof(struct vfs_file_ops));
-  initrd_fops.open = initrd_open;
-  initrd_fops.close = initrd_close;
-  initrd_fops.read = initrd_read;
-  initrd_fops.write = NULL;
-  initrd_fops.readdir = initrd_readdir;
 
   vfs_chroot(initrd_root_dirent);
   return 0;

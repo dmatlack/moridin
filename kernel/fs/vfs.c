@@ -159,7 +159,7 @@ struct vfs_file *vfs_get_file(char *path) {
   memset(file, 0, sizeof(struct vfs_file));
   file->dirent = dirent;
   file->offset = 0;
-  file->ops = NULL; //FIXME how to get the ops... ?
+  file->ops = dirent->inode->fops;
 
   return file;
 }

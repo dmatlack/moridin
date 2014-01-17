@@ -14,6 +14,7 @@
 #include <stdint.h>
 #include <debug.h>
 #include <list.h>
+#include <string.h>
 
 #define VFS_PATH_DELIM '/'
 
@@ -50,6 +51,7 @@ struct vfs_inode {
   size_t length;
   struct vfs_file_ops *fops;
   vfs_dirent_list_t dirents; // all the dirents referring to this file
+  void *object; // a pointer to private data (to be used by the underlying fs)
 };
 
 /*
@@ -64,13 +66,8 @@ struct vfs_dirent {
   struct vfs_dirent *parent;  // containing directory
   vfs_dirent_list_t children; // NULL if vfs_file, list of children if directory
   list_link(struct vfs_dirent) sibling_link; // other vfs_files in the same directory
-  list_link(struct vfs_dirent) inode_link; // hardlink brethren
+  list_link(struct vfs_dirent) hardlink_link; // hardlink brethren
 };
-
-static inline bool dirent_isdir(struct vfs_dirent *dirent) {
-  return VFS_TYPE(dirent->inode->flags) == VFS_DIRECTORY;
-}
-
 
 /*
  * Represents an open file (may be shared by multiple processes).
@@ -81,11 +78,23 @@ struct vfs_file {
   struct vfs_file_ops *ops;
 };
 
+/*
+ * The operations that can be performed on a file.
+ */
 struct vfs_file_ops {
   void (*open)(struct vfs_file *);
   void (*close)(struct vfs_file *);
 
-  ssize_t (*read)(struct vfs_file *, char *, size_t size, size_t off);
+  /**
+   * @brief Read <size> bytes starting at <off> in <f> into <buf>.
+   *
+   * @return
+   *    < 0 code on error
+   *      TODO list possible error codes
+   *    the number of bytes read on success
+   */
+  ssize_t (*read)(struct vfs_file *f, char *buf, size_t size, size_t off);
+
   ssize_t (*write)(struct vfs_file *, char *, size_t size, size_t off);
 
   struct vfs_dirent *(*readdir)(struct vfs_file *, unsigned int index);
@@ -96,6 +105,27 @@ struct vfs_file_ops {
 
 #define VFS_WARN(_f, _fmt, ...) \
   WARN("FS vfs_file %s: "_fmt, _f->name, ##__VA_ARGS__)
+
+static inline void dirent_init(struct vfs_dirent *d, char *name) {
+  memset(d, 0, sizeof(struct vfs_dirent));
+
+  strncpy(d->name, name, VFS_NAMESIZE);
+  d->name[VFS_NAMESIZE-1] = (char) 0;
+
+  list_init(&d->children);
+  list_elem_init(d, sibling_link);
+  list_elem_init(d, hardlink_link);
+}
+
+static inline bool dirent_isdir(struct vfs_dirent *dirent) {
+  return VFS_TYPE(dirent->inode->flags) == VFS_DIRECTORY;
+}
+
+static inline void inode_init(struct vfs_inode *i, unsigned long inode) {
+  memset(i, 0, sizeof(struct vfs_inode));
+  i->inode = inode;
+  list_init(&i->dirents);
+}
 
 /*
  * 
