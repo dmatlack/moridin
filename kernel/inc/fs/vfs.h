@@ -75,15 +75,15 @@ struct vfs_dirent {
 struct vfs_file {
   struct vfs_dirent *dirent;
   size_t offset; // read/write offset into the file
-  struct vfs_file_ops *ops;
+  struct vfs_file_ops *fops;
 };
 
 /*
  * The operations that can be performed on a file.
  */
 struct vfs_file_ops {
-  void (*open)(struct vfs_file *);
-  void (*close)(struct vfs_file *);
+  int (*open)(struct vfs_file *);
+  int (*close)(struct vfs_file *);
 
   /**
    * @brief Read <size> bytes starting at <off> in <f> into <buf>.
@@ -100,11 +100,15 @@ struct vfs_file_ops {
   struct vfs_dirent *(*readdir)(struct vfs_file *, unsigned int index);
 };
 
-#define VFS_ERROR(_f, _fmt, ...) \
-  ERROR("FS vfs_file %s: "_fmt, _f->name, ##__VA_ARGS__)
+#define VFS_ERROR(_fmt, ...) \
+  ERROR("%d: "_fmt, __func__, ##__VA_ARGS__)
 
-#define VFS_WARN(_f, _fmt, ...) \
-  WARN("FS vfs_file %s: "_fmt, _f->name, ##__VA_ARGS__)
+#define VFS_WARN(_fmt, ...) \
+  ERROR("%d: "_fmt, __func__, ##__VA_ARGS__)
+
+#define VFS_NULL_FOP(_fop, file) \
+    VFS_WARN("fop %s() is NULL for file %s.", \
+             #_fop, (file)->dirent->name)
 
 static inline void dirent_init(struct vfs_dirent *d, char *name) {
   memset(d, 0, sizeof(struct vfs_dirent));
@@ -136,5 +140,9 @@ void vfs_chroot(struct vfs_dirent *root);
 
 struct vfs_file *vfs_get_file(char *path);
 void vfs_put_file(struct vfs_file *file);
+
+int     vfs_open  (struct vfs_file *file);
+int     vfs_close (struct vfs_file *file);
+ssize_t vfs_read  (struct vfs_file *file, char *buf, size_t size);
 
 #endif /* !__FS_VFS_H__ */

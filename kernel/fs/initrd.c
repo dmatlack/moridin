@@ -39,27 +39,28 @@ static struct vfs_dirent *initrd_dirents;
 static struct vfs_dirent *initrd_root_dirent;
 static size_t initrd_dirents_size;
 
-
 /*
  * The file operations supported by initrd.
  */
 static struct vfs_file_ops initrd_fops;
 static struct vfs_file_ops initrd_root_fops;
 
-void initrd_open(struct vfs_file *f) {
+int initrd_open(struct vfs_file *f) {
   TRACE("f=%p", f);
   /*
    * Do nothing because the ramdisk is already in memory...
    */
   (void) f;
+  return 0;
 }
 
-void initrd_close(struct vfs_file *f) {
+int initrd_close(struct vfs_file *f) {
   TRACE("f=%p");
   /*
    * Do nothing because the ramdisk is already in memory...
    */
   (void) f;
+  return 0;
 }
 
 ssize_t initrd_read(struct vfs_file *file, char *buf, size_t size,

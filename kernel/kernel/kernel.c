@@ -23,6 +23,26 @@
 struct multiboot_info *__mb_info;
 
 #include <fs/vfs.h>
+void vfs_test(void) {
+  struct vfs_file *f;
+  char buf[512];
+  ssize_t bytes;
+  int i;
+
+  f = vfs_get_file((char*) "/hello.txt");
+  if (NULL == f) {
+    kprintf("Failed to open /hello.txt\n");
+    return;
+  }
+
+  do {
+    bytes = vfs_read(f, buf, 512);
+    for (i = 0; i < bytes; i++) kputchar(buf[i]);
+  } while (bytes > 0);
+  kputchar('\n');
+
+  vfs_put_file(f);
+}
 
 void kernel_main() {
 
@@ -58,6 +78,8 @@ void kernel_main() {
    * Peripheral Component Interconnect
    */
   SUCCEED_OR_DIE(pci_init());
+
+  vfs_test();
 
   while (1) {
     irq_status_bar(VGA_ROWS - 1);

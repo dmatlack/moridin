@@ -13,6 +13,7 @@
 #include <string.h>
 #include <list.h>
 #include <debug.h>
+#include <errno.h>
 
 struct vfs_dirent *__vfs_root_dirent;
 
@@ -159,7 +160,7 @@ struct vfs_file *vfs_get_file(char *path) {
   memset(file, 0, sizeof(struct vfs_file));
   file->dirent = dirent;
   file->offset = 0;
-  file->ops = dirent->inode->fops;
+  file->fops = dirent->inode->fops;
 
   return file;
 }
@@ -171,4 +172,51 @@ struct vfs_file *vfs_get_file(char *path) {
 void vfs_put_file(struct vfs_file *file) {
   vfs_put_dirent(file->dirent);
   kfree(file, sizeof(struct vfs_file));
+}
+
+int vfs_open(struct vfs_file *file) {
+  ASSERT_NOT_NULL(file);
+  if (NULL == file->fops->open) {
+    VFS_NULL_FOP(open, file);
+    return -EINVAL;
+  }
+  return file->fops->open(file);
+}
+
+int vfs_close(struct vfs_file *file) {
+  ASSERT_NOT_NULL(file);
+  if (NULL == file->fops->close) {
+    VFS_NULL_FOP(close, file);
+    return -EINVAL;
+  }
+  return file->fops->close(file);
+}
+
+/**
+ * @brief Read from a file into a buffer.
+ *
+ * @param file The vfs_file to read from.
+ * @param buf The buffer to read into
+ * @param size The number of bytes to read.
+ *
+ * @return
+ *    On success, the number of bytes read is returned.
+ *    -EINVAL if reading is not defined for the file
+ */
+ssize_t vfs_read(struct vfs_file *file, char *buf, size_t size) {
+  ssize_t ret;
+
+  ASSERT_NOT_NULL(file);
+  if (NULL == file->fops->read) {
+    VFS_NULL_FOP(read, file);
+    return -EINVAL;
+  }
+
+  ret = file->fops->read(file, buf, size, file->offset);
+
+  if (ret > 0) {
+    file->offset += ret;
+  }
+
+  return ret;
 }
