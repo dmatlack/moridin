@@ -18,7 +18,7 @@
 #define INITRD_FNAME "initrd"
 
 #define USAGE \
-  "Usage: ./create_initrc files ...\n" \
+  "Usage: ./create_initrc <output_image> files ...\n" \
   "   -h,--help  For this help message.\n" \
   "\n" \
   "Pass the utility a list of 0 or more files and it will create a\n" \
@@ -62,21 +62,28 @@ void copy_file(FILE *to, FILE *from) {
 
 int main(int argc, char **argv) {
   FILE *f, *rdisk;
-  unsigned nfiles = argc - 1;
+  unsigned nfiles;
   unsigned i;
   struct initrd_hdr hdr;
   struct initrd_file rfile;
   unsigned data_start, data_offset;
+  char *initrd_fname;
+  char **fnames;
 
-  if (argc > 1 &&
+  if (argc < 2 ||
       (!strncmp(argv[1], "-h", 2) || !strncmp(argv[1], "--help", 5))) {
     printf(USAGE);
     exit(0);
   }
 
-  rdisk = fopen(INITRD_FNAME, "wb");
+  initrd_fname = argv[1];
+  fnames = &argv[2];
+  nfiles = argc - 2;
+  
+
+  rdisk = fopen(initrd_fname, "wb");
   if (!rdisk) {
-    fail("Couldn't create "INITRD_FNAME);
+    fail("Couldn't create %s", initrd_fname);
   }
 
   /*
@@ -92,8 +99,8 @@ int main(int argc, char **argv) {
   /*
    * First write out all the files headers to the ramdisk
    */
-  for (i = 1; i <= nfiles; i++) {
-    char *fname = argv[i], *cp;
+  for (i = 0; i < nfiles; i++) {
+    char *fname = fnames[i], *cp;
     FILE *f = fopen(fname, "r");
     if (!f) {
       fail("Couldn't open file %s to write header.", fname);
