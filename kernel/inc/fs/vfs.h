@@ -5,7 +5,8 @@
  *
  * based on JamesM's tutorial at
  *  http://www.jamesmolloy.co.uk/tutorial_html/8.-The%20VFS%20and%20the%20initrd.html
- * and the Linux Virtual vfs_filesystem
+ *
+ * and the Linux Virtual Filesystem
  */
 #ifndef __FS_VFS_H__
 #define __FS_VFS_H__
@@ -28,7 +29,9 @@ list_typedef(struct vfs_dirent) vfs_dirent_list_t;
 list_typedef(struct vfs_file)   vfs_file_list_t;
 
 /*
- * Represents a physical file that is stored somewhere.
+ * Represents a physical file that is stored somewhere. For each file, there
+ * is at most one vfs_inode object globally accross the entire kernel at any
+ * time.
  */
 struct vfs_inode {
   unsigned long inode;
@@ -57,7 +60,9 @@ struct vfs_inode {
 /*
  * Represents a unique path in the Virtual Filesystem to a given inode.
  * (e.g. two different dirents can point to the same inode, this is called
- * a hard link)
+ * a hard link). For each file, there will be [0,N] vfs_dirents in existence
+ * at any time, where N is the number of hardlinks pointing to the file
+ * globally.
  */
 struct vfs_dirent {
 #define VFS_NAMESIZE 128
@@ -67,15 +72,19 @@ struct vfs_dirent {
   vfs_dirent_list_t children; // NULL if vfs_file, list of children if directory
   list_link(struct vfs_dirent) sibling_link; // other vfs_files in the same directory
   list_link(struct vfs_dirent) hardlink_link; // hardlink brethren
+  unsigned refs; // reference counter
 };
 
 /*
- * Represents an open file (may be shared by multiple processes).
+ * Represents an open file (may be shared by multiple processes). For each file
+ * there can be any number of vfs_file objects, since files can be opened
+ * by many processes.
  */
 struct vfs_file {
   struct vfs_dirent *dirent;
   size_t offset; // read/write offset into the file
   struct vfs_file_ops *fops;
+  unsigned refs; // reference counter
 };
 
 /*

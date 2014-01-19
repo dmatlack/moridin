@@ -1,13 +1,14 @@
 /**
  * @file fs/vfs.h
  *
- * based on JamesM's tutorial at
- *  http://www.jamesmolloy.co.uk/tutorial_html/8.-The%20VFS%20and%20the%20initrd.html
+ * FIXME: Once we have synchonization, this file needs to be carefully
+ * walked through to have locking added.
  *
  */
 #include <fs/vfs.h>
 
 #include <kernel/kmalloc.h>
+#include <kernel/atomic.h>
 #include <stdint.h>
 #include <types.h>
 #include <string.h>
@@ -86,8 +87,10 @@ struct vfs_dirent *vfs_get_dirent(char *path) {
    *
    *
    * FIXME: This does all the path/string parsing here. I'm sure it has bugs.
-   *
    * Eventually the path parsing should move into a library.
+   *
+   * Bugs:
+   *  - lack of locking dirents
    *
    *
    */
@@ -123,6 +126,7 @@ struct vfs_dirent *vfs_get_dirent(char *path) {
     return NULL;
   }
 
+  atomic_add(&d->refs, 1);
   return d;
 }
 
@@ -131,7 +135,7 @@ struct vfs_dirent *vfs_get_dirent(char *path) {
  * startup so we don't free dirents here.
  */
 void vfs_put_dirent(struct vfs_dirent *d) {
-  (void) d;
+  atomic_add(&d->refs, -1);
 }
 
 /**
@@ -161,6 +165,7 @@ struct vfs_file *vfs_get_file(char *path) {
   file->dirent = dirent;
   file->offset = 0;
   file->fops = dirent->inode->fops;
+  file->refs = 1;
 
   return file;
 }
@@ -171,7 +176,12 @@ struct vfs_file *vfs_get_file(char *path) {
  */
 void vfs_put_file(struct vfs_file *file) {
   vfs_put_dirent(file->dirent);
-  kfree(file, sizeof(struct vfs_file));
+
+  // lock file
+  if (0 == atomic_add(&file->refs, -1)) {
+    kfree(file, sizeof(struct vfs_file));
+  }
+  // unlock file
 }
 
 int vfs_open(struct vfs_file *file) {

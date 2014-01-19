@@ -22,6 +22,10 @@ Features (LAST UPDATED: 12/26/2013)
     - physical memory management (frame allocator)
     - virtual memory (paging, not to disk yet)
     - kernel dynamic memory (kmalloc)
+
+  filesystem: fs/
+    - Virtual filesystem
+    - Initial ramdisk (flat, readonly, filesystem)
  
   devices: dev/
     - VGA (console) driver
