@@ -162,8 +162,8 @@ int ata_identify(struct ata_drive *drive, uint16_t data[256]) {
   if (idstatus & ATA_ERR) {
     uint8_t error;
     error = inb(drive->bus->cmd + ATA_CMD_ERROR);
-    DEBUG("Error occured while waiting for ATA_DRQ after IDENTIFY: 0x%02x",
-          error);
+    WARN("Error occured while waiting for ATA_DRQ after IDENTIFY: 0x%02x. "
+         "This is probably an ATAPI device.", error);
     return EGENERIC;
   }
 
@@ -474,7 +474,7 @@ int ata_drive_init(struct ata_drive *drive, struct ata_bus *bus,
   /*
    * Do some printing for the boot screen.
    */
-  kprintf("    0x%03x: %s, %s, %d MB (irq %d)\n", 
+  kprintf("  0x%03x: %s, %s, %d MB (irq %d)\n", 
           drive->bus->cmd, drive->model, drive_type_string(drive->type),
           drive->sectors * 512 / MB(1), drive->bus->irq);
 

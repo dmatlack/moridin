@@ -1,9 +1,9 @@
 .section .text
 
-.global _start
 #
 # void _start(int argc, char **argv);
 #
+.global _start
 _start:
   push $0x0
   movl %esp, %ebp

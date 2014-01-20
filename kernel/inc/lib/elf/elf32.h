@@ -71,18 +71,16 @@ struct elf32_ehdr {
 #define EV_CURRENT 1 // current version
   elf32_word_t e_version;
 
-  elf32_addr_t e_entry;
-  elf32_word_t e_flags;
-  elf32_half_t e_ehsize;
-
-  elf32_off_t e_phoff;
-  elf32_half_t e_phentsize;
-  elf32_half_t e_phnum;
-
-  elf32_off_t e_shoff;
-  elf32_half_t e_shentsize;
-  elf32_half_t e_shnum;
-  elf32_half_t e_shstrndx;
+  elf32_addr_t e_entry;     // program entry point
+  elf32_off_t  e_phoff;     // program headers
+  elf32_off_t  e_shoff;     // section headers
+  elf32_word_t e_flags;     // ignore
+  elf32_half_t e_ehsize;    // header size in bytes
+  elf32_half_t e_phentsize; // program header size in bytes
+  elf32_half_t e_phnum;     // num program headers
+  elf32_half_t e_shentsize; // section header size in bytes
+  elf32_half_t e_shnum;     // num section headers
+  elf32_half_t e_shstrndx;  // index of string table section header
 } __attribute__((packed));
 
 #define CASE(_macro) case (_macro): return #_macro
@@ -98,15 +96,15 @@ static inline const char *elf32_type(elf32_half_t type) {
 }
 static inline const char *elf32_machine(elf32_half_t machine) {
   switch (machine) {
-    CASE(EM_NONE);
-    CASE(EM_M32);
-    CASE(EM_SPACE);
-    CASE(EM_386);
-    CASE(EM_68K);
-    CASE(EM_88K);
-    CASE(EM_860);
-    CASE(EM_MIPS);
-    default: return "?";
+    case (EM_NONE):   return "no machine";
+    case (EM_M32):    return "AT&T WE 32100"; 
+    case (EM_SPACE):  return "SPARC";
+    case (EM_386):    return "Intel 80386";
+    case (EM_68K):    return "Motorola 68000";
+    case (EM_88K):    return "Motorola 88000";
+    case (EM_860):    return "Intel 80860";
+    case (EM_MIPS):   return "MIPS RS3000";
+    default:          return "?";
   }
 }
 #undef CASE

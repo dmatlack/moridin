@@ -191,18 +191,17 @@ int initrd_init(size_t address) {
   /*
    * Now create a dirent and an inode for every file in th ramdisk
    */
-  kprintf("initrd:    0x%08x\n", initrd);
+  kprintf("initrd: 0x%08x\n", initrd);
   for (i = 0; i < initrd->nfiles; i++) {
     cur_dirent++;
     cur_inode++;
 
     initrd_init_file(cur_dirent, cur_inode, initrd_files + i);
 
-    kprintf("  %10s: inode=%2d length=0x%06x data=0x%06x\n",
+    kprintf("  /%-10s: inode=%-2d length=0x%06x data=0x%06x\n",
             cur_dirent->name, cur_inode->inode,
             cur_inode->length, (initrd_files + i)->data);
   }
-  kprintf("\n");
 
   vfs_chroot(initrd_root_dirent);
   return 0;

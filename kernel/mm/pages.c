@@ -53,7 +53,7 @@ int pages_init(void) {
   __index = p;
   __nfree -= MB(16) / PAGE_SIZE;
 
-  kprintf("system page table: %d entries (%d KB)\n", __npages,
+  kprintf("system page list: %d pages (%d KB total)\n", __npages,
           __npages * sizeof(struct page) / KB(1));
   return 0;
 }

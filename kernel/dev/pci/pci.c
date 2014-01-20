@@ -509,9 +509,8 @@ int pci_init(void) {
 
   kprintf("PCI: \n");
   list_foreach(d, &__pci_devices, global_link) {
-    kprintf("    %02x:%02x.%02x %s, %s, %s\n",
-       d->bus, d->device, d->func,
-       d->device_desc, d->classcode_desc, d->subclass_desc);
+    kprintf("  %02x:%02x.%02x %s\n",
+       d->bus, d->device, d->func, d->device_desc);
   }
   /*
    * register the default drivers

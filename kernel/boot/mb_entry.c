@@ -49,10 +49,6 @@ void mb_entry(unsigned int mb_magic, struct multiboot_info *mb_info) {
   vga_set_color(VGA_WHITE);
   kputchar_set(vga_putbyte);
 
-  kprintf("\n"
-          "    Booting kernel...\n"
-          "\n");
-
   if (mb_magic != MULTIBOOT_BOOTLOADER_MAGIC) {
     panic("Multiboot magic (eax) incorrect: expected 0x%08x, got 0x%08x\n",
           MULTIBOOT_BOOTLOADER_MAGIC, mb_magic);
