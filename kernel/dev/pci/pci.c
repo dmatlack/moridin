@@ -275,7 +275,7 @@ int pci_scan_bus(struct pci_bus *b) {
         sb->bus = pci_config_inb(d, 0x19);
         sb->self = d;
     
-        DEBUG("PCI-PCI Bridge found. Secondary Bus: %d", sb->bus);
+        INFO("PCI-PCI Bridge found. Secondary Bus: %d", sb->bus);
 
         if (0 != (ret = pci_scan_bus(sb))) {
           kfree(sb, sizeof(struct pci_bus));
@@ -299,9 +299,7 @@ int pci_scan_bus(struct pci_bus *b) {
  *****************************************************************************/
 
 void pci_print_device(struct pci_device *d) {
-
-#ifdef KDEBUG
-  DEBUG("PCI DEVICE (%p) %02x:%02x.%02x\n"
+  INFO("PCI DEVICE (%p) %02x:%02x.%02x\n"
     "vendor id:           0x%04x   %s\n"
     "device id:           0x%04x   %s\n"
     "classcode:           0x%02x     %s\n"
@@ -360,18 +358,13 @@ void pci_print_device(struct pci_device *d) {
     d->interrupt_pin,
     d->interrupt_line
   );
-#else
-  INFO("%02x:%02x.%02x %s, %s, %s, %s", 
-       d->bus, d->device, d->func,
-       d->vendor_desc, d->device_desc, d->classcode_desc, d->subclass_desc);
-#endif
 }
 
 void __lspci(struct pci_bus *root, int depth) {
   struct pci_device *d;
   struct pci_bus *sb;
 
-  DEBUG("%*sBus: %d", depth, "", root->bus);
+  INFO("%*sBus: %d", depth, "", root->bus);
   list_foreach(d, &root->devices, bus_link) {
 
     pci_print_device(d);

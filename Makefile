@@ -32,7 +32,7 @@ user:
 	make -C user/
 
 initrd: tools
-	tools/create_initrd initrd.img boot/initrd/* user/bin/*
+	tools/create_initrd initrd.img user/bin/* boot/initrd/* 
 
 tools:
 	make -C tools/

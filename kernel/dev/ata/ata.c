@@ -26,27 +26,36 @@ static void print_drive(struct ata_drive *drive) {
          drive_type_string(drive->type));
   }
   else {
-    INFO("ATA %s Drive: %s",
+    INFO("ATA %s Drive: %s\n"
+         "    Serial Number:      %s\n" 
+         "    Firmware Version:   %s\n" 
+         "    Model Number:       %s\n" 
+         "    sectors:            %d\n" 
+         "    sectors / block:    %d\n" 
+         "    Supported DMA Mode: %d\n" 
+         "    Selected DMA Mode:  %d\n" 
+         "    Supported PIO Mode: %d\n" 
+         "    Major Version:      0x%04x\n"
+         "    Minor Version:      0x%04x\n"
+         "    DMA Min Cylce Time: %d ns\n" 
+         "    DMA Cylce Time:     %d ns\n"
+         ,
          drive->select == ATA_SELECT_MASTER ? "Master" : "Slave",
-         drive_type_string(drive->type));
+         drive_type_string(drive->type),
+         drive->serial,
+         drive->firmware,
+         drive->model,
+         drive->sectors,
+         drive->sectors_per_block,
+         drive->supported_dma_mode,
+         drive->dma_mode,
+         drive->supported_pio_mode,
+         drive->major_version,
+         drive->minor_version,
+         drive->dma_min_nano,
+         drive->dma_nano
+         );
   }
-
-#ifdef KDEBUG
-  if (drive->exists && drive->usable) {
-    DEBUG("    Serial Number:      %s", drive->serial);
-    DEBUG("    Firmware Version:   %s", drive->firmware);
-    DEBUG("    Model Number:       %s", drive->model);
-    DEBUG("    sectors:            %d", drive->sectors);
-    DEBUG("    sectors / block:    %d", drive->sectors_per_block);
-    DEBUG("    Supported DMA Mode: %d", drive->supported_dma_mode);
-    DEBUG("    Selected DMA Mode:  %d", drive->dma_mode);
-    DEBUG("    Supported PIO Mode: %d", drive->supported_pio_mode);
-    DEBUG("    Major Version:      0x%04x", drive->major_version);
-    DEBUG("    Minor Version:      0x%04x", drive->minor_version);
-    DEBUG("    DMA Min Cylce Time: %d ns", drive->dma_min_nano);
-    DEBUG("    DMA Cylce Time:     %d ns", drive->dma_nano);
-  }
-#endif
 }
 
 /**

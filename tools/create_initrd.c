@@ -52,7 +52,9 @@ void copy_file(FILE *to, FILE *from) {
       fclose(to);
       fail("Failed fread() in %s: %d", __func__, bytes);
     }
-    if (0 > (error = fwrite(buf, 1, bytes, to))) {
+
+    error = fwrite(buf, 1, bytes, to);
+    if (error < 0) {
       fclose(from);
       fclose(to);
       fail("Failed fwrite() in %s: %d", __func__, error);
@@ -131,8 +133,8 @@ int main(int argc, char **argv) {
   /*
    * Then write the actual file data to the ramdisk
    */
-  for (i = 1; i <= nfiles; i++) {
-    char *fname = argv[i], *cp;
+  for (i = 0; i < nfiles; i++) {
+    char *fname = fnames[i];
     FILE *f = fopen(fname, "r");
     if (!f) {
       fail("Couldn't open file %s to write data.", fname);

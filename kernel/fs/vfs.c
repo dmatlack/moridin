@@ -185,21 +185,25 @@ void vfs_put_file(struct vfs_file *file) {
 }
 
 int vfs_open(struct vfs_file *file) {
+  TRACE("file=%p", file);
   ASSERT_NOT_NULL(file);
   if (NULL == file->fops->open) {
     VFS_NULL_FOP(open, file);
     return -EINVAL;
   }
+  file->offset = 0;
   return file->fops->open(file);
 }
 
-int vfs_close(struct vfs_file *file) {
+void vfs_close(struct vfs_file *file) {
+  TRACE("file=%p", file);
   ASSERT_NOT_NULL(file);
   if (NULL == file->fops->close) {
     VFS_NULL_FOP(close, file);
-    return -EINVAL;
   }
-  return file->fops->close(file);
+  else {
+    file->fops->close(file);
+  }
 }
 
 /**
@@ -216,6 +220,8 @@ int vfs_close(struct vfs_file *file) {
 ssize_t vfs_read(struct vfs_file *file, char *buf, size_t size) {
   ssize_t ret;
 
+  TRACE("file=%p, buf=%p, size=0x%x", file, buf, size);
+
   ASSERT_NOT_NULL(file);
   if (NULL == file->fops->read) {
     VFS_NULL_FOP(read, file);
@@ -229,4 +235,36 @@ ssize_t vfs_read(struct vfs_file *file, char *buf, size_t size) {
   }
 
   return ret;
+}
+
+/**
+ * @brief Update the current offset into the file.
+ *
+ * @return
+ *    >= 0 on success (return the offset from the beginning of the file)
+ *    -EINVAL if the <whence> parameter is invalid
+ *    -EFAULT if the seek request takes the file offset outside the bouds
+ *            of the file
+ */
+ssize_t vfs_seek(struct vfs_file *file, ssize_t offset, int whence) {
+  size_t from;
+  ssize_t new_offset;
+
+  TRACE("file=%p, offset=0x%x, whence=%d", file, offset, whence);
+  ASSERT_NOT_NULL(file);
+
+  switch (whence) {
+    case SEEK_SET: from = 0;                           break;
+    case SEEK_CUR: from = file->offset;                break;
+    case SEEK_END: from = file->dirent->inode->length; break;
+    default: return -EINVAL;
+  }
+  
+  new_offset = from + offset;
+
+  if (new_offset >= 0 && new_offset < (ssize_t) file->dirent->inode->length) {
+    file->offset = new_offset;
+    return new_offset;
+  }
+  return -EFAULT;
 }

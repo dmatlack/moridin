@@ -35,7 +35,8 @@ int trace(const char *fmt, ...);
 #define ERROR(fmt, ...) log(LOG_LEVEL_ERROR, "[ERROR]  "fmt"\n", ##__VA_ARGS__)
 
 #ifdef KDEBUG
-    #define DEBUG(fmt, ...) log(LOG_LEVEL_DEBUG, "[DEBUG]  "fmt"\n", ##__VA_ARGS__)
+    #define DEBUG(fmt, ...) log(LOG_LEVEL_DEBUG, "[DEBUG][%s:%d %s()]  "fmt"\n", \
+                                __FILE__, __LINE__, __func__, ##__VA_ARGS__)
     #define TRACE(fmt, ...) trace("[TRACE]  %s("fmt")\n", __func__, ##__VA_ARGS__)
 #else
     #define DEBUG(fmt, ...)

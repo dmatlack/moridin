@@ -92,7 +92,7 @@ struct vfs_file {
  */
 struct vfs_file_ops {
   int (*open)(struct vfs_file *);
-  int (*close)(struct vfs_file *);
+  void (*close)(struct vfs_file *);
 
   /**
    * @brief Read <size> bytes starting at <off> in <f> into <buf>.
@@ -140,6 +140,12 @@ static inline void inode_init(struct vfs_inode *i, unsigned long inode) {
   list_init(&i->dirents);
 }
 
+#define SEEK_SET 0 // offset from beginning of file
+#define SEEK_CUR 1 // offset from current position
+#define SEEK_END 2 // offset from the end of the file
+//#define SEEK_DATA 3
+//#define SEEK_HOLE 4
+
 /*
  * 
  * The Virtual vfs_filesystem Inferface
@@ -151,7 +157,8 @@ struct vfs_file *vfs_get_file(char *path);
 void vfs_put_file(struct vfs_file *file);
 
 int     vfs_open  (struct vfs_file *file);
-int     vfs_close (struct vfs_file *file);
+void    vfs_close (struct vfs_file *file);
 ssize_t vfs_read  (struct vfs_file *file, char *buf, size_t size);
+ssize_t vfs_seek  (struct vfs_file *file, ssize_t offset, int whence);
 
 #endif /* !__FS_VFS_H__ */

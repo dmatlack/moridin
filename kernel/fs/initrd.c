@@ -54,13 +54,12 @@ int initrd_open(struct vfs_file *f) {
   return 0;
 }
 
-int initrd_close(struct vfs_file *f) {
+void initrd_close(struct vfs_file *f) {
   TRACE("f=%p");
   /*
    * Do nothing because the ramdisk is already in memory...
    */
   (void) f;
-  return 0;
 }
 
 ssize_t initrd_read(struct vfs_file *file, char *buf, size_t size,
@@ -68,13 +67,18 @@ ssize_t initrd_read(struct vfs_file *file, char *buf, size_t size,
   struct initrd_file *ramfile = (struct initrd_file *) 
                                 file->dirent->inode->object;
   ssize_t bytes;
+  char *data;
+
+  TRACE("file=%p, buf=%p, size=0x%x, off=0x%x", file, buf, size, off);
 
   if (off >= ramfile->length) {
     return 0;
   }
 
   bytes = umin(size, ramfile->length - off);
-  memcpy(buf, (void *) ((size_t) initrd + ramfile->data), bytes);
+  data = (char *) ( ((size_t) initrd) + ramfile->data + off );
+  INFO("memcpy(to=%p, from=%p, bytes=%d", buf, data, bytes);
+  memcpy(buf, data, bytes);
   return bytes;
 }
 
@@ -113,7 +117,7 @@ static void initrd_init_root(struct vfs_dirent *d, struct vfs_inode *i) {
   d->parent = d;
 
   inode_init(i, initrd_next_inode++);
-  i->perm   = VFS_R;
+  i->perm   = VFS_R | VFS_X;
   i->flags  = VFS_DIRECTORY;
   i->length = 0;
   i->fops   = &initrd_root_fops;
@@ -129,7 +133,7 @@ static void initrd_init_file(struct vfs_dirent *d, struct vfs_inode *i,
   d->parent = initrd_root_dirent;
 
   inode_init(i, initrd_next_inode++);
-  i->perm   = VFS_R;
+  i->perm   = VFS_R | VFS_X;
   i->flags  = VFS_FILE;
   i->length = ramfile->length;
   i->fops   = &initrd_fops;
@@ -187,14 +191,16 @@ int initrd_init(size_t address) {
   /*
    * Now create a dirent and an inode for every file in th ramdisk
    */
-  kprintf("initrd: ");
+  kprintf("initrd:    0x%08x\n", initrd);
   for (i = 0; i < initrd->nfiles; i++) {
     cur_dirent++;
     cur_inode++;
 
     initrd_init_file(cur_dirent, cur_inode, initrd_files + i);
 
-    kprintf("%s:%d ", cur_dirent->name, cur_inode->inode);
+    kprintf("  %10s: inode=%2d length=0x%06x data=0x%06x\n",
+            cur_dirent->name, cur_inode->inode,
+            cur_inode->length, (initrd_files + i)->data);
   }
   kprintf("\n");
 

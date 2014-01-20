@@ -24,6 +24,10 @@ typedef uint32_t elf32_word_t;  // value, which is different from the kernel
 #define ELFMAG2 'L'
 #define ELFMAG3 'F'
 
+#define ELF32_MAGIC_SIZE 4
+static char elf32_magic[ELF32_MAGIC_SIZE] =
+  { ELFMAG0, ELFMAG1, ELFMAG2, ELFMAG3 };
+
 #define ELFCLASSNONE 0
 #define ELFCLASS32   1
 #define ELFCLASS64   2
@@ -79,8 +83,33 @@ struct elf32_ehdr {
   elf32_half_t e_shentsize;
   elf32_half_t e_shnum;
   elf32_half_t e_shstrndx;
-};
+} __attribute__((packed));
 
+#define CASE(_macro) case (_macro): return #_macro
+static inline const char *elf32_type(elf32_half_t type) {
+  switch (type) {
+    CASE(ET_NONE);
+    CASE(ET_REL);
+    CASE(ET_EXEC);
+    CASE(ET_DYN);
+    CASE(ET_CORE);
+    default: return "?";
+  }
+}
+static inline const char *elf32_machine(elf32_half_t machine) {
+  switch (machine) {
+    CASE(EM_NONE);
+    CASE(EM_M32);
+    CASE(EM_SPACE);
+    CASE(EM_386);
+    CASE(EM_68K);
+    CASE(EM_88K);
+    CASE(EM_860);
+    CASE(EM_MIPS);
+    default: return "?";
+  }
+}
+#undef CASE
 
 struct elf32_phdr {
 #define PT_NULL     0 // signifies this entry should be ignored
@@ -94,18 +123,31 @@ struct elf32_phdr {
 #define PT_HIPROC   0x7fffffff
   elf32_word_t p_type;
 
-  elf32_off_t  p_offset;
-  elf32_addr_t p_vaddr;
-  elf32_addr_t p_paddr;
-  elf32_word_t p_filesz;
-  elf32_word_t p_memsz;
+  elf32_off_t  p_offset; // offset into file of the region
+  elf32_addr_t p_vaddr;  // virtual address to load at
+  elf32_addr_t p_paddr;  // ignore
+  elf32_word_t p_filesz; // size of the region in the file
+  elf32_word_t p_memsz;  // size of the region in memory
 
 #define PF_X   0x1 // execute
 #define PF_W   0x2 // write-only
 #define PF_R   0x4 // read-only
   elf32_word_t p_flags;
-  elf32_word_t p_align; // p_vaddr % p_align == p_offset % p_align
-};
 
+  elf32_word_t p_align; // p_vaddr % p_align == p_offset % p_align
+} __attribute__((packed));
+
+
+struct elf32_file {
+  struct vfs_file *file;
+
+  size_t entry;
+
+  struct elf32_phdr *text;
+  struct elf32_phdr *data;
+  struct elf32_phdr *rodata;
+  struct elf32_phdr *bss;
+
+};
 
 #endif /* !__LIB_ELF_ELF32_H__ */
