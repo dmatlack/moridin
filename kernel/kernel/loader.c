@@ -13,6 +13,7 @@
 #include <fs/vfs.h>
 #include <lib/elf/elf32.h>
 #include <mm/memory.h>
+#include <mm/vm.h>
 
 /**
  * @brief Read the elf32_ehdr from the file.
@@ -82,6 +83,15 @@ struct elf32_phdr *elf32_get_phdrs(struct vfs_file *file,
 phdrs_cleanup:
   kfree(phdrs, sizeof(struct elf32_phdr) * ehdr->e_phnum);
   return NULL;
+}
+
+static inline vm_flags_t elf32_to_vm_flags(elf32_word_t p_flags) {
+  vm_flags_t v = 0;
+  v |= p_flags & PF_X ? VM_X : 0;
+  v |= p_flags & PF_R ? VM_R : 0;
+  v |= p_flags & PF_W ? VM_W : 0;
+  return v;
+
 }
 
 /**

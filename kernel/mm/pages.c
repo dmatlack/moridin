@@ -91,7 +91,9 @@ int alloc_pages(unsigned n, size_t *pages) {
 
   for (count = iter = 0; iter < __npages; iter++) {
     if (0 == __pages[__index].count) {
-      pages[count] = page_address(__pages + __index);
+      struct page *p = __pages + __index;
+      pages[count] = page_address(p);
+      p->count++;
       count++;
       if (count == n) break;
     }
@@ -119,6 +121,8 @@ void free_pages(unsigned n, size_t *pages) {
   TRACE("n=%d, pages=%p", n, pages);
 
   for (i = 0; i < n; i++) {
+    ASSERT_GREATEREQ(pages[i], MB(16)); // temporary check (don't free kernel pages)
+    ASSERT_GREATER(get_page(pages[i])->count, 0);
     (get_page(pages[i]))->count--;
   }
   

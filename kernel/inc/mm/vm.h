@@ -13,17 +13,23 @@
 
 typedef int vm_flags_t;
 
-#define VM_FLAGS_RW_SHIFT   0
-#define VM_FLAGS_READONLY   (0 << VM_FLAGS_RW_SHIFT)
-#define VM_FLAGS_READWRITE  (1 << VM_FLAGS_RW_SHIFT)
+#define VM_R (1 << 0) // read
+#define VM_W (1 << 1) // write
+#define VM_X (1 << 2) // execute
+#define VM_U (1 << 3) // user
+#define VM_S (1 << 4) // supervisor
 
-#define VM_FLAGS_US_SHIFT   1
-#define VM_FLAGS_USER       (0 << VM_FLAGS_US_SHIFT)
-#define VM_FLAGS_SUPERVISOR (1 << VM_FLAGS_US_SHIFT)
+struct vm_region {
+  size_t address;
+  size_t size;
+  vm_flags_t flags;
+  list_link(struct vm_region) link;
+};
 
-#define VM_IS_READWRITE(flags)  (flags & VM_FLAGS_READWRITE)
-#define VM_IS_READONLY(flags)   (!VM_FLAGS_READWRITE(flags))
-#define VM_IS_SUPERVISOR(flags) (flags & VM_FLAGS_SUPERVISOR)
-#define VM_IS_USER(flags)       (!VM_FLAGS_SUPERVISOR(flags))
+list_typedef(struct vm_region) vm_region_list_t;
+
+struct vm_space {
+  vm_region_list_t regions;
+};
 
 #endif /* !__MM_VM_H__ */

@@ -38,6 +38,11 @@ struct thread_struct {
    */
   list_link(struct thread_struct) sibling_link;
 
+  /*
+   * The address of the first instruction this thread should run.
+   */
+  size_t entry;
+
   int tid;
 };
 

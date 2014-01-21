@@ -168,6 +168,7 @@ static inline int entry_is_dirty(entry_t *entry) {
  *   These bits are available for use by the system programmer.
  */
 #define ENTRY_AVAIL 9
+#define   ENTRY_TABLE_UNMAP (1 << 9) // used to mark page directory entries
 #define ENTRY_AVAIL_MASK MASK(3)
 
 /*
@@ -197,12 +198,6 @@ struct entry_table {
 int entry_table_init(struct entry_table *tbl);
 struct entry_table *entry_table_alloc(void);
 void entry_table_free(struct entry_table *ptr);
-
-#define NUM_KERNEL_PGTBLS \
-  (CONFIG_KERNEL_VM_SIZE / X86_PAGE_SIZE / ENTRY_TABLE_SIZE)
-
-extern struct entry_table kernel_pgtbls[NUM_KERNEL_PGTBLS];
-
 
 /*
  * Linear Address translation for 4 KB pages
@@ -241,12 +236,10 @@ int x86_init_page_dir(struct entry_table **object);
 
 bool x86_vtop(struct entry_table *pd,  size_t vaddr, size_t *paddrp);
 
-int x86_map_page(struct entry_table *pd, size_t vpage, size_t ppage, 
-                 vm_flags_t flags);
-
 int x86_map_pages(struct entry_table *pd, size_t *vpages, size_t *ppages,
                   int num_pages, vm_flags_t flags);
 
-#define ALLOC_FAILED 1
+void x86_unmap_pages(struct entry_table *pd, size_t *vpages,
+                     size_t *ppages, int num_pages);
 
 #endif /* !__X86_VM_H__ */

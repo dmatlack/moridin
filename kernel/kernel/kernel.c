@@ -41,6 +41,38 @@ void vfs_test(void) {
   vfs_put_file(f);
 }
 
+#include <arch/x86/vm.h>
+void x86_vm_test(void) {
+  size_t *ppages;
+  size_t *vpages;
+  int ret;
+  int num_pages = 10;
+  int i;
+ 
+  ppages = kmalloc(sizeof(size_t) * num_pages);
+  ASSERT_NOT_NULL(ppages);
+  vpages = kmalloc(sizeof(size_t) * num_pages);
+  ASSERT_NOT_NULL(vpages);
+
+  for (i = 0; i < num_pages; i++) {
+    vpages[i] = 0xC0000000 + (PAGE_SIZE * i);
+  }
+
+  ret = alloc_pages(num_pages, ppages);
+  ASSERT_EQUALS(ret, 0);
+
+  x86_map_pages((struct entry_table *) boot_page_dir, vpages, ppages, num_pages, VM_R|VM_W|VM_U);
+
+  // Use pages
+
+  x86_unmap_pages((struct entry_table *) boot_page_dir, vpages, ppages, num_pages);
+
+  free_pages(num_pages, ppages);
+
+  kfree(ppages, sizeof(size_t) * num_pages);
+  kfree(vpages, sizeof(size_t) * num_pages);
+}
+
 void kernel_main() {
 
   serial_port_init();
@@ -77,6 +109,8 @@ void kernel_main() {
   SUCCEED_OR_DIE(pci_init());
 
   vfs_test();
+
+  x86_vm_test();
 
   while (1) {
     irq_status_bar(VGA_ROWS - 1);
