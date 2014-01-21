@@ -11,6 +11,7 @@
 
 #include <mm/memory.h>
 #include <mm/pages.h>
+#include <mm/vm.h>
 
 #include <dev/vga.h>
 #include <dev/serial.h>
@@ -41,12 +42,13 @@ void vfs_test(void) {
   vfs_put_file(f);
 }
 
-#include <mm/vm.h>
 void x86_vm_test(void) {
 
-  boot_vm_space.object = (void *) boot_page_dir;
- 
   vm_map(&boot_vm_space, 0xC0000000, 10 * PAGE_SIZE, VM_R|VM_W|VM_S);
+
+  BOCHS_MAGIC_BREAK;
+
+  vm_unmap(&boot_vm_space, 0xC0000000, 10 * PAGE_SIZE);
 
   BOCHS_MAGIC_BREAK;
 }
@@ -63,6 +65,8 @@ void kernel_main() {
    * Page management
    */
   SUCCEED_OR_DIE(pages_init());
+
+  SUCCEED_OR_DIE(vm_init());
 
   /*
    * Exception Handling

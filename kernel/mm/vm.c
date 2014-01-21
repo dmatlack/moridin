@@ -18,6 +18,11 @@
 
 struct vm_space boot_vm_space;
 
+int vm_init(void) {
+  boot_vm_space.object = boot_page_dir;
+  return 0;
+}
+
 /**
  * @brief Initialize a virtual address space.
  *
@@ -42,6 +47,20 @@ int vm_space_init(struct vm_space *space) {
 }
 
 
+/**
+ * @brief Map a range of addresses into the virtual address space.
+ *
+ * Note that this function is all-or-nothing. Either the entire region
+ * gets mapped, or an error occurs and none of the region is mapped.
+ *
+ * @warning <address> will be aligned down to the nearest page and
+ * <size> will be aligned up to the nearest page.
+ *
+ * @return
+ *    0 on success
+ *    ENOMEM
+ *    other non-0 on architecture-dependent errors
+ */
 int vm_map(struct vm_space *space, size_t address, size_t size,
            vm_flags_t flags) {
   size_t *vpages;
@@ -90,4 +109,26 @@ map_free_vpages:
 map_free_ppages:
   kfree(ppages, sizeof(size_t) * num_pages);
   return ret;
+}
+
+void vm_unmap(struct vm_space *space, size_t address, size_t size) {
+  int num_pages;
+  int i;
+
+  TRACE("space=%p, address=0x%x, size=0x%x", space, address, size);
+
+  address = PAGE_ALIGN_DOWN(address);
+  size = PAGE_ALIGN_UP(size);
+  num_pages = size / PAGE_SIZE;
+
+  for (i = 0; i < num_pages; i++) {
+    size_t vpage = address + (i * PAGE_SIZE);
+    size_t ppage;
+
+#ifdef ARCH_X86
+    x86_unmap_pages(space->object, &vpage, &ppage, 1); 
+#endif
+
+    free_pages(1, &ppage);
+  }
 }
