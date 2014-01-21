@@ -232,7 +232,7 @@ static inline entry_t* get_pte(struct entry_table *pt, size_t vaddr) {
   return &(pt->entries[PT_OFFSET(vaddr)]);
 }
 
-int x86_init_page_dir(struct entry_table **object);
+int x86_init_page_dir(struct entry_table **pd);
 
 bool x86_vtop(struct entry_table *pd,  size_t vaddr, size_t *paddrp);
 

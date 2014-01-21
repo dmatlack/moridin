@@ -29,7 +29,12 @@ struct vm_region {
 list_typedef(struct vm_region) vm_region_list_t;
 
 struct vm_space {
-  vm_region_list_t regions;
+  void *object;
 };
+
+extern struct vm_space boot_vm_space;
+
+int vm_space_init(struct vm_space *space);
+int vm_map(struct vm_space *space, size_t address, size_t size, vm_flags_t flags);
 
 #endif /* !__MM_VM_H__ */

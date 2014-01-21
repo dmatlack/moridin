@@ -41,36 +41,14 @@ void vfs_test(void) {
   vfs_put_file(f);
 }
 
-#include <arch/x86/vm.h>
+#include <mm/vm.h>
 void x86_vm_test(void) {
-  size_t *ppages;
-  size_t *vpages;
-  int ret;
-  int num_pages = 10;
-  int i;
+
+  boot_vm_space.object = (void *) boot_page_dir;
  
-  ppages = kmalloc(sizeof(size_t) * num_pages);
-  ASSERT_NOT_NULL(ppages);
-  vpages = kmalloc(sizeof(size_t) * num_pages);
-  ASSERT_NOT_NULL(vpages);
+  vm_map(&boot_vm_space, 0xC0000000, 10 * PAGE_SIZE, VM_R|VM_W|VM_S);
 
-  for (i = 0; i < num_pages; i++) {
-    vpages[i] = 0xC0000000 + (PAGE_SIZE * i);
-  }
-
-  ret = alloc_pages(num_pages, ppages);
-  ASSERT_EQUALS(ret, 0);
-
-  x86_map_pages((struct entry_table *) boot_page_dir, vpages, ppages, num_pages, VM_R|VM_W|VM_U);
-
-  // Use pages
-
-  x86_unmap_pages((struct entry_table *) boot_page_dir, vpages, ppages, num_pages);
-
-  free_pages(num_pages, ppages);
-
-  kfree(ppages, sizeof(size_t) * num_pages);
-  kfree(vpages, sizeof(size_t) * num_pages);
+  BOCHS_MAGIC_BREAK;
 }
 
 void kernel_main() {

@@ -224,6 +224,11 @@ void x86_unmap_pages(struct entry_table *pd, size_t *vpages,
  * <num_pages> physical pages specified in <ppages>, all with the provided
  * flags.
  *
+ * TODO: maybe revise this interface to take in a start virtual address
+ * and size rather than array of virtual addresses. It's probably rare
+ * that we want to allocate a chunk of non-contiguous virtual memory at
+ * once...
+ *
  * @warning vpages and ppages must both be arrays of at least length
  * <num_pages>.
  *
