@@ -81,6 +81,10 @@ int vm_map(struct vm_space *space, size_t address, size_t size,
   if (NULL == ppages) {
     return ENOMEM;
   }
+  /*
+   * TODO: We can reduce the amount of malloc'ing here by changing the
+   * x86 interface to map a range of addresses rather than a list
+   */
   vpages = kmalloc(sizeof(size_t) * num_pages);
   if (NULL == vpages) {
     ret = ENOMEM;

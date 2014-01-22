@@ -47,10 +47,10 @@ clean:
 # User Programs
 ###############################################################################
 
-all: spin
+all: init
 
-spin: crt0.o progs/spin.o
-	$(LD) -T user.ld $? -o $(BIN)/spin
+init: crt0.o progs/init.o
+	$(LD) -T user.ld $? -o $(BIN)/init
 
 ###############################################################################
 # General Make fulrs for filetypes

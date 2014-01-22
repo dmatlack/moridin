@@ -29,28 +29,18 @@ extern int load(struct vfs_file *);
 
 void vfs_test(void) {
   struct vfs_file *f;
+  char *init = (char *) "/init";
   int i;
 
-  f = vfs_get_file((char*) "/spin");
+  f = vfs_get_file(init);
   if (NULL == f) {
-    kprintf("Failed to open /spin\n");
+    kprintf("Failed to open %s\n", init);
     return;
   }
   if ((i = load(f)) < 0) {
-    kprintf("Failed to load /spin: %s", strerr(i));
+    kprintf("Failed to load %s: %s", init, strerr(i));
   }
   vfs_put_file(f);
-}
-
-void x86_vm_test(void) {
-
-  vm_map(&boot_vm_space, 0xC0000000, 10 * PAGE_SIZE, VM_R|VM_W|VM_S);
-
-  BOCHS_MAGIC_BREAK;
-
-  vm_unmap(&boot_vm_space, 0xC0000000, 10 * PAGE_SIZE);
-
-  BOCHS_MAGIC_BREAK;
 }
 
 void kernel_main() {
@@ -91,8 +81,6 @@ void kernel_main() {
   SUCCEED_OR_DIE(pci_init());
 
   vfs_test();
-
-  x86_vm_test();
 
   while (1) {
     irq_status_bar(VGA_ROWS - 1);
