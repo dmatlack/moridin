@@ -82,6 +82,11 @@ void kernel_main() {
 
   vfs_test();
 
+  vm_map(&boot_vm_space, 0xC0000000, 0x10000, VM_R|VM_W|VM_U);
+  BOCHS_MAGIC_BREAK;
+  vm_unmap(&boot_vm_space, 0xC0000000, 0x10000);
+  BOCHS_MAGIC_BREAK;
+
   while (1) {
     irq_status_bar(VGA_ROWS - 1);
   }

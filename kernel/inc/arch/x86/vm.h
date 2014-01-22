@@ -236,10 +236,10 @@ int x86_init_page_dir(struct entry_table **pd);
 
 bool x86_vtop(struct entry_table *pd,  size_t vaddr, size_t *paddrp);
 
-int x86_map_pages(struct entry_table *pd, size_t *vpages, size_t *ppages,
-                  int num_pages, vm_flags_t flags);
+int x86_map_pages(struct entry_table *pd, size_t addr, size_t size,
+                  size_t *ppages, vm_flags_t flags);
 
-void x86_unmap_pages(struct entry_table *pd, size_t *vpages,
-                     size_t *ppages, int num_pages);
+void x86_unmap_pages(struct entry_table *pd, size_t addr, size_t size,
+                     size_t *ppages);
 
 #endif /* !__X86_VM_H__ */

@@ -27,6 +27,8 @@ int x86_init_page_dir(struct entry_table **object) {
   struct entry_table *page_directory;
   int ret;
 
+  ASSERT_EQUALS(PAGE_SIZE, X86_PAGE_SIZE);
+
   page_directory = entry_table_alloc();
   if (NULL == page_directory) return ENOMEM;
 
@@ -153,21 +155,25 @@ int x86_map_page(struct entry_table *pd, size_t vpage, size_t ppage,
  * unmapped pages or "free" them in any way. That is up to the caller.
  *
  * @param pd The page directory
- * @param vpages The virtual addresses of the pages to unmap
+ * @param addr The start address of the region to map
+ * @param size The size of the region to map
  * @param ppages The physical addresses of the pages that were unmapped
- * @param num_pages The number of pages to unmap
  */
-void x86_unmap_pages(struct entry_table *pd, size_t *vpages,
-                     size_t *ppages, int num_pages) {
+void x86_unmap_pages(struct entry_table *pd, size_t addr, size_t size,
+                     size_t *ppages) {
   size_t vpage;
   entry_t *pde, *pte;
   int i, j;
+  int num_pages = size / PAGE_SIZE;
 
-  TRACE("pd=%p, vpages=%p, ppages=%p, num_pages=%d",
-        pd, vpages, ppages, num_pages);
+  TRACE("pd=%p, addr=0x%x, size=0x%x, ppages=%p",
+        pd, addr, size, ppages);
+
+  ASSERT(X86_IS_PAGE_ALIGNED(addr));
+  ASSERT(X86_IS_PAGE_ALIGNED(size));
 
   for (i = 0; i < num_pages; i++) {
-    vpage = vpages[i];
+    vpage = addr + (i * X86_PAGE_SIZE);
 
     /*
      * Mark the page _directory_ entry so we know that we unmapped a page
@@ -220,31 +226,29 @@ void x86_unmap_pages(struct entry_table *pd, size_t *vpages,
 }
 
 /**
- * @brief Map the <num_pages> virtual pages specified in <vpages> to the
- * <num_pages> physical pages specified in <ppages>, all with the provided
- * flags.
+ * @brief Map a region of memory into the page directory.
  *
- * TODO: maybe revise this interface to take in a start virtual address
- * and size rather than array of virtual addresses. It's probably rare
- * that we want to allocate a chunk of non-contiguous virtual memory at
- * once...
- *
- * @warning vpages and ppages must both be arrays of at least length
- * <num_pages>.
+ * @warning ppages must be an array of at least length <size> / PAGE_SIZE.
  *
  * @return 0 on success, non-0 on error
  */
-int x86_map_pages(struct entry_table *pd, size_t *vpages, size_t *ppages, 
-                  int num_pages, vm_flags_t flags) {
+int x86_map_pages(struct entry_table *pd, size_t addr, size_t size,
+                  size_t *ppages, vm_flags_t flags) {
   int i;
 
-  TRACE("pd=%p, vpages=%p, ppages=%p, num_pages=%d, flags=0x%x",
-        pd, vpages, ppages, num_pages, flags);
-  for (i = 0; i < num_pages; i++) {
-    int ret = x86_map_page(pd, vpages[i], ppages[i], flags);
+  TRACE("pd=%p, addr=0x%x, size=0x%x, ppages=%p",
+        pd, addr, size, ppages);
 
+  ASSERT(X86_IS_PAGE_ALIGNED(addr));
+  ASSERT(X86_IS_PAGE_ALIGNED(size));
+
+  for (i = 0; i < (int) (size / X86_PAGE_SIZE); i++) {
+    size_t vpage = addr + (i * X86_PAGE_SIZE);
+    int ret;
+   
+    ret = x86_map_page(pd, vpage, ppages[i], flags);
     if (0 != ret) {
-      x86_unmap_pages(pd, vpages, ppages, i);
+      x86_unmap_pages(pd, addr, i * X86_PAGE_SIZE, ppages);
       return ret;
     }
   }
