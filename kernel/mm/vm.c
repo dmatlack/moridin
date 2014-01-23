@@ -16,10 +16,43 @@
 #include <debug.h>
 #include <errno.h>
 
-struct vm_space boot_vm_space;
+#define KERNEL_VIRTUAL_START 0x00000000
+
+struct vm_space postboot_vm_space;
 
 int vm_init(void) {
-  boot_vm_space.object = boot_page_dir;
+  unsigned i, nkpages;
+  size_t ksize;
+
+  /*
+   * Reserve the first 1/4 of physical memory
+   */
+  ksize = PAGE_ALIGN_DOWN(phys_mem_bytes / 4 * 3);
+  ASSERT_GREATEREQ(ksize, MB(16));
+  reserve_kernel_pages(0x0, ksize);
+
+  /*
+   * Map the reserved pages into a new address space.
+   */
+  vm_space_init(&postboot_vm_space);
+
+  TRACE_OFF; // about to map a lot of pages, so disable debug call tracing
+
+  nkpages = num_kernel_pages();
+  for (i = 0; i < nkpages; i++) {
+    size_t paddr = kernel_pages_pstart() + i*PAGE_SIZE;
+    size_t vaddr = KERNEL_VIRTUAL_START + i*PAGE_SIZE;
+    __vm_map(&postboot_vm_space, vaddr, PAGE_SIZE, &paddr, VM_S | VM_R | VM_W); 
+  }
+
+  TRACE_ON;
+
+  /*
+   * Finally switch off the boot virtual address space and into our new,
+   * "real" virtual address space.
+   */
+  vm_space_switch(&postboot_vm_space);
+
   return 0;
 }
 
@@ -44,6 +77,23 @@ int vm_space_init(struct vm_space *space) {
 #endif
 
   return 0;
+}
+
+void vm_space_switch(struct vm_space *space) {
+#ifdef ARCH_X86
+  x86_set_pagedir(space->object);
+#endif
+}
+
+int __vm_map(struct vm_space *space, size_t address, size_t size,
+             size_t *ppages, vm_flags_t flags) {
+  int ret;
+
+#ifdef ARCH_X86
+  ret = x86_map_pages(space->object, address, size, ppages, flags);
+#endif
+
+  return ret;
 }
 
 
@@ -83,9 +133,7 @@ int vm_map(struct vm_space *space, size_t address, size_t size,
   ret = alloc_pages(num_pages, ppages);
   if (ret != 0) goto map_free_ppages;
 
-#ifdef ARCH_X86
-  map_failed = x86_map_pages(space->object, address, size, ppages, flags);
-#endif
+  map_failed = __vm_map(space, address, size, ppages, flags);
 
   if (map_failed) {
     ret = map_failed;

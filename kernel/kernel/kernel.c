@@ -51,37 +51,17 @@ void kernel_main() {
 
   mb_dump(__log, __mb_info);
   
-  /*
-   * Page management
-   */
   SUCCEED_OR_DIE(pages_init());
-
   SUCCEED_OR_DIE(vm_init());
-
-  /*
-   * Exception Handling
-   */
   SUCCEED_OR_DIE(exn_init());
-
-  /*
-   * Hardware Interrupts
-   */
   SUCCEED_OR_DIE(irq_init());
-
-  /*
-   * Kernel Timer
-   */
   SUCCEED_OR_DIE(timer_init());
 
   enable_irqs();
   
-  /*
-   * Peripheral Component Interconnect
-   */
   SUCCEED_OR_DIE(pci_init());
 
   vfs_test();
-
   while (1) {
     irq_status_bar(VGA_ROWS - 1);
   }

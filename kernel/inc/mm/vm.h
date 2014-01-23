@@ -36,7 +36,9 @@ extern struct vm_space boot_vm_space;
 
 int  vm_init(void);
 int  vm_space_init(struct vm_space *space);
+void vm_space_switch(struct vm_space *space);
 int  vm_map(struct vm_space *space, size_t address, size_t size, vm_flags_t flags);
+int  __vm_map(struct vm_space *space, size_t address, size_t size, size_t *ppages, vm_flags_t flags);
 void vm_unmap(struct vm_space *space, size_t address, size_t size);
 
 #endif /* !__MM_VM_H__ */

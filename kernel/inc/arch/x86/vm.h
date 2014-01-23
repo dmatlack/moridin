@@ -242,4 +242,6 @@ int x86_map_pages(struct entry_table *pd, size_t addr, size_t size,
 void x86_unmap_pages(struct entry_table *pd, size_t addr, size_t size,
                      size_t *ppages);
 
+void x86_set_pagedir(struct entry_table *pd);
+
 #endif /* !__X86_VM_H__ */

@@ -21,11 +21,6 @@
 GENERATE_CRX_SET_BIT_FN(0)
 GENERATE_CRX_SET_BIT_FN(4)
 
-void x86_set_pagedir(int32_t pd) {
-  TRACE("pd=0x%08x", pd);
-  set_cr3(pd);
-}
-
 void x86_enable_paging(void) {
   TRACE();
   cr0_set_bit(CR0_PG, 1);

@@ -28,11 +28,13 @@ static unsigned __npages;   /* size of __pages */
 static unsigned __nfree;    /* number of available pages in __pages */
 static unsigned __index;    /* last used lookup index in __pages */
 
+static struct page *__kernel_pages;
+static unsigned     __kernel_npages;
+
 /**
  * @breif Initialize the physical page management system.
  */
 int pages_init(void) {
-  size_t p;
 
   __npages = phys_mem_bytes / PAGE_SIZE;
   __nfree = __npages;
@@ -42,16 +44,6 @@ int pages_init(void) {
   if (NULL == __pages) return ENOMEM;
 
   memset(__pages, 0, sizeof(struct page) * __npages);
-
-  /*
-   * Since the boot code maps the first 16 MB of memory, we'll set each
-   * refcount for those pages to 1.
-   */
-  for (p = 0; p < MB(16) / PAGE_SIZE; p++) {
-    __pages[p].count = 1;
-  }
-  __index = p;
-  __nfree -= MB(16) / PAGE_SIZE;
 
   kprintf("system page list: %d pages (%d KB total)\n", __npages,
           __npages * sizeof(struct page) / KB(1));
@@ -64,6 +56,45 @@ size_t page_address(struct page *p) {
 
 struct page *get_page(size_t address) {
   return __pages + (address / PAGE_SIZE);
+}
+
+/**
+ * @brief Reserve a region of physical memory for use by the kernel.
+ * 
+ * This function is needed to remap the kernel after system startup.
+ * After being loaded, one of the first things the kernel does is
+ * enable paging, mapping the first 16 MB of memory. Later the kernel
+ * needs to set up its virtual memory properly it will need to reserve
+ * a set of physical pages.
+ *
+ * @param paddr The physical address of the first page to reserve.
+ * @param size The size in bytes of the region to reserve.
+ */
+void reserve_kernel_pages(size_t paddr, size_t size) {
+  unsigned i;
+
+  TRACE("paddr=0x%x, size=0x%x", paddr, size);
+
+  ASSERT(IS_PAGE_ALIGNED(paddr));
+  ASSERT(IS_PAGE_ALIGNED(size));
+
+  for (i = 0; i < size / PAGE_SIZE; i++) {
+    struct page *p = get_page(paddr + (i*PAGE_SIZE));
+    p->count = 1;
+  }
+
+  __kernel_pages = get_page(paddr);
+  __kernel_npages = size / PAGE_SIZE;
+
+  __nfree -= __kernel_npages;;
+}
+
+unsigned num_kernel_pages(void) {
+  return __kernel_npages;
+}
+
+size_t kernel_pages_pstart(void) {
+  return page_address(__kernel_pages);
 }
 
 /**

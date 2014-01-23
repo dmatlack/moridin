@@ -8,7 +8,6 @@
 
 #include <stdint.h>
 
-void x86_set_pagedir(int32_t pd);
 void x86_enable_paging(void);
 void x86_disable_paging(void);
 void x86_enable_protected_mode(void);

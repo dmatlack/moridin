@@ -132,6 +132,9 @@ int x86_map_page(struct entry_table *pd, size_t vpage, size_t ppage,
       entry_set_flags(pde, VM_R | VM_W | VM_U);
     }
   }
+  else {
+    pt = (struct entry_table *) entry_get_addr(pde);
+  }
 
   ASSERT(entry_is_present(pde));
 
@@ -267,6 +270,7 @@ bool x86_vtop(struct entry_table *pd,  size_t vaddr, size_t *paddrp) {
   struct entry_table *pt;
   entry_t *pde, *pte;
 
+  TRACE("pd=0x%x, vaddr=0x%x, paddrp=%p", pd, vaddr, paddrp);
   ASSERT_NOT_NULL(paddrp);
   
   pde = get_pde(pd, vaddr);
@@ -284,4 +288,8 @@ bool x86_vtop(struct entry_table *pd,  size_t vaddr, size_t *paddrp) {
 
   *paddrp = entry_get_addr(pte) + PHYS_OFFSET(vaddr);
   return true;
+}
+
+void x86_set_pagedir(struct entry_table *pd) {
+  set_cr3((int32_t) pd);
 }
