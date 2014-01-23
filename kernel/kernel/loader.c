@@ -91,7 +91,6 @@ static inline vm_flags_t elf32_to_vm_flags(elf32_word_t p_flags) {
   v |= p_flags & PF_R ? VM_R : 0;
   v |= p_flags & PF_W ? VM_W : 0;
   return v;
-
 }
 
 /**
@@ -100,9 +99,11 @@ static inline vm_flags_t elf32_to_vm_flags(elf32_word_t p_flags) {
  * @return
  *    0 on success
  */
-int __elf32_load(struct vfs_file *file, struct elf32_ehdr *ehdr, 
-                 struct elf32_phdr *phdrs) {
+int __elf32_load(struct vfs_file *file, struct vm_space *space,
+                 struct elf32_ehdr *ehdr, struct elf32_phdr *phdrs) {
   int i;
+
+  (void) space;
 
   for (i = 0; i < ehdr->e_phnum; i++) {
     struct elf32_phdr *p = phdrs + i;
@@ -130,7 +131,7 @@ int __elf32_load(struct vfs_file *file, struct elf32_ehdr *ehdr,
  *    ENOEXEC if the file could not be loaded
  *    0 on success
  */
-int elf32_load(struct vfs_file *file) {
+int elf32_load(struct vfs_file *file, struct vm_space *space) {
   struct elf32_ehdr *ehdr;
   struct elf32_phdr *phdrs;
   int ret = 0;
@@ -180,7 +181,7 @@ int elf32_load(struct vfs_file *file) {
   /*
    * Now we load the file into the virtual address space.
    */
-  ret = __elf32_load(file, ehdr, phdrs);
+  ret = __elf32_load(file, space, ehdr, phdrs);
 
   goto free_phdrs_ret;
 free_phdrs_ret:
@@ -196,13 +197,17 @@ free_ehdr_ret:
  * TODO: maybe pass in a process or address space object as well
  * so the loader knows where to load the file.
  *
+ * @param file The file object of the executable to load
+ * @param space The virtual address space into which to load the
+ * file.
+ *
  * @return
  *    0 on success
  *    EPERM if the file is not executable
  *    EFAULT if the file could not be opened, closed, or read
  *    ENOEXEC if the executable file format was invalid or corrupt
  */
-int load(struct vfs_file *file) {
+int load(struct vfs_file *file, struct vm_space *space) {
 #define LOAD_HEADER_SIZE 4
   char buffer[LOAD_HEADER_SIZE];
   ssize_t bytes;
@@ -240,7 +245,7 @@ int load(struct vfs_file *file) {
    */
   if (bytes >= ELF32_MAGIC_SIZE &&
       0 == memcmp(buffer, elf32_magic, ELF32_MAGIC_SIZE)) {
-    ret = elf32_load(file);
+    ret = elf32_load(file, space);
   }
   else {
     DEBUG("File %s does not match any executable formats.",
