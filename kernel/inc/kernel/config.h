@@ -6,18 +6,10 @@
 #ifndef __KERNEL_CONFIG_H__
 #define __KERNEL_CONFIG_H__
 
-#include <stddef.h>
-
 /*
- * The size of the kernel in the VIRTUAL address space.
+ * The start address of the kernel's virtual address space.
  */
-#define CONFIG_KERNEL_VM_SIZE           GB(1)
-
-/*
- * The minimum amount of PHYSICAL memory needed for to boot.
- */
-#define CONFIG_MIN_PHYSMEM_KERNEL       MB(32)
-#define CONFIG_MIN_PHYSMEM_USER         MB(32)
+#define CONFIG_KERNEL_VIRTUAL_START 0x00000000
 
 /*
  * The default frequency (times per second) to receive hardware interrupts

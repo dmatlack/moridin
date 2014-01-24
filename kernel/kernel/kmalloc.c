@@ -16,22 +16,49 @@
 
 #include <mm/lmm.h>
 #include <mm/lmm_types.h>
+#include <mm/memory.h>
 
-static lmm_t kernel_lmm = LMM_INITIALIZER;
+static lmm_t        kernel_lmm; // = LMM_INITIALIZER;
 static lmm_region_t global_region;
 
 /**
  * @brief Initialize kmalloc and set up the kernel heap to extend
- * from <start> to <end>.
+ * from <start> to <start>+<size>.
  *
  * This function is used to allocate a small heap for system startup.
  */
-void kmalloc_early_init(size_t start, size_t end) {
-  TRACE("start=0x%0x, end=0x%x", start, end);
+void kmalloc_early_init(size_t start, size_t size) {
+  TRACE("start=0x%0x, size=0x%x", start, size);
 
   lmm_init(&kernel_lmm);
   lmm_add_region(&kernel_lmm, &global_region, (size_t) 0, (size_t) -1, 0, 0);
-  lmm_add_free(&kernel_lmm, (void *) start, end - start);
+  lmm_add_free(&kernel_lmm, (void *) start, size);
+}
+
+/**
+ * @brief Grow the kernel heap to address <new_end>.
+ *
+ * This function is called after the kernel has bootstrapped it's virtual
+ * memory management.
+ */
+void kmalloc_late_init(size_t new_end) {
+  size_t start;
+
+  TRACE("new_end=0x%x", new_end);
+
+  start = (size_t) kheap_end;
+
+  lmm_add_free(&kernel_lmm, (void *) start, new_end - start);
+
+  kheap_end = (char *) new_end;
+}
+
+void kmalloc_dump(void) {
+  lmm_dump(&kernel_lmm);
+}
+
+size_t kmalloc_bytes_free(void) {
+  return lmm_avail(&kernel_lmm, 0);
 }
 
 static void *__kmalloc(size_t size) {

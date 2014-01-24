@@ -51,8 +51,12 @@ void kernel_main() {
 
   mb_dump(__log, __mb_info);
   
+  //TODO kernel startup init functions shouldn't return integer error codes.
+  // If they fail, they should just panic themselves describing what went
+  // wrong. We can't proceed anyway.
+
   SUCCEED_OR_DIE(pages_init());
-  SUCCEED_OR_DIE(vm_init());
+  vm_init();
   SUCCEED_OR_DIE(exn_init());
   SUCCEED_OR_DIE(irq_init());
   SUCCEED_OR_DIE(timer_init());
@@ -62,6 +66,9 @@ void kernel_main() {
   SUCCEED_OR_DIE(pci_init());
 
   vfs_test();
+
+  kmalloc_dump();
+
   while (1) {
     irq_status_bar(VGA_ROWS - 1);
   }

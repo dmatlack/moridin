@@ -71,7 +71,8 @@ void mb_entry(unsigned int mb_magic, struct multiboot_info *mb_info) {
    * NOTE: if we use a higher half kernel we'll have to offset these
    * values
    */
-  kmalloc_early_init((size_t) kheap_start, (size_t) kheap_end);
+  kmalloc_early_init((size_t) kheap_start,
+                    ((size_t) kheap_end - (size_t) kheap_start));
 
   /*
    * Initialize the ramdisk

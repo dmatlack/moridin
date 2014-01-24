@@ -35,43 +35,43 @@ void lmm_dump(lmm_t *lmm)
 {
 	struct lmm_region *reg;
 
-	DEBUG("lmm_dump(lmm=%p)\n", lmm);
+	TRACE("lmm=%p", lmm);
 
 	for (reg = lmm->regions; reg; reg = reg->next)
 	{
 		struct lmm_node *node;
 		vm_size_t free_check;
 
-		DEBUG(" region %08lx-%08lx size=%08lx flags=%08x pri=%d free=%08lx\n",
+		INFO(" region 0x%08lx-0x%08lx size=0x%08lx flags=0x%08x pri=%d free=0x%08lx",
 			reg->min, reg->max, reg->max - reg->min,
 			reg->flags, reg->pri, reg->free);
 
-		assert((reg->nodes == 0)
+		ASSERT((reg->nodes == 0)
 		       || (vm_offset_t)reg->nodes >= reg->min);
-		assert((reg->nodes ==0) || (vm_offset_t)reg->nodes < reg->max);
-		assert(reg->free >= 0);
-		assert(reg->free <= reg->max - reg->min);
+		ASSERT((reg->nodes ==0) || (vm_offset_t)reg->nodes < reg->max);
+		ASSERT(reg->free >= 0);
+		ASSERT(reg->free <= reg->max - reg->min);
 
 		free_check = 0;
 		for (node = reg->nodes; node; node = node->next)
 		{
-			DEBUG("  node %p-%08lx size=%08lx next=%p\n",
+			INFO("  node %p-0x%08lx size=0x%08lx next=%p",
 				node, (vm_offset_t)node + node->size, node->size, node->next);
 
-			assert(((vm_offset_t)node & ALIGN_MASK) == 0);
-			assert((node->size & ALIGN_MASK) == 0);
-			assert(node->size >= sizeof(*node));
-			assert((node->next == 0) || (node->next > node));
-			assert((vm_offset_t)node < reg->max);
+			ASSERT(((vm_offset_t)node & ALIGN_MASK) == 0);
+			ASSERT((node->size & ALIGN_MASK) == 0);
+			ASSERT(node->size >= sizeof(*node));
+			ASSERT((node->next == 0) || (node->next > node));
+			ASSERT((vm_offset_t)node < reg->max);
 
 			free_check += node->size;
 		}
 
-		DEBUG(" free_check=%08lx\n", free_check);
-		assert(reg->free == free_check);
+		INFO(" free_check=0x%08lx", free_check);
+		ASSERT(reg->free == free_check);
 	}
 
-	DEBUG("lmm_dump done\n");
+	INFO("lmm_dump done");
 }
 
 #pragma GCC diagnostic pop

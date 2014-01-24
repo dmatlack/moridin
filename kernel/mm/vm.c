@@ -6,6 +6,7 @@
 #include <mm/memory.h>
 #include <mm/pages.h>
 
+#include <kernel/config.h>
 #include <kernel/kmalloc.h>
 
 #ifdef ARCH_X86
@@ -16,33 +17,46 @@
 #include <debug.h>
 #include <errno.h>
 
-#define KERNEL_VIRTUAL_START 0x00000000
+struct vm_space *postboot_vm_space;
 
-struct vm_space postboot_vm_space;
-
-int vm_init(void) {
+void vm_init(void) {
   unsigned i, nkpages;
   size_t ksize;
+  int ret;
+
+  TRACE();
+
+  postboot_vm_space = kmalloc(sizeof(struct vm_space));
+  if (NULL == postboot_vm_space) {
+    panic("Couldn't allocate the posboot_vm_space struct.");
+  }
 
   /*
    * Reserve the first 1/4 of physical memory
    */
-  ksize = PAGE_ALIGN_DOWN(phys_mem_bytes / 4 * 3);
+  ksize = PAGE_ALIGN_DOWN(phys_mem_bytes / 4 * 1);
   ASSERT_GREATEREQ(ksize, MB(16));
-  reserve_kernel_pages(0x0, ksize);
+  reserve_kernel_pages(CONFIG_KERNEL_VIRTUAL_START, ksize);
 
   /*
    * Map the reserved pages into a new address space.
    */
-  vm_space_init(&postboot_vm_space);
+  ret = vm_space_init(postboot_vm_space);
+  if (ret) {
+    panic("Couldn't initialize postboot_vm_space: %d/%s", ret, strerr(ret));
+  }
 
   TRACE_OFF; // about to map a lot of pages, so disable debug call tracing
 
   nkpages = num_kernel_pages();
   for (i = 0; i < nkpages; i++) {
     size_t paddr = kernel_pages_pstart() + i*PAGE_SIZE;
-    size_t vaddr = KERNEL_VIRTUAL_START + i*PAGE_SIZE;
-    __vm_map(&postboot_vm_space, vaddr, PAGE_SIZE, &paddr, VM_S | VM_R | VM_W); 
+    size_t vaddr = CONFIG_KERNEL_VIRTUAL_START + i*PAGE_SIZE;
+
+    ret = __vm_map(postboot_vm_space, vaddr, PAGE_SIZE, &paddr, VM_S | VM_R | VM_W);
+    if (ret) {
+      panic("Couldn't map kernel address space: %d/%s", ret, strerr(ret));
+    }
   }
 
   TRACE_ON;
@@ -51,9 +65,12 @@ int vm_init(void) {
    * Finally switch off the boot virtual address space and into our new,
    * "real" virtual address space.
    */
-  vm_space_switch(&postboot_vm_space);
+  vm_space_switch(postboot_vm_space);
 
-  return 0;
+  /*
+   * Resize the kernel heap to match to new kernel address space.
+   */
+  kmalloc_late_init(CONFIG_KERNEL_VIRTUAL_START + ksize);
 }
 
 /**
