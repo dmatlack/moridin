@@ -479,7 +479,7 @@ int pci_register_driver(struct pci_device_driver *driver) {
  *    ENOMEM if there is not enough memory to initialize the pci subsystem
  *    0 otherwise
  */
-int pci_init(void) {
+void pci_init(void) {
   struct pci_device *d;
   int ret;
 
@@ -490,7 +490,7 @@ int pci_init(void) {
 
   __pci_root = kmalloc(sizeof(struct pci_bus));
   if (NULL == __pci_root) {
-    return ENOMEM;
+    panic("Not enough memory to allocate the root pci_bus struct.");
   }
   list_init(&__pci_root->devices);
   list_init(&__pci_root->buses);
@@ -502,7 +502,7 @@ int pci_init(void) {
    * construct the pci device tree
    */
   if (0 != (ret = pci_scan_bus(__pci_root))) {
-    return ret;
+    panic("Failed to create the PCI tree: %d/%s", ret, strerr(ret));
   }
 
   lspci();
@@ -517,7 +517,4 @@ int pci_init(void) {
    */
   pci_register_driver(&piix_ide_driver);
   //TODO add more drivers ...
-  
-
-  return 0;
 }

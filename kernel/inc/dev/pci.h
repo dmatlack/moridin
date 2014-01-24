@@ -390,7 +390,7 @@ extern pci_device_list_t __pci_devices;
  */
 extern pci_device_driver_list_t __pci_drivers;
 
-int pci_init(void);
+void pci_init(void);
 int pci_scan_bus(struct pci_bus *b);
 int pci_register_driver(struct pci_device_driver *driver);
 

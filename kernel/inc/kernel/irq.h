@@ -69,7 +69,7 @@ struct irq_state {
   int in_irq;
 };
 
-int irq_init(void);
+void irq_init(void);
 void generate_irq(int irq);
 void handle_irq(int irq);
 void register_irq(int irq, struct irq_handler *new_handler);

@@ -26,7 +26,7 @@ extern struct machine_irq_interface x86_irq_interface;
 static struct machine_irq_interface *__machine_irq_system = &x86_irq_interface;
 #endif
 
-int irq_init(void) {
+void irq_init(void) {
   struct machine_irq_info irq_info;
   int i;
   int ret;
@@ -36,7 +36,7 @@ int irq_init(void) {
   ASSERT_NOT_NULL(__machine_irq_system->init);
 
   if (0 != (ret = __machine_irq_system->init(&irq_info))) {
-    return ret;
+    panic("Couldn't get architecture irq information: %d/%s", ret, strerr(ret));
   }
 
   __max_irqs = irq_info.max_irqs;
@@ -45,7 +45,7 @@ int irq_init(void) {
 
   __irqs = kmalloc(sizeof(struct irq_state) * __max_irqs);
   if (NULL == __irqs) {
-    return ENOMEM;
+    panic("Not enough memory to allocate the irq list.");
   }
   
   for (i = 0; i < __max_irqs; i++) {
@@ -54,8 +54,6 @@ int irq_init(void) {
     irq->count = 0;
     irq->in_irq = 0;
   }
-
-  return 0;
 }
 
 void generate_irq(int irq) {

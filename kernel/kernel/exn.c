@@ -72,7 +72,6 @@ void kernel_exn_handler(struct x86_exn_args *args) {
   panic("Exception %d during boot. Aborting.", exn->vector);
 }
 
-int exn_init(void) {
+void exn_init(void) {
   x86_exn_set_handler(kernel_exn_handler);
-  return 0;
 }

@@ -8,7 +8,7 @@
 
 #include <stddef.h>
 
-int pages_init(void);
+void pages_init(void);
 int alloc_pages(unsigned n, size_t *pages);
 void free_pages(unsigned n, size_t *pages);
 

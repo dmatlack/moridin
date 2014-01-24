@@ -34,20 +34,21 @@ static unsigned     __kernel_npages;
 /**
  * @breif Initialize the physical page management system.
  */
-int pages_init(void) {
+void pages_init(void) {
 
   __npages = phys_mem_bytes / PAGE_SIZE;
   __nfree = __npages;
   __index = 0;
 
   __pages = kmalloc(sizeof(struct page) * __npages);
-  if (NULL == __pages) return ENOMEM;
+  if (NULL == __pages) {
+    panic("Not enough memory to allocate the page list.");  
+  }
 
   memset(__pages, 0, sizeof(struct page) * __npages);
 
   kprintf("system page list: %d pages (%d KB total)\n", __npages,
           __npages * sizeof(struct page) / KB(1));
-  return 0;
 }
 
 size_t page_address(struct page *p) {
