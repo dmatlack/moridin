@@ -77,7 +77,6 @@ ssize_t initrd_read(struct vfs_file *file, char *buf, size_t size,
 
   bytes = umin(size, ramfile->length - off);
   data = (char *) ( ((size_t) initrd) + ramfile->data + off );
-  INFO("memcpy(to=%p, from=%p, bytes=%d", buf, data, bytes);
   memcpy(buf, data, bytes);
   return bytes;
 }

@@ -293,3 +293,7 @@ bool x86_vtop(struct entry_table *pd,  size_t vaddr, size_t *paddrp) {
 void x86_set_pagedir(struct entry_table *pd) {
   set_cr3((int32_t) pd);
 }
+
+struct entry_table *x86_get_pagedir(void) {
+  return (struct entry_table *) get_cr3();
+}

@@ -65,7 +65,7 @@ void vm_init(void) {
    * Finally switch off the boot virtual address space and into our new,
    * "real" virtual address space.
    */
-  vm_space_switch(postboot_vm_space);
+  __vm_space_switch(postboot_vm_space->object);
 
   /*
    * Resize the kernel heap to match to new kernel address space.
@@ -96,10 +96,30 @@ int vm_space_init(struct vm_space *space) {
   return 0;
 }
 
-void vm_space_switch(struct vm_space *space) {
+/**
+ * @brief Switch address spaces.
+ *
+ * @warning This function does not allow you to get the vm_space struct of
+ * old object. So this function is not safe to use if you care about locking
+ * the vm_space that is currently in use and have no other way of accessing
+ * it.
+ *
+ * @param object This should be a (struct vm_space *)->object, or the object
+ * returned by a previous invocation to this function.
+ *
+ * @return The old object.
+ */
+void *__vm_space_switch(void *object) {
+  void *old_object;
+
+  TRACE("object=%p", object);
+
 #ifdef ARCH_X86
-  x86_set_pagedir(space->object);
+  old_object = x86_get_pagedir();
+  x86_set_pagedir(object);
 #endif
+
+  return old_object;
 }
 
 int __vm_map(struct vm_space *space, size_t address, size_t size,

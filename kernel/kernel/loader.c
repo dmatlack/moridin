@@ -101,9 +101,12 @@ static inline vm_flags_t elf32_to_vm_flags(elf32_word_t p_flags) {
  */
 int __elf32_load(struct vfs_file *file, struct vm_space *space,
                  struct elf32_ehdr *ehdr, struct elf32_phdr *phdrs) {
+  void *old_space_object;
   int i;
 
-  (void) space;
+  // TODO we could probably get the old_space_object's corresponding vm_space
+  // struct by examining the currently running thread.
+  old_space_object = __vm_space_switch(space->object);
 
   for (i = 0; i < ehdr->e_phnum; i++) {
     struct elf32_phdr *p = phdrs + i;
@@ -116,6 +119,8 @@ int __elf32_load(struct vfs_file *file, struct vm_space *space,
          p->p_type, p->p_offset, p->p_vaddr, p->p_paddr, p->p_filesz,
          p->p_memsz, p->p_flags, p->p_align);
   }
+
+  __vm_space_switch(old_space_object);
 
   return 0;
 }

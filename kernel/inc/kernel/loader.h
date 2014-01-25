@@ -4,6 +4,7 @@
 #ifndef __KERNEL_LOADER_H__
 #define __KERNEL_LOADER_H__
 
+#include <fs/vfs.h>
 #include <mm/vm.h>
 
 int load(struct vfs_file *file, struct vm_space *space);

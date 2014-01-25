@@ -8,6 +8,7 @@
 #include <kernel/irq.h>
 #include <kernel/timer.h>
 #include <kernel/exn.h>
+#include <kernel/loader.h>
 
 #include <mm/memory.h>
 #include <mm/pages.h>
@@ -25,7 +26,8 @@
 struct multiboot_info *__mb_info;
 
 #include <fs/vfs.h>
-extern int load(struct vfs_file *);
+
+extern struct vm_space *postboot_vm_space;
 
 void vfs_test(void) {
   struct vfs_file *f;
@@ -37,7 +39,7 @@ void vfs_test(void) {
     kprintf("Failed to open %s\n", init);
     return;
   }
-  if ((i = load(f)) < 0) {
+  if ((i = load(f, postboot_vm_space)) < 0) {
     kprintf("Failed to load %s: %s", init, strerr(i));
   }
   vfs_put_file(f);
