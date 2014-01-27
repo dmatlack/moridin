@@ -198,10 +198,12 @@ void vm_unmap(struct vm_space *space, size_t address, size_t size) {
     size_t ppage;
 
 #ifdef ARCH_X86
-    x86_unmap_pages(space->object, vpage, PAGE_SIZE,  &ppage); 
+    if (x86_is_mapped(space->object, vpage)) {
+      x86_unmap_pages(space->object, vpage, PAGE_SIZE,  &ppage); 
+      free_pages(1, &ppage);
+    }
 #endif
 
-    free_pages(1, &ppage);
   }
 }
 

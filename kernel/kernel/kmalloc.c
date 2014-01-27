@@ -20,6 +20,7 @@
 
 static lmm_t        kernel_lmm; // = LMM_INITIALIZER;
 static lmm_region_t global_region;
+static size_t       __kmalloc_total;
 
 /**
  * @brief Initialize kmalloc and set up the kernel heap to extend
@@ -29,6 +30,8 @@ static lmm_region_t global_region;
  */
 void kmalloc_early_init(size_t start, size_t size) {
   TRACE("start=0x%0x, size=0x%x", start, size);
+
+  __kmalloc_total = 0;
 
   lmm_init(&kernel_lmm);
   lmm_add_region(&kernel_lmm, &global_region, (size_t) 0, (size_t) -1, 0, 0);
@@ -61,12 +64,17 @@ size_t kmalloc_bytes_free(void) {
   return lmm_avail(&kernel_lmm, 0);
 }
 
+size_t kmalloc_bytes_used(void) {
+  return __kmalloc_total;
+}
+
 static void *__kmalloc(size_t size) {
 	void *chunk;
 
 	if (!(chunk = lmm_alloc(&kernel_lmm, size, 0)))
         return NULL;
 
+  __kmalloc_total += size;
 	return chunk;
 }
 
@@ -115,6 +123,7 @@ void *kmemalign(size_t alignment, size_t size) {
 		return NULL;
 #pragma GCC diagnostic pop
 
+  __kmalloc_total += size;
 	return chunk;
 }
 
@@ -125,5 +134,6 @@ void *kmemalign(size_t alignment, size_t size) {
  * @param size The size of the memory to free
  */
 void kfree(void *buf, size_t size) {
+  __kmalloc_total -= size;
 	lmm_free(&kernel_lmm, buf, size);
 }

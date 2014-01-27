@@ -290,6 +290,12 @@ bool x86_vtop(struct entry_table *pd,  size_t vaddr, size_t *paddrp) {
   return true;
 }
 
+bool x86_is_mapped(struct entry_table *pd, size_t addr) {
+  size_t ignore;
+
+  return x86_vtop(pd, addr, &ignore);
+}
+
 void x86_set_pagedir(struct entry_table *pd) {
   set_cr3((int32_t) pd);
 }

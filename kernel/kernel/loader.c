@@ -215,7 +215,8 @@ int __elf32_load(struct vfs_file *file, struct vm_space *space,
     ret = elf32_load_phdr(file, space, p);
 
     if (ret != 0) {
-      ERROR("Failed to load elf program section: %d/%s", ret, strerr(ret));
+      ERROR("Failed to load program section of %s: %d/%s", 
+            file->dirent->name, ret, strerr(ret));
       __elf32_unload(space, ehdr, phdrs);
       break;
     }
