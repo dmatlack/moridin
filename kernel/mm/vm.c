@@ -204,3 +204,27 @@ void vm_unmap(struct vm_space *space, size_t address, size_t size) {
     free_pages(1, &ppage);
   }
 }
+
+/**
+ * @brief Flush the contents of the TLB, invalidating all cached virtual
+ * address lookups.
+ */
+void tlb_flush(void) {
+  void *object;
+
+#ifdef ARCH_X86
+  object = x86_get_pagedir();
+  x86_set_pagedir(object);
+#endif
+}
+
+/**
+ * @brief Invalidate a set of pages in the TLB. This should be called
+ * after vm_map if you want to write to or read from the pages you just
+ * mapped.
+ */
+void tlb_invalidate(size_t addr, size_t size) {
+  (void) addr; (void) size;
+  // TODO implement this with invlpg
+  tlb_flush();
+}
