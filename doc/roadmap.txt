@@ -14,16 +14,16 @@
 
   a. Finish implementing Virtual Memory. The following functions should be
     supported:
-    - Initialize an address space (x86: initialize a page directory, map
+x   - Initialize an address space (x86: initialize a page directory, map
       all the kernel addresses.
-    - Destroy an address space (x86: free allocated page tables, do not
+x   - Destroy an address space (x86: free allocated page tables, do not
       free the kernel page tables)
-    - For fork() we should be able to support:
+>   - For fork() we should be able to support:
       * Copy an address space (where each user page will have to be
         physically copied to other pages, until we support ZFOD and
         COW in which case making a physcial copy will just pretend
         to make a copy).
-    - Map a region of memory into an address space, with some flags
+x   - Map a region of memory into an address space, with some flags
       * allocate physical pages
       * x86 map the physical page into the address sapce
       * flags include read/write, executable, etc.
@@ -31,19 +31,19 @@
   b. Get binary loading working. In order to run user programs, we need to
     be able to load an executable into the users memory and run it.
 
-    - Choose an executable format (ELF), study it.
-    - Start writing and compiling simple user programs that could be run
+x   - Choose an executable format (ELF), study it.
+x   - Start writing and compiling simple user programs that could be run
       by our kernel (in other words, user programs that use a very special,
       and probably hardcoded, linker script).
-      * write a crt0 (_start)
-      * write a simple system call to write a character to the screen
-      * write a program that just prints to the screen so that when we run
+x     * write a crt0 (_start)
+>     * write a simple system call to write a character to the screen
+>     * write a program that just prints to the screen so that when we run
         it we can visually verify that it is "working".
-    - Figure out how to load user programs into the kernel image so that
+x   - Figure out how to load user programs into the kernel image so that
       they can be accessed as byte arrays.
-    - Write an ELF parser that can read in an ELF binary and turn it into
+x   - Write an ELF parser that can read in an ELF binary and turn it into
       something useful (e.g. parse the headers into a struct).
-    - Write a loader that takes the binary and copies it into the user's
+x   - Write a loader that takes the binary and copies it into the user's
       address space at the correct addresses.
 
   c. Jump to Userspace.
@@ -53,18 +53,18 @@
 
 2. Synchronization
 
-  a. Implement spinlocks with save/restore/disable interrupts (the spinlocks
+> a. Implement spinlocks with save/restore/disable interrupts (the spinlocks
     are just because we would need them once we got to SMP).
-  b. Implement semaphores.
+> b. Implement semaphores.
 
 3. System Calls
 
-  a. Implement fork()
-  b. Implement exec() (<-- this will just use string "filenames" which
+> a. Implement fork()
+> b. Implement exec() (<-- this will just use string "filenames" which
     simply identify the binary blobs loaded into our kernel image.
     Eventually we will implement the VFS and then ramdisk).
 
 4. Scheduler
 
-  a. Implement a context switch
-  b. Implement a scheduler
+> a. Implement a context switch
+> b. Implement a scheduler
