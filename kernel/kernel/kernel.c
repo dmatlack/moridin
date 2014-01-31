@@ -30,9 +30,11 @@ struct multiboot_info *__mb_info;
 extern struct vm_space *postboot_vm_space;
 
 void load_test(struct vfs_file *f, struct vm_space *space) {
-  int i;
-  if ((i = load(f, space)) < 0) {
-    kprintf("Failed to load %s: %s", f->dirent->name, strerr(i));
+  int ret;
+
+  ret = load(f, space);
+  if (ret) {
+    kprintf("Failed to load %s: %s", f->dirent->name, strerr(ret));
   }
 }
 
@@ -45,9 +47,7 @@ void vfs_test(void) {
     return;
   }
 
-  kprintf("Bytes before: 0x%x\n", kmalloc_bytes_used());
   load_test(f, postboot_vm_space);
-  kprintf("Bytes after: 0x%x\n", kmalloc_bytes_used());
 
   vfs_put_file(f);
 }

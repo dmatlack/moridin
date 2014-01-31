@@ -105,58 +105,39 @@ static inline vm_flags_t elf32_to_vm_flags(elf32_word_t p_flags) {
  *    ENOMEM if we ran out of memory while trying to load the section
  *    other non-0 error codes if virtual memory mapping or file reading fails
  */
-int elf32_load_phdr(struct vfs_file *file, struct vm_space *space,
-                    struct elf32_phdr *phdr) {
-#define ELF32_PSBUF_SIZE 1024
-  char *buf;
+int elf32_load_phdr(struct vfs_file *file, struct elf32_phdr *phdr,
+                    char *buf, int bufsz) {
   ssize_t bytes;
   size_t offset;
   int ret;
 
-  TRACE("file=%p, space=%p, phdr=%p", file, space, phdr);
-
   if (PT_LOAD != phdr->p_type) {
+    WARN("%s: Non loadable elf32 program section type: %d", file->dirent->name,
+         phdr->p_type);
     return EINVAL;
   }
 
-  ret = vfs_seek(file, phdr->p_offset, SEEK_SET);
-  if (ret != (int) phdr->p_offset) {
-    return EFAULT;
-  }
-
-  //TODO: kmalloc'ing a buffer for every program section is redundant. Maybe
-  // move the allocation to the calling function.
-  buf = kmalloc(ELF32_PSBUF_SIZE);
-  if (NULL == buf) {
-    return ENOMEM;
-  }
-
-  /*
-   * Map the region into virtual memory.
-   */
-  ret = vm_map(space, phdr->p_vaddr, phdr->p_memsz,
-               elf32_to_vm_flags(phdr->p_flags));
-  if (ret != 0) {
-    goto load_phdr_cleanup;
-  }
-
-  /*
-   * Copy the program section contents from the file,
-   * into memory.
-   */
   offset = 0;
-  do {
-    bytes = vfs_read(file, buf, ELF32_PSBUF_SIZE);
-    if (bytes < 0) {
-      ret = bytes;
-      vm_unmap(space, phdr->p_vaddr, phdr->p_memsz);
-      goto load_phdr_cleanup;
+  if (phdr->p_filesz > 0) {
+    ret = vfs_seek(file, phdr->p_offset, SEEK_SET);
+    if (ret != (int) phdr->p_offset) {
+      return EFAULT;
     }
 
-    memcpy((void *) (phdr->p_vaddr + offset), buf, bytes);
+    /*
+     * Copy the program section contents from the file,
+     * into memory.
+     */
+    do {
+      bytes = vfs_read(file, buf, bufsz);
+      if (bytes < 0) {
+        return bytes;
+      }
+      memcpy((void *) (phdr->p_vaddr + offset), buf, bytes);
 
-    offset += bytes;
-  } while (offset < phdr->p_filesz);
+      offset += bytes;
+    } while (offset < phdr->p_filesz);
+  }
 
   /*
    * Finally write 0s if the size of the section in memory is
@@ -166,10 +147,7 @@ int elf32_load_phdr(struct vfs_file *file, struct vm_space *space,
     memset((void *) (phdr->p_vaddr + offset), 0, phdr->p_memsz - offset);
   }
 
-  ret = 0;
-load_phdr_cleanup:
-  kfree(buf, ELF32_PSBUF_SIZE);
-  return ret;
+  return 0;
 }
 
 /**
@@ -182,7 +160,32 @@ void __elf32_unload(struct vm_space *space, struct elf32_ehdr *ehdr,
   for (i = 0; i < ehdr->e_phnum; i++) {
     struct elf32_phdr *p = phdrs + i;
     vm_unmap(space, p->p_vaddr, p->p_memsz);
+    tlb_invalidate(p->p_vaddr, p->p_memsz);
   }
+}
+
+/**
+ * @brief Map the elf program section into virtual memory.
+ */
+int elf32_map_ps(struct vm_space *space, struct elf32_phdr *phdr) {
+  int ret;
+  int flags;
+
+  flags = elf32_to_vm_flags(phdr->p_flags);
+
+  /*
+   * Map the region into virtual memory.
+   */
+  ret = vm_map(space, phdr->p_vaddr, phdr->p_memsz, flags);
+  if (ret) return ret;
+  
+  /*
+   * Flush these pages from the TLB so we don't page fault trying to write
+   * to them.
+   */
+  tlb_invalidate(phdr->p_vaddr, phdr->p_memsz);
+
+  return 0;
 }
 
 /**
@@ -194,8 +197,16 @@ void __elf32_unload(struct vm_space *space, struct elf32_ehdr *ehdr,
 int __elf32_load(struct vfs_file *file, struct vm_space *space,
                  struct elf32_ehdr *ehdr, struct elf32_phdr *phdrs) {
   void *old_space_object;
+  char *buf;
+  int bufsz;
   int ret;
   int i;
+
+  bufsz = 1024;
+  buf = kmalloc(bufsz);
+  if (NULL == buf) {
+    return ENOMEM;
+  }
 
   // TODO we could probably get the old_space_object's corresponding vm_space
   // struct by examining the currently running thread.
@@ -212,19 +223,30 @@ int __elf32_load(struct vfs_file *file, struct vm_space *space,
          p->p_type, p->p_offset, p->p_vaddr, p->p_paddr, p->p_filesz,
          p->p_memsz, p->p_flags, p->p_align);
 
-    ret = elf32_load_phdr(file, space, p);
-
-    if (ret != 0) {
-      ERROR("Failed to load program section of %s: %d/%s", 
-            file->dirent->name, ret, strerr(ret));
+    /*
+     * Map the memory needed by the program section into virtual memory
+     */
+    ret = elf32_map_ps(space, p);
+    if (ret) {
       __elf32_unload(space, ehdr, phdrs);
-      break;
+      goto __elf32_load_cleanup;
+    }
+
+    /*
+     * Copy the file contents into memory
+     */
+    ret = elf32_load_phdr(file, p, buf, bufsz);
+    if (ret) {
+      __elf32_unload(space, ehdr, phdrs);
+      goto __elf32_load_cleanup;
     }
   }
 
+  ret = 0;
+__elf32_load_cleanup:
   __vm_space_switch(old_space_object);
-
-  return 0;
+  kfree(buf, bufsz);
+  return ret;
 }
 
 /**
@@ -290,8 +312,6 @@ int elf32_load(struct vfs_file *file, struct vm_space *space) {
    */
   ret = __elf32_load(file, space, ehdr, phdrs);
 
-  goto free_phdrs_ret;
-free_phdrs_ret:
   kfree(phdrs, sizeof(struct elf32_phdr) * ehdr->e_phnum);
 free_ehdr_ret:
   kfree(ehdr, sizeof(struct elf32_ehdr));

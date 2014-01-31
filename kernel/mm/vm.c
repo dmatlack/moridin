@@ -226,7 +226,13 @@ void tlb_flush(void) {
  * mapped.
  */
 void tlb_invalidate(size_t addr, size_t size) {
-  (void) addr; (void) size;
   // TODO implement this with invlpg
+  // e.g.
+  //
+  // addr = PAGE_ALIGN_DOWN( addr )
+  // size = PAGE_ALIGN_UP( size )
+  // for (p = addr; p < addr + size; p += page_size) x86_invlpg(p)
+  //
+  (void) addr; (void) size;
   tlb_flush();
 }

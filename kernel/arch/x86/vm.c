@@ -270,7 +270,7 @@ bool x86_vtop(struct entry_table *pd,  size_t vaddr, size_t *paddrp) {
   struct entry_table *pt;
   entry_t *pde, *pte;
 
-  TRACE("pd=0x%x, vaddr=0x%x, paddrp=%p", pd, vaddr, paddrp);
+  //TRACE("pd=0x%x, vaddr=0x%x, paddrp=%p", pd, vaddr, paddrp);
   ASSERT_NOT_NULL(paddrp);
   
   pde = get_pde(pd, vaddr);
