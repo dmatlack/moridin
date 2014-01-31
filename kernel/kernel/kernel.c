@@ -1,6 +1,8 @@
 /**
  * @file kernel.c
  *
+ * Welcome to the main
+ *
  * @author David Matlack
  */
 #include <kernel.h>
@@ -22,59 +24,41 @@
 #include <debug.h>
 #include <errno.h>
 
-#include <boot/multiboot.h>
-struct multiboot_info *__mb_info;
-
 #include <fs/vfs.h>
 
-extern struct vm_space *postboot_vm_space;
-
-void load_test(struct vfs_file *f, struct vm_space *space) {
-  int ret;
-
-  ret = load(f, space);
-  if (ret) {
-    kprintf("Failed to load %s: %s", f->dirent->name, strerr(ret));
-  }
-}
-
-void vfs_test(void) {
-  struct vfs_file *f;
-
-  f = vfs_get_file((char *) "/init");
-  if (NULL == f) {
-    kprintf("Failed to open %s\n", "/init");
-    return;
-  }
-
-  load_test(f, postboot_vm_space);
-
-  vfs_put_file(f);
-}
-
-void kernel_main() {
-
-  serial_port_init();
+/**
+ * @brief Kernel initialization functions that need to run with interrupts
+ * off.
+ *
+ * You probably don't want to mess with the order of these functions.
+ */
+void pre_irq_init(void) {
   debug_init();
-  log_init(debug_putchar, LOG_LEVEL_DEBUG);
 
-  mb_dump(__log, __mb_info);
-  
   pages_init();
   vm_init();
   exn_init();
   irq_init();
   timer_init();
+}
 
-  enable_irqs();
-  
+/**
+ * @brief Kernel initialization functions that can, or should, run with
+ * interrupts enabled.
+ */
+void post_irq_init(void) {
   pci_init();
+}
 
-  /*
-   * Temporary stuff...
-   */
-  vfs_test();
-  while (1) {
-    irq_status_bar(VGA_ROWS - 1);
-  }
+/**
+ * @brief This is main logical entry point for the kernel, not to be confused
+ * with the actual entry point, _start. Also not to be confused the multiboot
+ * entry point mb_entry. Ok so it's not the entry point, but it is an entry
+ * point.
+ */
+void kernel_main() {
+  pre_irq_init();
+  enable_irqs();
+  post_irq_init();
+  //run_first_proc();
 }
