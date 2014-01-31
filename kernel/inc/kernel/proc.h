@@ -11,14 +11,15 @@
 
 
 struct thread_struct;
-struct process_struct;
+struct proc_struct;
 
 list_typedef(struct thread_struct) thread_list_t;
-list_typedef(struct process_struct) process_list_t;
+list_typedef(struct proc_struct) proc_list_t;
 
 #define CURRENT_THREAD \
   ((struct thread_struct *) FLOOR(get_esp(), PAGE_SIZE))
 
+#define THREAD_STRUCT_ALIGN PAGE_SIZE
 #define THREAD_KSTACK_SIZE 2048
 struct thread_struct {
   /*
@@ -31,7 +32,7 @@ struct thread_struct {
   /*
    * the process this thread is a part of
    */
-  struct process_struct *proc;
+  struct proc_struct *proc;
 
   /*
    * each thread_struct is part of a linked list of siblings
@@ -51,15 +52,18 @@ struct proc_struct {
    * the process family hierarchy: a pointer to your parent, and a list
    * of your children.
    */
-  struct process_struct *parent; 
-  process_list_t children;
+  struct proc_struct *parent; 
+  proc_list_t children;
 
   /*
    * All the threads in this process
    */
   thread_list_t threads;
 
-  struct vm_address_space *vm;
+  /*
+   * The virtual address space shared by all threads running in the process.
+   */
+  struct vm_space *space;
 
   int next_tid;
   int pid;
