@@ -10,7 +10,7 @@
 
 #include <stdint.h>
 
-struct __attribute__ ((__packed__)) x86_pusha_stack {
+struct __attribute__((__packed__)) x86_pusha_stack {
   uint32_t edi;
   uint32_t esi;
   uint32_t ebp;
@@ -21,17 +21,53 @@ struct __attribute__ ((__packed__)) x86_pusha_stack {
   uint32_t eax;
 };
 
-struct __attribute__ ((__packed__)) x86_iret_stack {
+struct __attribute__((__packed__)) x86_iret_stack {
   uint32_t eip;
   uint32_t cs;
   uint32_t eflags;
-  /*
-   * These only get pushed if we call a trap/interrupt gate from
-   * user context (PL3).
-   */
   uint32_t esp;
   uint32_t ss;
 };
+
+
+void restore_registers(
+  /*
+   * control registers
+   */
+  uint32_t cr4,
+  uint32_t cr3,
+  uint32_t cr2,
+  uint32_t cr0,
+
+  /*
+   * pusha
+   */
+  uint32_t edi,
+  uint32_t esi,
+  uint32_t ebp,
+  uint32_t ignore,
+  uint32_t ebx,
+  uint32_t edx,
+  uint32_t ecx,
+  uint32_t eax,
+
+  /*
+   * data segments
+   */
+  uint32_t gs,
+  uint32_t fs,
+  uint32_t es,
+  uint32_t ds,
+
+  /*
+   * iret
+   */
+  uint32_t eip,
+  uint32_t cs,
+  uint32_t eflags,
+  uint32_t esp,
+  uint32_t ss
+);
 
 uint32_t get_esp();
 
@@ -164,5 +200,6 @@ void set_cr4(int32_t);
  *
  * TODO
  */
+int32_t get_eflags(void);
 
 #endif /* !__X86_REG_H__ */

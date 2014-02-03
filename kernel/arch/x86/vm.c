@@ -89,9 +89,11 @@ void entry_set_flags(entry_t *entry, vm_flags_t flags) {
   }
 
   if (flags & VM_S) {
+    TRACE("SUPERVISOR");
     entry_set_supervisor(entry);
   }
   else {
+    TRACE("USER");
     entry_set_user(entry);
   }
 }

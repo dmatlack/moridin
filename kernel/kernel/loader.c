@@ -3,6 +3,7 @@
  *
  * @brief Loading executables into memory.
  */
+#include <kernel/loader.h>
 #include <kernel/kmalloc.h>
 #include <kernel/kprintf.h>
 
@@ -318,6 +319,20 @@ free_ehdr_ret:
   return ret;
 }
 
+int elf32_parse(struct exec_file *exec, struct vfs_file *file) {
+  struct elf32_ehdr *ehdr;
+
+  ehdr = elf32_get_ehdr(file);
+  if (NULL == ehdr) {
+    return ENOMEM;
+  }
+
+  exec->entry = ehdr->e_entry;
+
+  kfree(ehdr, sizeof(struct elf32_ehdr));
+  return 0;
+}
+
 /**
  * @brief Load an executable file.
  *
@@ -334,13 +349,45 @@ free_ehdr_ret:
  *    EFAULT if the file could not be opened, closed, or read
  *    ENOEXEC if the executable file format was invalid or corrupt
  */
-int load(struct vfs_file *file, struct vm_space *space) {
+int load(struct exec_file *exec, struct vm_space *space) {
+  int ret;
+
+  ret = exec->load(exec->file, space);
+
+  return ret;
+}
+
+#define IS_ELF32(header, bytes) \
+  ((bytes) >= ELF32_MAGIC_SIZE && 0 == memcmp(header, elf32_magic, ELF32_MAGIC_SIZE))
+
+struct exec_file *exec_file_get(struct vfs_file *file) {
+  struct exec_file *exec;
+  int ret = 0;
+
+  exec = kmalloc(sizeof(struct exec_file));
+  if (NULL == exec) return NULL;
+
+  ret = exec_file_init(exec, file);
+  if (ret) {
+    kfree(exec, sizeof(struct exec_file));
+    exec = NULL;
+  }
+
+  return exec;
+}
+
+/**
+ * @brief Initialize an exec_file struct.
+ */
+int exec_file_init(struct exec_file *exec, struct vfs_file *file) {
 #define LOAD_HEADER_SIZE 4
   char buffer[LOAD_HEADER_SIZE];
   ssize_t bytes;
   int ret = 0;
 
-  TRACE("file=%p", file);
+  exec->file = file;
+  exec->entry = 0;
+  exec->refs = 1;
 
   if (!(file->dirent->inode->perm & VFS_X)) {
     WARN("Tried to load non-executable file: %s", file->dirent->name);
@@ -349,8 +396,7 @@ int load(struct vfs_file *file, struct vm_space *space) {
 
   ret = vfs_open(file);
   if (ret < 0) {
-    DEBUG("Could not open %s for loading: %d/%s", file->dirent->name,
-          ret, strerr(ret));
+    DEBUG("Could not open %s: %d/%s", file->dirent->name, ret, strerr(ret));
     return ret;
   }
 
@@ -368,11 +414,11 @@ int load(struct vfs_file *file, struct vm_space *space) {
   }
 
   /*
-   * Invoke the correct loader based on the file's executable format
+   * Invoke the correct parser based on the file's executable format
    */
-  if (bytes >= ELF32_MAGIC_SIZE &&
-      0 == memcmp(buffer, elf32_magic, ELF32_MAGIC_SIZE)) {
-    ret = elf32_load(file, space);
+  if (IS_ELF32(buffer, bytes)) {
+    exec->load = elf32_load;
+    ret = elf32_parse(exec, file);
   }
   else {
     DEBUG("File %s does not match any executable formats.",

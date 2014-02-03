@@ -37,12 +37,12 @@ struct thread_struct {
   /*
    * each thread_struct is part of a linked list of siblings
    */
-  list_link(struct thread_struct) sibling_link;
+  list_link(struct thread_struct) thread_link;
 
   /*
-   * The address of the first instruction this thread should run.
+   * The location of the user runtime stack.
    */
-  size_t entry;
+  size_t ustack;
 
   int tid;
 };
@@ -54,6 +54,7 @@ struct proc_struct {
    */
   struct proc_struct *parent; 
   proc_list_t children;
+  list_link(struct proc_struct) sibling_link;
 
   /*
    * All the threads in this process
@@ -65,9 +66,15 @@ struct proc_struct {
    */
   struct vm_space *space;
 
+  /*
+   * The file this process is executing
+   */
+  struct exec_file *exec;
+
   int next_tid;
   int pid;
 };
 
+int new_proc(struct proc_struct *proc);
 
 #endif /* !_KERNEL_PROC_H__ */

@@ -16,6 +16,10 @@
 #include <boot/multiboot.h>
 #include <arch/x86/seg.h>
 
+.global kernel_idt
+.global kernel_gdt
+.global kernel_tss
+
 .global boot_page_dir
 .global boot_stack_bottom
 .global boot_stack_top
@@ -38,16 +42,16 @@
 
 .section .text
 
-init_idt: # (256 entries) x (8 bytes per entry) = 2048 bytes
+kernel_idt: # (256 entries) x (8 bytes per entry) = 2048 bytes
   .space 2048
-init_gdt: # see x86/gdt.S
+kernel_gdt: # see x86/gdt.S
   SEGDESC_NULL
   SEGDESC_KERNEL_TSS
   SEGDESC_KERNEL_CS
   SEGDESC_KERNEL_DS
   SEGDESC_USER_CS
   SEGDESC_USER_DS
-init_tss: # see x86/tss.S
+kernel_tss: # see x86/tss.S
   TSS_SINGLE_TASK
 
 # The linker script specifies _start is the entry point of the kernel. The
@@ -59,19 +63,19 @@ _start:
   pushl %eax                  # push the multiboot magic value
   movl %esp, %ebp             # save this stack address in %ebp
 
-  movl $init_tss, %eax        # set up the Global Descriptor Table
-  subl $init_gdt, %eax
+  movl $kernel_tss, %eax      # set up the Global Descriptor Table
+  subl $kernel_gdt, %eax
   subl $1, %eax
   pushl %eax
-  pushl $init_gdt
+  pushl $kernel_gdt
   call lgdt
   addl $8, %esp
 
-  movl $init_gdt, %eax        # set up the Interrupt Descriptor Table
-  subl $init_idt, %eax
+  movl $kernel_gdt, %eax      # set up the Interrupt Descriptor Table
+  subl $kernel_idt, %eax
   subl $1, %eax
   pushl %eax
-  pushl $init_idt
+  pushl $kernel_idt
   call lidt
   addl $8, %esp
 

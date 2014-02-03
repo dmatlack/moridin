@@ -11,6 +11,8 @@
  */
 #define CONFIG_KERNEL_VIRTUAL_START 0x00000000
 
+#define CONFIG_USER_VIRTUAL_TOP 0xFFFFF000
+
 /*
  * The default frequency (times per second) to receive hardware interrupts
  * from the timer.

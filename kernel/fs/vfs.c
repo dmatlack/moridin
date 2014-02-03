@@ -146,7 +146,7 @@ void vfs_put_dirent(struct vfs_dirent *d) {
  *    A pointer to the allocated file on success
  *    NULL on error
  */
-struct vfs_file *vfs_get_file(char *path) {
+struct vfs_file *vfs_file_get(char *path) {
   struct vfs_dirent *dirent;
   struct vfs_file *file;
 
@@ -174,7 +174,7 @@ struct vfs_file *vfs_get_file(char *path) {
  * @brief Release (stop using) a vfs_file. This is not called "vfs_free_file"
  * because we may want to cache the file object for later use.
  */
-void vfs_put_file(struct vfs_file *file) {
+void vfs_file_put(struct vfs_file *file) {
   vfs_put_dirent(file->dirent);
 
   // lock file

@@ -29,6 +29,7 @@ x86_exn_handle_\vector:
   # to the global handler. This is because the iret stack is provided 
   # already by the machine when the exception occurs.
   #
+  xchg %bx, %bx
 
   .if \has_error_code   # put an error code onto the stack for exceptions
     nop                 # that don't already provide an error code. this

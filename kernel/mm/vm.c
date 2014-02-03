@@ -96,6 +96,11 @@ int vm_space_init(struct vm_space *space) {
   return 0;
 }
 
+void vm_space_destroy(struct vm_space *space) {
+  (void)space;
+  panic("Implement me: %s", __func__);
+}
+
 /**
  * @brief Switch address spaces.
  *
@@ -155,8 +160,8 @@ int vm_map(struct vm_space *space, size_t address, size_t size,
   int ret = 0;
   int map_failed;
 
-  TRACE("space=%p, address=0x%x, size=0x%x, flags=0x%x",
-        space, address, size, flags);
+  //TRACE("space=%p, address=0x%x, size=0x%x, flags=0x%x",
+  //      space, address, size, flags);
 
   address = PAGE_ALIGN_DOWN(address);
   size = PAGE_ALIGN_UP(size);
@@ -187,7 +192,7 @@ void vm_unmap(struct vm_space *space, size_t address, size_t size) {
   int num_pages;
   int i;
 
-  TRACE("space=%p, address=0x%x, size=0x%x", space, address, size);
+  //TRACE("space=%p, address=0x%x, size=0x%x", space, address, size);
 
   address = PAGE_ALIGN_DOWN(address);
   size = PAGE_ALIGN_UP(size);

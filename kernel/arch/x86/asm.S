@@ -3,6 +3,7 @@
 #
 # @brief Assembly routines needed to program the x86 architecture.
 ###
+#include <arch/x86/seg.h>
 
 .global outb
 outb:
@@ -109,6 +110,18 @@ get_cr4:
     movl %cr4, %eax
     ret
 
+.global get_eflags
+get_eflags:
+  push %ebp
+  mov %esp, %ebp
+
+  pushf
+  pop %eax
+
+  leave
+  ret
+    
+
 # cr0 is special: change must be followed
 # by a "far jump" (thanks, nwf).
 .global set_cr0
@@ -154,3 +167,52 @@ __enable_interrupts:
 __disable_interrupts:
   cli
   ret
+
+.extern kernel_tss
+.global set_esp0
+set_esp0:
+  movl 4(%esp), %eax
+  movl $kernel_tss, %ecx          # exc = kernel_tss
+  movl %eax, 4(%ecx)              # set esp0
+  movw $SEGSEL_KERNEL_DS, 8(%ecx) # set ss0
+  ret 
+
+.global restore_registers
+restore_registers:
+
+  popl %eax         # pop off the return address, we don't return from this
+
+  #
+  # control registers
+  #
+  popl %eax         # cr4
+  popl %eax         # cr3
+  movl %eax, %cr3
+  popl %eax         # cr2
+  movl %eax, %cr2
+  popl %eax         # cr0
+
+
+  #
+  # general purpose registers
+  #
+  popa
+  
+  #
+  # USE OF GENERAL PURPOSE REGISTERS IS NOT ALLOWED AFTER THIS POINT!
+  #
+
+  #
+  # data segment registers
+  #
+  popl %gs
+  popl %fs
+  popl %es
+  popl %ds
+
+  xchg %bx, %bx # DEBUG: MAGIC BREAKPOINT
+
+  #
+  # All that's left is the iret stack, so we'll iret to it
+  #
+  iret
