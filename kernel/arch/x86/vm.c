@@ -83,9 +83,11 @@ void entry_table_free(struct entry_table *ptr) {
 void entry_set_flags(entry_t *entry, vm_flags_t flags) {
   if (flags & VM_W) {
     entry_set_readwrite(entry);
+    TRACE("RW");
   }
   else {
     entry_set_readonly(entry);
+    TRACE("RO");
   }
 
   if (flags & VM_S) {

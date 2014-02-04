@@ -89,6 +89,10 @@ int create_stack(struct proc_struct *proc, int argc, char **argv) {
   stack_size = PAGE_SIZE;
   stack_start = args_start - stack_size;
   ret = vm_map(proc->space, stack_start, stack_size, VM_U | VM_W);
+  if (ret) {
+    vm_unmap(proc->space, args_start, args_size);
+    return ret;
+  }
 
   stack_argc = (int *) args_start;
   stack_argv = (char ***) (args_start + sizeof(int));

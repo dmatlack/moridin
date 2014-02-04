@@ -5,6 +5,8 @@
 *.img
 /DISK*
 
+bochs.out
+
 TODO
 
 kernel/KERNEL.S

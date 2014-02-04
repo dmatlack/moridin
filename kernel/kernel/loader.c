@@ -88,10 +88,10 @@ phdrs_cleanup:
 
 static inline vm_flags_t elf32_to_vm_flags(elf32_word_t p_flags) {
   vm_flags_t v = 0;
-  v |= p_flags & PF_X ? VM_X : 0;
-  v |= p_flags & PF_R ? VM_R : 0;
-  v |= p_flags & PF_W ? VM_W : 0;
-  return v;
+  v |= (p_flags & PF_X) ? VM_X : 0;
+  v |= (p_flags & PF_R) ? VM_R : 0;
+  v |= (p_flags & PF_W) ? VM_W : 0;
+  return v | VM_U;
 }
 
 /**
