@@ -41,16 +41,15 @@ multiboot_header:
   .long MULTIBOOT_HEADER_FLAGS
   .long MULTIBOOT_HEADER_CHECKSUM
 
-.section .text
-
+.section .intel
 #
-# 0x10d510
+# 0x10000c
 #
 kernel_idt: # (256 entries) x (8 bytes per entry) = 2048 bytes
   .space 2048
 
 #
-# 0x10dd10
+# 0x10080c
 #
 kernel_gdt:
   #
@@ -60,11 +59,11 @@ kernel_gdt:
   .long 0x00000000
   #
   # SEGDESC_TSS
-  #   base:  0x10dd40 (kernel_tss)
+  #   base:  0x10083c (kernel_tss)
   #   limit: 0x68 - 1 byte = 0x67
   #   dpl:   0
   #
-  .long 0xdd400067
+  .long 0x083c0067
   .long 0x00008910
   #
   # SEGDESC_KERNEL_CS
@@ -104,7 +103,7 @@ kernel_gdt:
   .long 0x00cff200
 
 #
-# 0x10dd40
+# 0x10083c
 #
 kernel_tss:
   # TSS_SINGLE_TASK
@@ -112,6 +111,8 @@ kernel_tss:
   .word 0x0018 # ss0 = SEGSEL_KERNEL_DS in <arch/x86/seg.h>
   .space 92
   .word 0x0068 # IOBP = sizeof(TSS) = 104 = 0x68
+
+.section .text
 
 # The linker script specifies _start is the entry point of the kernel. The
 # bootloader (e.g. grub) will drop us here.

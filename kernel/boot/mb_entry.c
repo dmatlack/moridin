@@ -28,6 +28,10 @@
 
 extern void kernel_main(void);
 
+extern char kernel_idt[];
+extern char kernel_gdt[];
+extern char kernel_tss[];
+
 struct multiboot_info *__mb_info;
 
 /**
@@ -49,10 +53,11 @@ void mb_entry(unsigned int mb_magic, struct multiboot_info *mb_info) {
   vga_set_color(VGA_WHITE);
   kputchar_set(vga_putbyte);
 
-  if (mb_magic != MULTIBOOT_BOOTLOADER_MAGIC) {
-    panic("Multiboot magic (eax) incorrect: expected 0x%08x, got 0x%08x\n",
-          MULTIBOOT_BOOTLOADER_MAGIC, mb_magic);
-  }
+  ASSERT_EQUALS((size_t) kernel_idt, 0x10000c);
+  ASSERT_EQUALS((size_t) kernel_gdt, 0x10080c);
+  ASSERT_EQUALS((size_t) kernel_tss, 0x10083c);
+
+  ASSERT_EQUALS(mb_magic, MULTIBOOT_BOOTLOADER_MAGIC);
 
   /*
    * Use the mb_info struct to learn about the physical memory layout

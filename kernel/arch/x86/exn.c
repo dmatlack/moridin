@@ -201,7 +201,6 @@ void x86_exn_panic(struct x86_exn_args *args) {
 static void (*exn_handler)(struct x86_exn_args *args);
 
 void x86_exn_handle_all(struct x86_exn_args args) {
-  BOCHS_MAGIC_BREAK;
   exn_handler(&args);
 }
 
