@@ -42,7 +42,13 @@ struct thread_struct {
   /*
    * The location of the user runtime stack.
    */
-  size_t ustack;
+  size_t ustack_start;
+  size_t ustack_size;
+
+  /*
+   * The stack pointer to use when jumping to user mode.
+   */
+  size_t esp;
 
   int tid;
 };
@@ -70,6 +76,19 @@ struct proc_struct {
    * The file this process is executing
    */
   struct exec_file *exec;
+
+  /*
+   * The region of memory where process arguments are stored. This is usually
+   * some number of pages at the top of the stack.
+   */
+  size_t arg_start;
+  size_t arg_size;
+
+  /*
+   * The location of each argument on the user runtime stack.
+   */
+  size_t argc_addr;
+  size_t argv_addr;
 
   int next_tid;
   int pid;

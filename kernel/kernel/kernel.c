@@ -13,6 +13,7 @@
 #include <kernel/loader.h>
 #include <kernel/proc.h>
 #include <kernel/config.h>
+#include <kernel/stack.h>
 
 #include <mm/memory.h>
 #include <mm/pages.h>
@@ -56,56 +57,6 @@ void post_irq_init(void) {
 }
 
 //
-// FIXME: hacked user runtime stack. Need to move to a different file,
-// finish, and clean up.
-//
-int create_stack(struct proc_struct *proc, int argc, char **argv) {
-  size_t args_start, args_size;
-  size_t stack_start, stack_size;
-
-  int *stack_argc;
-  char ***stack_argv;
-  int ret;
-
-  if (argc != 0) {
-    //TODO
-    panic("Implement me: create_stack() (argc > 0)");
-  }
-  (void) argc; (void) argv;
-
-  /*
-   * Map a read-only region for the program arguments
-   */
-  args_start = CONFIG_USER_VIRTUAL_TOP - PAGE_SIZE;
-  args_size = PAGE_SIZE;
-  ret = vm_map(proc->space, args_start, args_size, VM_U | VM_R);
-  if (ret) {
-    return ret;
-  }
-
-  /*
-   * Map a read-write region for the runtime stack
-   */
-  stack_size = PAGE_SIZE;
-  stack_start = args_start - stack_size;
-  ret = vm_map(proc->space, stack_start, stack_size, VM_U | VM_W);
-  if (ret) {
-    vm_unmap(proc->space, args_start, args_size);
-    return ret;
-  }
-
-  stack_argc = (int *) args_start;
-  stack_argv = (char ***) (args_start + sizeof(int));
-
-  *(stack_argc) = 0;
-  *(stack_argv) = NULL;
-
-  list_head(&proc->threads)->ustack = stack_start + stack_size - sizeof(int);
-
-  return 0;
-}
-
-//
 // FIXME: hacked jump to user space. Need to separate this out into arch/
 // and cleanup the code.
 //
@@ -142,7 +93,7 @@ void jump_to_userspace(struct thread_struct *thread) {
       thread->proc->exec->entry,    // eip
       SEGSEL_USER_CS,               // cs
       get_eflags(),                 // eflags
-      thread->ustack,               // esp
+      thread->esp,                  // esp
       SEGSEL_USER_DS                // ss
   );
 }
@@ -155,7 +106,7 @@ void run_first_proc(char *execpath) {
   int ret;
 
   ret = new_proc(&init_proc);
-  ASSERT_EQUALS(0, ret);
+  ASSERT_EQUALS(ret, 0);
 
   file = vfs_file_get(execpath);
   ASSERT(NULL != file);
@@ -174,7 +125,8 @@ void run_first_proc(char *execpath) {
   /*
    * Create a runtime stack for the process.
    */
-  ret = create_stack(&init_proc, 0, NULL);
+  ret = create_user_stack(list_head(&init_proc.threads), 0, NULL);
+  ASSERT_EQUALS(ret, 0);
 
   jump_to_userspace(list_head(&init_proc.threads));
 }

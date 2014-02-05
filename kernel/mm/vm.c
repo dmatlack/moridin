@@ -160,8 +160,8 @@ int vm_map(struct vm_space *space, size_t address, size_t size,
   int ret = 0;
   int map_failed;
 
-  //TRACE("space=%p, address=0x%x, size=0x%x, flags=0x%x",
-  //      space, address, size, flags);
+  TRACE("space=%p, address=0x%x, size=0x%x, flags=0x%x",
+        space, address, size, flags);
 
   address = PAGE_ALIGN_DOWN(address);
   size = PAGE_ALIGN_UP(size);
