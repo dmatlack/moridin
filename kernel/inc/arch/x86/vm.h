@@ -81,15 +81,15 @@ static inline int entry_is_readwrite(entry_t *entry) {
  *   priveledge level. When the flag is set, the page(s) are assigned the
  *   user priveledge level.
  */
-#define ENTRY_SUPERVISOR 2
+#define ENTRY_USER 2
 static inline void entry_set_supervisor(entry_t *entry) {
-  set_bit(entry, ENTRY_SUPERVISOR, 1);
+  set_bit(entry, ENTRY_USER, 0);
 }
 static inline void entry_set_user(entry_t *entry) {
-  set_bit(entry, ENTRY_SUPERVISOR, 0);
+  set_bit(entry, ENTRY_USER, 1);
 }
 static inline int entry_is_supervisor(entry_t *entry) {
-  return get_bit(*entry, ENTRY_SUPERVISOR);
+  return get_bit(*entry, ENTRY_USER);
 }
 
 /*
