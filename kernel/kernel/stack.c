@@ -17,7 +17,7 @@
 /**
  * @brief Set up the user runtime stack.
  *
- *  +-------+ <- top of stack
+ *  +-------+ <- top of runtime stack
  *  | argv  |
  *  +-------+
  *  | argc  |
@@ -110,7 +110,7 @@ int create_user_stack(struct thread_struct *thread, int argc, char **argv) {
    * FIXME implement copying the argv array into the arg region of the stack
    * and then pass in the address into this function.
    */
-  setup_runtime_stack(thread, 0xaa, (char **) 0xbb);
+  setup_runtime_stack(thread, argc, NULL);
 
   return 0;
 }

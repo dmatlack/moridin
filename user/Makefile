@@ -4,12 +4,20 @@
 #
 #
 
+# default architecture to build for
+ARCH=ARCH_X86
+
 # location of source code for user programs
 PROGS := progs
+
 # location of executables for user programs
 BIN := bin
 
 AUTOSTART := $(shell mkdir -p $(BIN))
+
+LIB_CFILES =  			$(shell find $(shell pwd)/lib -type f -name "*.c")
+LIB_SFILES = crt0.S $(shell find $(shell pwd)/lib -type f -name "*.S")
+LIB_OFILES = $(patsubst %.c,%.o,$(LIB_CFILES)) $(patsubst %.S,%.o,$(LIB_SFILES))
 
 ###############################################################################
 # Build Toolchain
@@ -29,7 +37,7 @@ WARNINGS := \
 			-Wuninitialized \
 			-Werror \
 
-CFLAGS := -g -std=c99 -ffreestanding $(WARNINGS)
+CFLAGS := -g -std=c99 -ffreestanding -D$(ARCH) $(WARNINGS)
 
 # TODO: add a C library for user programs to use
 INCLUDES := 
@@ -41,16 +49,18 @@ default: all
 clean:
 	rm -f *.o
 	rm -f progs/*.o
+	rm -f lib/*.o
 	rm -f bin/*
 
 ###############################################################################
 # User Programs
 ###############################################################################
-
 all: init
 
-init: crt0.o progs/init.o
+
+init: $(LIB_OFILES) progs/init.o
 	$(LD) -T user.ld $? -o $(BIN)/init
+
 
 ###############################################################################
 # General Make fulrs for filetypes

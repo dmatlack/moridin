@@ -119,6 +119,17 @@ void idt_exn_gate(int vector, void (*handler)()) {
       IDT_GATE_TYPE_TRAP);
 }
 
+void idt_syscall_gate(int vector, void (*handler)(void)) {
+  idt_install_gate(
+      (uint16_t) vector,
+      SEGSEL_KERNEL_CS,
+      (uint32_t) handler,
+      IDT_GATE_PRESENT,
+      IDT_PL3,
+      IDT_D_32,
+      IDT_GATE_TYPE_TRAP);
+}
+
 void idt_irq_gate(int irq, void (*handler)()) {
   idt_install_gate(
       irq,

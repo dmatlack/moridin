@@ -1,8 +1,8 @@
-/**
- * @file arch/x86/atomic.S
- *
- * @brief Atomic operations in the x86 architecture.
- */
+###
+# @file arch/x86/atomic.S
+#
+# @brief Atomic operations in the x86 architecture.
+###
 
 .global __xadd
 __xadd:

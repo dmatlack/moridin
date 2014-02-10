@@ -8,12 +8,19 @@ PWD = $(shell pwd)
 
 AUTOSTART := $(shell rm -f KERNEL.S)
 
+# The default architecture. See ../Makfile for more information
+ARCH := ARCH_X86
+
 ###############################################################################
 # Project Directory/Files
 ###############################################################################
 
 # directories with source code
-PROJDIRS := arch boot fs lib dev kernel debug mm
+PROJDIRS := boot fs lib dev kernel debug mm
+
+ifeq ($(ARCH),ARCH_X86)
+PROJDIRS += arch/x86
+endif
 
 # source files by type
 CFILES = $(shell find $(PWD)/$(PROJDIRS) -type f -name "*.c")
@@ -26,8 +33,10 @@ OBJFILES = $(patsubst %.c,%.o,$(CFILES)) $(patsubst %.S,%.o,$(SFILES))
 ###############################################################################
 # Compiler Options
 ###############################################################################
+ifeq ($(ARCH),ARCH_X86)
 CC = i586-elf-gcc # compiler
 AS = i586-elf-as  # assembler
+endif
 WARNINGS := \
 			-Wall \
 			-Wextra \
@@ -40,7 +49,7 @@ WARNINGS := \
 			-Wuninitialized \
 			-Werror \
 
-CFLAGS := -g -std=c99 -ffreestanding -DARCH_X86 $(WARNINGS) -DKDEBUG
+CFLAGS := -g -std=c99 -ffreestanding -D$(ARCH) $(WARNINGS) -DKDEBUG
 INCLUDES := -I$(PWD)/inc/lib -I$(PWD)/inc
 
 ###############################################################################

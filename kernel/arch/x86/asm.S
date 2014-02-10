@@ -210,8 +210,6 @@ restore_registers:
   popl %es
   popl %ds
 
-  xchg %bx, %bx # DEBUG: MAGIC BREAKPOINT
-
   #
   # All that's left is the iret stack, so we'll iret to it
   #
