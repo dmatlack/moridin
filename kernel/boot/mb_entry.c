@@ -25,6 +25,7 @@
 #include <arch/x86/cpu.h>
 #include <arch/x86/reg.h>
 #include <arch/x86/exn.h>
+#include <arch/x86/idt.h>
 
 extern void kernel_main(void);
 
@@ -33,6 +34,8 @@ extern char kernel_gdt[];
 extern char kernel_tss[];
 
 struct multiboot_info *__mb_info;
+
+extern void x86_syscall(void);
 
 /**
  * @brief The multiboot, C, entry-point to the kernel.
@@ -90,8 +93,8 @@ void mb_entry(unsigned int mb_magic, struct multiboot_info *mb_info) {
   }
 
   /* 
-   * Initialize the exception handlers in the IDT incase an exception occurs
-   * during system setup.
+   * Initialize the Interrupt Descriptor Table (IDT), installing default
+   * handlers for all entries and exception handlers for exceptions.
    */
   x86_exn_setup_idt();
 
@@ -99,6 +102,11 @@ void mb_entry(unsigned int mb_magic, struct multiboot_info *mb_info) {
    * Disable the floating point unit
    */
   x86_disable_fpu();
+
+  /*
+   * Set up the system call handler
+   */
+  idt_syscall_gate(0x80, x86_syscall);
 
   /*
    * And finally enter the kernel

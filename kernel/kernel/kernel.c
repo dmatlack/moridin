@@ -32,14 +32,6 @@
 extern struct vm_space *postboot_vm_space;
 struct proc_struct init_proc;
 
-int syscall(int s, void *arg) {
-  kprintf("%s(s=%d, arg=%p)\n", __func__, s, arg);
-  return 42;
-}
-
-extern void x86_syscall(void);
-extern void idt_syscall_gate(int, void (*)(void));
-
 /**
  * @brief Kernel initialization functions that need to run with interrupts
  * off.
@@ -54,8 +46,6 @@ void pre_irq_init(void) {
   exn_init();
   irq_init();
   timer_init();
-
-  idt_syscall_gate(0x80, x86_syscall);
 }
 
 /**

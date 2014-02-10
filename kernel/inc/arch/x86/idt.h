@@ -109,5 +109,6 @@ void idt_install_default_gate(uint16_t index, void (*handler)(),
 
 void idt_exn_gate(int vector, void (*handler)(void));
 void idt_irq_gate(int irq, void (*handler)(void));
+void idt_syscall_gate(int vector, void (*handler)(void));
 
 #endif /* __IDT_H__ */
