@@ -1,72 +1,41 @@
-#
+###############################################################################
 #
 # User Makefile
 #
-#
-
-# default architecture to build for
-ARCH=ARCH_X86
-
-# location of source code for user programs
-PROGS := progs
-
-# location of executables for user programs
-BIN := bin
-
-AUTOSTART := $(shell mkdir -p $(BIN))
-
-LIB_CFILES =  			$(shell find $(shell pwd)/lib -type f -name "*.c")
-LIB_SFILES = crt0.S $(shell find $(shell pwd)/lib -type f -name "*.S")
-LIB_OFILES = $(patsubst %.c,%.o,$(LIB_CFILES)) $(patsubst %.S,%.o,$(LIB_SFILES))
-
 ###############################################################################
-# Build Toolchain
-###############################################################################
-CC = i586-elf-gcc
-LD = i586-elf-ld
+include ../config.mk
 
-WARNINGS := \
-			-Wall \
-			-Wextra \
-			-Wshadow \
-			-Wcast-align \
-			-Wwrite-strings \
-			-Wredundant-decls \
-			-Wnested-externs \
-			-Winline \
-			-Wuninitialized \
-			-Werror \
+BIN = bin
 
-CFLAGS := -g -std=c99 -ffreestanding -D$(ARCH) $(WARNINGS)
+INCLUDES = -Iinclude
 
-# TODO: add a C library for user programs to use
-INCLUDES := 
+.PHONY: all sys clean
 
-.PHONY: default clean
-
-default: all
+all: sys init
 
 clean:
-	rm -f *.o
-	rm -f progs/*.o
-	rm -f lib/*.o
-	rm -f bin/*
+	rm -rf $(SYS_OFILES)
+	rm -rf $(BIN)/*
+	rm -rf progs/*.o
 
-###############################################################################
-# User Programs
-###############################################################################
-all: init
+#
+# Sys is a binary that is linked statically into all user executables. It
+# contains the code needed to make system calls, initializes the runtime,
+# etc.
+#
+SYS_CFILES = $(shell find sys/ -type f -name "*.c")
+SYS_SFILES = $(shell find sys/ -type f -name "*.S")
+SYS_OFILES = $(patsubst %.c,%.o,$(SYS_CFILES)) $(patsubst %.S,%.o,$(SYS_SFILES))
 
+sys: $(SYS_OFILES)
 
-init: $(LIB_OFILES) progs/init.o
-	$(LD) -T user.ld $? -o $(BIN)/init
+#
+# PUT USER PROGRAMS BELOW THIS POINT
+#
+# 	- All user programs (targets) should include sys as a dependency
+# 	- List all source files needed by the program as .o files. (e.g. if
+# 		you need myprogram.c, use myprogram.o)
+#
 
-
-###############################################################################
-# General Make fulrs for filetypes
-###############################################################################
-%.o: %.S
-	$(CC) $(CFLAGS) -DASSEMBLER $(INCLUDES) -c -o $@ $<
-
-%.o: %.c
-	$(CC) $(CFLAGS) $(INCLUDES) -c -o $@ $<
+init: sys progs/init.o
+	$(LD) -T user.ld $(SYS_OFILES) progs/init.o -o $(BIN)/$@

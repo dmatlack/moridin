@@ -19,16 +19,16 @@
 # @author David Matlack
 ###
 
-#
-# int syscall(int s, void *arg)
-#
-.extern syscall
+.extern __syscall
 
 .global x86_syscall
 x86_syscall:
+  #
+  # FIXME what registers should we save/restore here?
+  #
   pushl %ecx
   pushl %eax
-  call syscall
+  call __syscall
   popl %ecx
   popl %ecx
   iret

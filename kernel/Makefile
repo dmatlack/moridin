@@ -1,97 +1,49 @@
-#
+###############################################################################
 #
 # Kernel Makefile
 #
-#
-
-PWD = $(shell pwd)
-
-AUTOSTART := $(shell rm -f KERNEL.S)
-
-# The default architecture. See ../Makfile for more information
-ARCH := ARCH_X86
-
 ###############################################################################
-# Project Directory/Files
-###############################################################################
+include ../config.mk
 
-# directories with source code
-PROJDIRS := boot fs lib dev kernel debug mm
+SRCDIRS = boot      \
+          debug     \
+          dev       \
+          fs        \
+          kernel    \
+          lib       \
+          mm
 
 ifeq ($(ARCH),ARCH_X86)
-PROJDIRS += arch/x86
+SRCDIRS += arch/x86
 endif
 
-# source files by type
-CFILES = $(shell find $(PWD)/$(PROJDIRS) -type f -name "*.c")
-HFILES = $(shell find $(PWD)/$(PROJDIRS) -type f -name "*.h")
-SFILES = $(shell find $(PWD)/$(PROJDIRS) -type f -name "*.S")
+INCDIRS = inc      \
+          inc/lib
 
-OBJFILES = $(patsubst %.c,%.o,$(CFILES)) $(patsubst %.S,%.o,$(SFILES))
+CFILES = $(shell find $(SRCDIRS) -type f -name "*.c")
+SFILES = $(shell find $(SRCDIRS) -type f -name "*.S")
+OFILES = $(patsubst %.c,%.o,$(CFILES)) $(patsubst %.S,%.o,$(SFILES))
 
+HFILES = $(shell find $(INCDIRS) -type f -name "*.h")
+INCLUDES = $(addprefix -I, $(INCDIRS))
 
-###############################################################################
-# Compiler Options
-###############################################################################
-ifeq ($(ARCH),ARCH_X86)
-CC = i586-elf-gcc # compiler
-AS = i586-elf-as  # assembler
-endif
-WARNINGS := \
-			-Wall \
-			-Wextra \
-			-Wshadow \
-			-Wcast-align \
-			-Wwrite-strings \
-			-Wredundant-decls \
-			-Wnested-externs \
-			-Winline \
-			-Wuninitialized \
-			-Werror \
+CFLAGS += -DKDEBUG
 
-CFLAGS := -g -std=c99 -ffreestanding -D$(ARCH) $(WARNINGS) -DKDEBUG
-INCLUDES := -I$(PWD)/inc/lib -I$(PWD)/inc
+.PHONY: default clean 
 
-###############################################################################
-# Targets
-###############################################################################
-.PHONY: all clean 
-
-all: $(OBJFILES) $(HFILES) linker.ld
-	$(CC) -T linker.ld -o KERNEL.o -ffreestanding -O2 -nostdlib $(OBJFILES) -lgcc
+default: kernel
+	
+kernel: $(OFILES) $(HFILES) linker.ld
+	$(CC) -T linker.ld -o KERNEL.o -ffreestanding -O2 -nostdlib $(OFILES) -lgcc
 	objdump -DgFS KERNEL.o > KERNEL.S
 
 clean:
 	rm -rf KERNEL.S
 	rm -rf KERNEL.o
-	rm -rf $(OBJFILES)
-
-###############################################################################
-# General Make Rules for filetypes
-###############################################################################
-
-%.d: %.S
-	$(CC) $(CFLAGS) -DASSEMBLER $(INCLUDES) -M -MP -MF $@ -MT $(<:.S=.o) $<
-
-%.d: %.s
-	@echo "You should use the .S file extension rather than .s"
-	@echo ".s does not support precompiler directives (like #include)"
-	@false
-
-%.d: %.c
-	$(CC) $(CFLAGS) $(INCLUDES) -M -MP -MF $@ -MT $(<:.c=.o) $<
+	rm -rf $(OFILES)
 
 %.o: %.S
-	$(CC) $(CFLAGS) -DASSEMBLER $(INCLUDES) -c -o $@ $<
-	#$(OBJCOPY) -R .comment -R .note $@ $@
-
-%.o: %.s
-	@echo "You should use the .S file extension rather than .s"
-	@echo ".s does not support precompiler directives (like #include)"
-	@false
+	$(CC) $(CFLAGS) $(INCLUDES) -DASSEMBLER -c -o $@ $<
 
 %.o: %.c
 	$(CC) $(CFLAGS) $(INCLUDES) -c -o $@ $<
-	#$(OBJCOPY) -R .comment -R .note $@ $@
-
-###############################################################################

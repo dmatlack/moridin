@@ -1,12 +1,12 @@
-int global_data;
+#include <syscall.h>
 
-extern int syscall(int s, void *arg);
+int global_data;
 
 int main(int argc, char **argv) {
   (void) argc;
   (void) argv;
 
-  syscall(0, (void *) "Hello from userspace!\n");
+  __syscall(0, (void *) "Hello from userspace!\n");
 
   while (1) global_data++;
 }

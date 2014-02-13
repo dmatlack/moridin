@@ -8,7 +8,7 @@
 
 #include <debug.h>
 
-int syscall(int s, void *arg) {
+int __syscall(int s, void *arg) {
   TRACE("s=%d, arg=%p", s, arg);
 
   kprintf("%s", (char *) arg);
