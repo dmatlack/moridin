@@ -131,6 +131,9 @@ void run_first_proc(char *execpath) {
   jump_to_userspace(list_head(&init_proc.threads));
 }
 
+extern void **syscall_table;
+extern int sys_write(int fd, char *ptr, int len);
+
 /**
  * @brief This is main logical entry point for the kernel, not to be confused
  * with the actual entry point, _start. Also not to be confused the multiboot
@@ -141,6 +144,10 @@ void kernel_main() {
   pre_irq_init();
   enable_irqs();
   post_irq_init();
+
+  kprintf("syscall_table: %p\n", syscall_table);
+  kprintf("sys_write: %p\n", sys_write);
+  kprintf("syscall_table[0]: %p\n", syscall_table[0]);
 
   // TODO: pass in the name of the init binary as a parameter via the
   // bootloader rather than hardcopying it.

@@ -148,7 +148,7 @@ static inline void inode_init(struct vfs_inode *i, unsigned long inode) {
 
 /*
  * 
- * The Virtual vfs_filesystem Inferface
+ * The Virtual Filesystem Inferface
  *
  */
 void vfs_chroot(struct vfs_dirent *root);
