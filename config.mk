@@ -19,7 +19,6 @@ WARNINGS := \
 			-Wextra \
 			-Wshadow \
 			-Wcast-align \
-			-Wwrite-strings \
 			-Wredundant-decls \
 			-Wnested-externs \
 			-Winline \

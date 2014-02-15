@@ -101,7 +101,7 @@ void jump_to_userspace(struct thread_struct *thread) {
 /**
  * @brief Load and initialize the first process that will run.
  */
-void run_first_proc(char *execpath) {
+void run_first_proc(char *execpath, int argc, char **argv) {
   struct vfs_file *file;
   int ret;
 
@@ -125,14 +125,11 @@ void run_first_proc(char *execpath) {
   /*
    * Create a runtime stack for the process.
    */
-  ret = create_user_stack(list_head(&init_proc.threads), 0, NULL);
+  ret = create_user_stack(list_head(&init_proc.threads), argc, argv);
   ASSERT_EQUALS(ret, 0);
 
   jump_to_userspace(list_head(&init_proc.threads));
 }
-
-extern void **syscall_table;
-extern int sys_write(int fd, char *ptr, int len);
 
 /**
  * @brief This is main logical entry point for the kernel, not to be confused
@@ -145,11 +142,11 @@ void kernel_main() {
   enable_irqs();
   post_irq_init();
 
-  kprintf("syscall_table: %p\n", syscall_table);
-  kprintf("sys_write: %p\n", sys_write);
-  kprintf("syscall_table[0]: %p\n", syscall_table[0]);
-
   // TODO: pass in the name of the init binary as a parameter via the
   // bootloader rather than hardcopying it.
-  run_first_proc((char *) "/init");
+  {
+    char *argv[4] = { "/init", "arg1", "arg2", ":)" };
+    int argc = 4;
+    run_first_proc((char *) "/init", argc, argv );
+  }
 }

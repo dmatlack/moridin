@@ -8,8 +8,8 @@ _start:
   push $0x0
   movl %esp, %ebp
   
-  pushl 8(%ebp)
-  pushl 4(%ebp)
+  pushl 0xC(%ebp)
+  pushl 0x8(%ebp)
   
   call main
 

@@ -14,6 +14,34 @@
 #include <mm/vm.h>
 #include <mm/memory.h>
 
+#include <lib/string.h>
+
+/**
+ * @brief Determine the size of the argument stack. This should be large
+ * enough to hold all the character arrays in argv as well as argv itself.
+ */
+static size_t arg_size(int argc, char **argv) {
+  size_t argv_size, size;
+  int i;
+  
+  /*
+   * According to http://www.gnu.org/software/libc/manual/html_node/Program-Arguments.html,
+   * "A null pointer always follows the last element: argv[argc] is this
+   * null pointer." So we reserve space for argc + 1 char pointers.
+   */
+  argv_size = (argc + 1) * sizeof(char *);
+
+  size = 0;
+  for (i = 0; i < argc; i++) {
+    /*
+     * +1 for the null terminator
+     */
+    size += strlen(argv[argc]) + 1;
+  }
+  
+  return size + argv_size;
+}
+
 /**
  * @brief Set up the user runtime stack.
  *
@@ -26,6 +54,11 @@
  *  +-------+ <- esp
  *  |       |
  *     ...
+ *
+ * @warning It is assumed that argv is already fully copied to the stack
+ * and that argv points to an address on the stack!
+ *
+ * @param argv The location of the argument array on the stack.
  */
 void setup_runtime_stack(struct thread_struct *thread, int argc, char **argv) {
 
@@ -56,6 +89,39 @@ void setup_runtime_stack(struct thread_struct *thread, int argc, char **argv) {
 }
 
 /**
+ * @brief Copy the program arguments onto a region of the program's runtime
+ * stack.
+ */
+void setup_arg_stack(struct thread_struct *thread, int argc, char **argv) {
+  char **stack_argv;
+  char *stack_arg;
+  int i;
+
+  /*
+   * The location of the argument array on the stack
+   */
+  stack_argv = (char **) thread->proc->arg_start;
+
+  /*
+   * The location of the actually character arrays on the stack.
+   */
+  stack_arg = (char *) (thread->proc->arg_start + ((argc+1) * sizeof(char *)));
+
+  for (i = 0; i < argc; i++) {
+    char *from = argv[i];
+    char *to = stack_arg;
+    int len_with_null = strlen(from) + 1;
+
+    memcpy(to, from, len_with_null);
+    stack_argv[i] = to;
+
+    stack_arg += len_with_null;
+  }
+
+  stack_argv[argc] = NULL;
+}
+
+/**
  * @brief Create the main user runtime stack for the thread.
  *
  * This function actually does 2 things:
@@ -73,21 +139,15 @@ void setup_runtime_stack(struct thread_struct *thread, int argc, char **argv) {
 int create_user_stack(struct thread_struct *thread, int argc, char **argv) {
   int ret;
 
-  if (argc != 0) {
-    //TODO
-    panic("Implement me: %s(argc > 0)", __func__);
-  }
-  (void) argc; (void) argv;
-
   /*
-   * Map a read-only region for the program arguments
+   * Map a region for the program arguments
    */
   thread->proc->arg_start = CONFIG_USER_VIRTUAL_TOP - PAGE_SIZE;
-  thread->proc->arg_size  = PAGE_SIZE;
+  thread->proc->arg_size  = PAGE_ALIGN_UP(arg_size(argc, argv));
 
   ret = vm_map(thread->proc->space,
                thread->proc->arg_start, thread->proc->arg_size,
-               VM_U | VM_R);
+               VM_U | VM_W);
   if (ret) {
     return ret;
   }
@@ -106,11 +166,8 @@ int create_user_stack(struct thread_struct *thread, int argc, char **argv) {
     return ret;
   }
 
-  /*
-   * FIXME implement copying the argv array into the arg region of the stack
-   * and then pass in the address into this function.
-   */
-  setup_runtime_stack(thread, argc, NULL);
+  setup_arg_stack(thread, argc, argv);
+  setup_runtime_stack(thread, argc, (char **) thread->proc->arg_start);
 
   return 0;
 }

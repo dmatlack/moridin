@@ -9,11 +9,19 @@ void print(const char *s) {
 }
 
 int main(int argc, char **argv) {
-  (void) argc;
-  (void) argv;
+  int i;
 
-  while (1) {
-    print("Hello from userspace!\n");
+  print("Hello from userspace! :)\n");
+
+  for (i = 0; i < argc; i++) {
+    print("arg: ");
+    print(argv[i]);
+    print("\n");
   }
 
+  if (argv[argc] != (char *) 0) {
+    print("INIT ERROR: argv[argc] != NULL!\n");
+  }
+
+  return 0;
 }
