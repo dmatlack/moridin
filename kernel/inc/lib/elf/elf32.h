@@ -24,10 +24,6 @@ typedef uint32_t elf32_word_t;  // value, which is different from the kernel
 #define ELFMAG2 'L'
 #define ELFMAG3 'F'
 
-#define ELF32_MAGIC_SIZE 4
-static char elf32_magic[ELF32_MAGIC_SIZE] =
-  { ELFMAG0, ELFMAG1, ELFMAG2, ELFMAG3 };
-
 #define ELFCLASSNONE 0
 #define ELFCLASS32   1
 #define ELFCLASS64   2

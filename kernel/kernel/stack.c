@@ -62,20 +62,20 @@ static size_t arg_size(int argc, char **argv) {
  */
 void setup_runtime_stack(struct thread_struct *thread, int argc, char **argv) {
 
-  thread->esp = thread->ustack_start + thread->ustack_size;
+  thread->ustack_entry = thread->ustack_start + thread->ustack_size;
 
   /*
    * argv
    */
-  thread->esp -= sizeof(char **);
-  thread->proc->argv_addr = thread->esp;
+  thread->ustack_entry -= sizeof(char **);
+  thread->proc->argv_addr = thread->ustack_entry;
   *((char ***) thread->proc->argv_addr) = argv;
 
   /*
    * argc
    */
-  thread->esp -= sizeof(int);
-  thread->proc->argc_addr = thread->esp;
+  thread->ustack_entry -= sizeof(int);
+  thread->proc->argc_addr = thread->ustack_entry;
   *((int *) thread->proc->argc_addr) = argc;
 
   /*
@@ -84,8 +84,8 @@ void setup_runtime_stack(struct thread_struct *thread, int argc, char **argv) {
    * Since we never actually return from _start, we write a NULL
    * as the return address.
    */
-  thread->esp -= sizeof(void *);
-  *((void **) thread->esp) = NULL;
+  thread->ustack_entry -= sizeof(void *);
+  *((void **) thread->ustack_entry) = NULL;
 }
 
 /**

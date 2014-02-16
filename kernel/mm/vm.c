@@ -53,7 +53,8 @@ void vm_init(void) {
     size_t paddr = kernel_pages_pstart() + i*PAGE_SIZE;
     size_t vaddr = CONFIG_KERNEL_VIRTUAL_START + i*PAGE_SIZE;
 
-    ret = __vm_map(postboot_vm_space, vaddr, PAGE_SIZE, &paddr, VM_S | VM_R | VM_W);
+    ret = __vm_map(postboot_vm_space, vaddr, PAGE_SIZE, &paddr,
+                   VM_S | VM_G | VM_R | VM_W);
     if (ret) {
       panic("Couldn't map kernel address space: %d/%s", ret, strerr(ret));
     }

@@ -8,13 +8,15 @@
 #include <kernel.h>
 #include <kernel/proc.h>
 #include <kernel/atomic.h>
+#include <kernel/loader.h>
 
 #include <mm/vm.h>
-#include <string.h>
 
+#include <string.h>
 #include <errno.h>
 #include <debug.h>
 #include <assert.h>
+#include <list.h>
 
 static int next_pid = 0;
 
@@ -41,7 +43,7 @@ void thread_init(struct thread_struct *thread) {
   list_elem_init(thread, thread_link);
 }
 
-int add_thread(struct proc_struct *proc) {
+int proc_add_thread(struct proc_struct *proc) {
   struct thread_struct *thread;
 
   thread = kmemalign(THREAD_STRUCT_ALIGN, sizeof(struct thread_struct));
@@ -58,7 +60,55 @@ int add_thread(struct proc_struct *proc) {
   return 0;
 }
 
-int new_proc(struct proc_struct *proc) {
+int proc_new(struct proc_struct *proc) {
   proc_init(proc);
-  return add_thread(proc);
+  return proc_add_thread(proc);
+}
+
+void destroy_thread(struct thread_struct *thread) {
+  (void) thread; panic("%s: UNIMPLEMENTED", __func__);
+}
+
+void destroy_proc(struct proc_struct *proc) {
+  (void) proc; panic("%s: UNIMPLEMENTED", __func__);
+}
+
+int thread_fork(struct thread_struct *parent, struct thread_struct *child) {
+  memcpy(child->kstack, parent->kstack, THREAD_KSTACK_SIZE);
+
+  child->ustack_start = parent->ustack_start;
+  child->ustack_size = parent->ustack_size;
+
+  return 0;
+}
+
+int proc_fork(struct proc_struct *parent, struct proc_struct *child) {
+  int ret;
+
+  ret = proc_new(child);
+  if (ret) {
+    return ret;
+  }
+
+  if (parent) {
+    child->parent = parent;
+    list_insert_tail(&parent->children, child, sibling_link);
+
+    child->exec = exec_file_copy(parent->exec);
+
+    child->arg_start = parent->arg_start;
+    child->arg_size = parent->arg_size;
+    child->argc_addr = parent->argc_addr;
+    child->argv_addr = parent->argv_addr;
+
+    //TODO child->space
+
+    ret = thread_fork(list_head(&parent->threads), list_head(&child->threads));
+    if (ret) {
+      destroy_proc(child);
+      return ret;
+    }
+  }
+
+  return 0;
 }

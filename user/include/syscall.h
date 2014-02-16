@@ -14,7 +14,6 @@
 void _exit(void);
 int close(int fd);
 int execve(char *name, char **argv, char **env);
-int fork(void);
 int fstat(int fd, struct stat *st);
 int isatty(int fd);
 int kill(int pid, int sig);
@@ -28,7 +27,8 @@ int unlink(char *name);
 int wait(int *status);
 #endif
 
-int getpid(void);
 int write(int fd, char *ptr, int len);
+int getpid(void);
+int fork(void);
 
 #endif /* !SYSCALL_H */

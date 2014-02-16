@@ -27,7 +27,7 @@ struct proc_struct init_proc;
 #include <arch/x86/cpu.h>
 void jump_to_userspace(struct thread_struct *thread) {
   iret_to_userspace(thread->kstack_hi, (size_t) thread->proc->space->object,
-                    thread->proc->exec->entry, thread->esp);
+                    thread->proc->exec->entry, thread->ustack_entry);
 }
 #endif
 
@@ -38,7 +38,7 @@ void run_first_proc(char *execpath, int argc, char **argv) {
   struct vfs_file *file;
   int ret;
 
-  ret = new_proc(&init_proc);
+  ret = proc_fork(NULL, &init_proc);
   ASSERT_EQUALS(ret, 0);
 
   file = vfs_file_get(execpath);

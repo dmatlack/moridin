@@ -6,16 +6,19 @@
 #include <kernel/syscall.h>
 #include <kernel/kprintf.h>
 #include <kernel/proc.h>
+#include <kernel/fork.h>
 
 #include <debug.h>
 
 #define SYS_WRITE     0
 #define SYS_GETPID    1
+#define SYS_FORK      2
 
 void *syscall_table[] =
 {
   [SYS_WRITE]  = (void *) sys_write,
-  [SYS_GETPID] = (void *) sys_getpid
+  [SYS_GETPID] = (void *) sys_getpid,
+  [SYS_FORK]   = (void *) sys_fork
 };
 
 int sys_write(int fd, char *ptr, int len) {

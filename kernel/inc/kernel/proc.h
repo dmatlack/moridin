@@ -18,9 +18,13 @@ list_typedef(struct proc_struct) proc_list_t;
 
 #ifdef ARCH_X86
 #include <arch/x86/reg.h>
+#endif
+
 #define CURRENT_THREAD \
   ((struct thread_struct *) PAGE_ALIGN_DOWN(get_esp()))
-#endif
+
+#define CURRENT_PROC \
+  ((CURRENT_THREAD)->proc)
 
 #define THREAD_STRUCT_ALIGN PAGE_SIZE
 #define THREAD_KSTACK_SIZE 2048
@@ -47,11 +51,7 @@ struct thread_struct {
    */
   size_t ustack_start;
   size_t ustack_size;
-
-  /*
-   * The stack pointer to use when jumping to user mode.
-   */
-  size_t esp;
+  size_t ustack_entry;
 
   int tid;
 };
@@ -97,6 +97,6 @@ struct proc_struct {
   int pid;
 };
 
-int new_proc(struct proc_struct *proc);
+int proc_fork(struct proc_struct *parent, struct proc_struct *child);
 
 #endif /* !_KERNEL_PROC_H__ */

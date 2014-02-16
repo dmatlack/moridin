@@ -18,6 +18,7 @@ typedef int vm_flags_t;
 #define VM_X (1 << 2) // execute
 #define VM_U (1 << 3) // user
 #define VM_S (1 << 4) // supervisor
+#define VM_G (1 << 5) // global
 
 struct vm_region {
   size_t address;

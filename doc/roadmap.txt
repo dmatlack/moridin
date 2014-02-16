@@ -36,8 +36,8 @@ x   - Start writing and compiling simple user programs that could be run
       by our kernel (in other words, user programs that use a very special,
       and probably hardcoded, linker script).
 x     * write a crt0 (_start)
->     * write a simple system call to write a character to the screen
->     * write a program that just prints to the screen so that when we run
+x     * write a simple system call to write a character to the screen
+x     * write a program that just prints to the screen so that when we run
         it we can visually verify that it is "working".
 x   - Figure out how to load user programs into the kernel image so that
       they can be accessed as byte arrays.

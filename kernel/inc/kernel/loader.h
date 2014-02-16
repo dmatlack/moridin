@@ -33,5 +33,7 @@ int load(struct exec_file *file, struct vm_space *space);
 int exec_file_init(struct exec_file *exec, struct vfs_file *file);
 
 struct exec_file *exec_file_get(struct vfs_file *file);
+struct exec_file *exec_file_copy(struct exec_file *exec);
+void exec_file_put(struct exec_file *exec);
 
 #endif /* !__KERNEL_LOADER_H__ */
