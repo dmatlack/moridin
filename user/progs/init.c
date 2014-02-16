@@ -8,10 +8,45 @@ void print(const char *s) {
   write(0, (char *) s, l);
 }
 
+void print_int(int i) {
+  char string[12];
+  char *s = string + 11;
+  int negative;
+
+  if ((negative = (i < 0))) {
+    i *= -1;
+  }
+
+  *s = (char) 0;
+
+  if (0 == i) {
+    s--;
+    *s = '0';
+  }
+  else {
+    while (i > 0) {
+      s--;
+      *s = '0' + (i % 10);
+      i /= 10;
+    }
+  }
+
+  if (negative) {
+    s--;
+    *s = '-';
+  }
+
+  print(s);
+}
+
 int main(int argc, char **argv) {
+  int pid;
   int i;
 
-  print("Hello from userspace! :)\n");
+  pid = getpid();
+
+  print_int(pid);
+  print(": Hello from userspace! :)\n");
 
   for (i = 0; i < argc; i++) {
     print("arg: ");

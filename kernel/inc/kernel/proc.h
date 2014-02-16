@@ -16,8 +16,11 @@ struct proc_struct;
 list_typedef(struct thread_struct) thread_list_t;
 list_typedef(struct proc_struct) proc_list_t;
 
+#ifdef ARCH_X86
+#include <arch/x86/reg.h>
 #define CURRENT_THREAD \
-  ((struct thread_struct *) FLOOR(get_esp(), PAGE_SIZE))
+  ((struct thread_struct *) PAGE_ALIGN_DOWN(get_esp()))
+#endif
 
 #define THREAD_STRUCT_ALIGN PAGE_SIZE
 #define THREAD_KSTACK_SIZE 2048

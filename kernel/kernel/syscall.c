@@ -5,10 +5,18 @@
  */
 #include <kernel/syscall.h>
 #include <kernel/kprintf.h>
+#include <kernel/proc.h>
 
 #include <debug.h>
 
-void *syscall_table[] = { (void *) sys_write };
+#define SYS_WRITE     0
+#define SYS_GETPID    1
+
+void *syscall_table[] =
+{
+  [SYS_WRITE]  = (void *) sys_write,
+  [SYS_GETPID] = (void *) sys_getpid
+};
 
 int sys_write(int fd, char *ptr, int len) {
   int i;
@@ -20,4 +28,9 @@ int sys_write(int fd, char *ptr, int len) {
   }
 
   return 0;
+}
+
+int sys_getpid(void) {
+  TRACE();
+  return CURRENT_THREAD->proc->pid;
 }

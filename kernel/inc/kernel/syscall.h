@@ -5,5 +5,6 @@
 #define __KERNEL_SYSCALL_H__
 
 int sys_write(int fd, char *ptr, int len);
+int sys_getpid(void);
 
 #endif /* !__KERNEL_SYSCALL_H__ */

@@ -43,8 +43,8 @@ x86_syscall:
   #
   # TODO: sanity check eax to make sure not negative or out of bounds
   #
-  movl syscall_table, %ecx
-  leal (%ecx, %eax, 0x4), %ecx
+  movl $syscall_table, %ecx
+  movl (%ecx, %eax, 0x4), %ecx
   call *%ecx
   
   #
