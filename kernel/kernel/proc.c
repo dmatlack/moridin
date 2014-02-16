@@ -35,8 +35,8 @@ void proc_init(struct proc_struct *proc) {
 void thread_init(struct thread_struct *thread) {
   memset(thread->kstack, 0, THREAD_KSTACK_SIZE);
 
-  thread->kstack_hi = thread->kstack + THREAD_KSTACK_SIZE;
-  thread->kstack_lo = thread->kstack;
+  thread->kstack_hi = (size_t) (thread->kstack + THREAD_KSTACK_SIZE);
+  thread->kstack_lo = (size_t) (thread->kstack);
 
   list_elem_init(thread, thread_link);
 }

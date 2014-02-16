@@ -6,14 +6,16 @@
  * @author David Matlack
  */
 #include <kernel.h>
-#include <kernel/kmalloc.h>
-#include <kernel/irq.h>
-#include <kernel/timer.h>
+
+#include <kernel/config.h>
+#include <kernel/exec.h>
 #include <kernel/exn.h>
+#include <kernel/irq.h>
+#include <kernel/kmalloc.h>
 #include <kernel/loader.h>
 #include <kernel/proc.h>
-#include <kernel/config.h>
 #include <kernel/stack.h>
+#include <kernel/timer.h>
 
 #include <mm/memory.h>
 #include <mm/pages.h>
@@ -28,9 +30,6 @@
 #include <errno.h>
 
 #include <fs/vfs.h>
-
-extern struct vm_space *postboot_vm_space;
-struct proc_struct init_proc;
 
 /**
  * @brief Kernel initialization functions that need to run with interrupts
@@ -56,81 +55,6 @@ void post_irq_init(void) {
   pci_init();
 }
 
-//
-// FIXME: hacked jump to user space. Need to separate this out into arch/
-// and cleanup the code.
-//
-#include <arch/x86/reg.h>
-#include <arch/x86/cpu.h>
-#include <arch/x86/seg.h>
-void jump_to_userspace(struct thread_struct *thread) {
-  uint32_t page_dir;
-
-  set_esp0((uint32_t) thread->kstack_hi);
-
-  page_dir = (uint32_t) thread->proc->space->object;
-
-  restore_registers(
-      get_cr4(),                    // cr4
-      page_dir,                     // cr3
-      0,                            // cr2
-      get_cr0(),                    // cr0
-
-      0,                            // edi
-      0,                            // esi
-      0,                            // ebp
-      0,                            // ignore
-      0,                            // ebx
-      0,                            // edx
-      0,                            // ecx
-      0,                            // eax
-
-      SEGSEL_USER_DS,               // gs
-      SEGSEL_USER_DS,               // fs
-      SEGSEL_USER_DS,               // es
-      SEGSEL_USER_DS,               // ds
-
-      thread->proc->exec->entry,    // eip
-      SEGSEL_USER_CS,               // cs
-      get_eflags(),                 // eflags
-      thread->esp,                  // esp
-      SEGSEL_USER_DS                // ss
-  );
-}
-
-/**
- * @brief Load and initialize the first process that will run.
- */
-void run_first_proc(char *execpath, int argc, char **argv) {
-  struct vfs_file *file;
-  int ret;
-
-  ret = new_proc(&init_proc);
-  ASSERT_EQUALS(ret, 0);
-
-  file = vfs_file_get(execpath);
-  ASSERT(NULL != file);
-
-  init_proc.exec = exec_file_get(file);
-  ASSERT(NULL != init_proc.exec);
-
-  init_proc.space = postboot_vm_space;
-
-  /*
-   * Load the executable into memory
-   */
-  ret = load(init_proc.exec, init_proc.space);
-  ASSERT_EQUALS(ret, 0);
-
-  /*
-   * Create a runtime stack for the process.
-   */
-  ret = create_user_stack(list_head(&init_proc.threads), argc, argv);
-  ASSERT_EQUALS(ret, 0);
-
-  jump_to_userspace(list_head(&init_proc.threads));
-}
-
 /**
  * @brief This is main logical entry point for the kernel, not to be confused
  * with the actual entry point, _start. Also not to be confused the multiboot
@@ -139,14 +63,17 @@ void run_first_proc(char *execpath, int argc, char **argv) {
  */
 void kernel_main() {
   pre_irq_init();
+
   enable_irqs();
+
   post_irq_init();
 
-  // TODO: pass in the name of the init binary as a parameter via the
-  // bootloader rather than hardcopying it.
   {
     char *argv[4] = { "/init", "arg1", "arg2", ":)" };
     int argc = 4;
+
+    // TODO: pass in the name of the init binary as a parameter via the
+    // bootloader rather than hardcopying it.
     run_first_proc((char *) "/init", argc, argv );
   }
 }

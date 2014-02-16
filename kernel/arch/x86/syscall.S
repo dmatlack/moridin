@@ -45,7 +45,7 @@ x86_syscall:
   #
   movl syscall_table, %ecx
   leal (%ecx, %eax, 0x4), %ecx
-  call %ecx
+  call *%ecx
   
   #
   # restore the stack to the iret stack

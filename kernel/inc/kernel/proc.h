@@ -26,8 +26,8 @@ struct thread_struct {
    * the kernel stack used by this thread. MUST BE PAGE-ALIGNED.
    */
   char  kstack[THREAD_KSTACK_SIZE];
-  char *kstack_hi;
-  char *kstack_lo;
+  size_t kstack_hi;
+  size_t kstack_lo;
 
   /*
    * the process this thread is a part of

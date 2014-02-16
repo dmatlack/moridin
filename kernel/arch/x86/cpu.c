@@ -8,6 +8,7 @@
  */
 #include <arch/x86/cpu.h>
 #include <arch/x86/reg.h>
+#include <arch/x86/seg.h>
 #include <stdint.h>
 #include <stddef.h>
 #include <debug.h>
@@ -54,4 +55,45 @@ void x86_enable_global_pages(void) {
 void x86_enable_write_protect(void) {
   TRACE();
   cr0_set_bit(CR0_WP, 1);
+}
+
+/**
+ * @brief Jump to user space with default register values.
+ *
+ * @param kstack The location of the top of the kernel stack to use on
+ *    interrupts
+ * @param page_dir The page directory to use.
+ * @param entry The address of the first instruction to execute
+ * @param ustack The location of the top of the user runtime stack to use.
+ */
+void iret_to_userspace(uint32_t kstack, uint32_t page_dir,
+                       uint32_t entry, uint32_t ustack) {
+  set_esp0(kstack);
+
+  restore_registers(
+      get_cr4(),                    // cr4
+      page_dir,                     // cr3
+      0,                            // cr2
+      get_cr0(),                    // cr0
+
+      0,                            // edi
+      0,                            // esi
+      0,                            // ebp
+      0,                            // ignore
+      0,                            // ebx
+      0,                            // edx
+      0,                            // ecx
+      0,                            // eax
+
+      SEGSEL_USER_DS,               // gs
+      SEGSEL_USER_DS,               // fs
+      SEGSEL_USER_DS,               // es
+      SEGSEL_USER_DS,               // ds
+
+      entry,                        // eip
+      SEGSEL_USER_CS,               // cs
+      get_eflags(),                 // eflags
+      ustack,                       // esp
+      SEGSEL_USER_DS                // ss
+  );
 }
