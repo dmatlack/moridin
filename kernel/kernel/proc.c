@@ -40,6 +40,9 @@ void thread_init(struct thread_struct *thread) {
   thread->kstack_hi = (size_t) (thread->kstack + THREAD_KSTACK_SIZE);
   thread->kstack_lo = (size_t) (thread->kstack);
 
+  ASSERT_EQUALS(thread->kstack_lo, thread);
+  ASSERT(IS_PAGE_ALIGNED(thread->kstack_lo));
+
   list_elem_init(thread, thread_link);
 }
 

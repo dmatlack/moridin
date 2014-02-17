@@ -19,28 +19,14 @@
 
 struct vm_space *postboot_vm_space;
 
-void vm_init(void) {
+static void vm_map_kernel_pages(void) {
   unsigned i, nkpages;
-  size_t ksize;
   int ret;
-
-  TRACE();
 
   postboot_vm_space = kmalloc(sizeof(struct vm_space));
   if (NULL == postboot_vm_space) {
     panic("Couldn't allocate the posboot_vm_space struct.");
   }
-
-  /*
-   * Reserve the first 1/4 of physical memory
-   */
-  ksize = PAGE_ALIGN_DOWN(phys_mem_bytes / 4 * 1);
-  ASSERT_GREATEREQ(ksize, MB(16));
-  reserve_kernel_pages(CONFIG_KERNEL_VIRTUAL_START, ksize);
-
-  /*
-   * Map the reserved pages into a new address space.
-   */
   ret = vm_space_init(postboot_vm_space);
   if (ret) {
     panic("Couldn't initialize postboot_vm_space: %d/%s", ret, strerr(ret));
@@ -53,18 +39,38 @@ void vm_init(void) {
     size_t paddr = kernel_pages_pstart() + i*PAGE_SIZE;
     size_t vaddr = CONFIG_KERNEL_VIRTUAL_START + i*PAGE_SIZE;
 
-    ret = __vm_map(postboot_vm_space, vaddr, PAGE_SIZE, &paddr,
-                   VM_S | VM_G | VM_R | VM_W);
+#ifdef ARCH_X86
+    ret = x86_map_pages(postboot_vm_space->object, vaddr, PAGE_SIZE,
+                        &paddr, VM_S | VM_G | VM_R | VM_W);
+#endif
     if (ret) {
       panic("Couldn't map kernel address space: %d/%s", ret, strerr(ret));
     }
   }
 
   TRACE_ON;
+}
+
+void vm_init(void) {
+  size_t ksize;
+
+  TRACE();
+
+  /*
+   * Reserve the first 1/4 of physical memory
+   */
+  ksize = PAGE_ALIGN_DOWN(phys_mem_bytes / 4 * 1);
+  ASSERT_GREATEREQ(ksize, MB(16));
+  alloc_kernel_pages(0x0, ksize);
+
+  /*
+   * Map the pages into a new virtual address space
+   */
+  vm_map_kernel_pages();
 
   /*
    * Finally switch off the boot virtual address space and into our new,
-   * "real" virtual address space.
+   * virtual address space.
    */
   __vm_space_switch(postboot_vm_space->object);
 
@@ -133,7 +139,7 @@ int __vm_map(struct vm_space *space, size_t address, size_t size,
   int ret;
 
 #ifdef ARCH_X86
-  ret = x86_map_pages(space->object, address, size, ppages, flags);
+    ret = x86_map_pages(space->object, address, size, ppages, flags);
 #endif
 
   return ret;

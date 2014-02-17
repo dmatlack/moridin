@@ -9,10 +9,16 @@
 #include <stddef.h>
 
 void pages_init(void);
+
 int alloc_pages(unsigned n, size_t *pages);
+int reserve_pages(unsigned n);
+void fulfill_pages(unsigned n, size_t *pages);
+
+int refcopy_pages(unsigned n, size_t *pages);
+
 void free_pages(unsigned n, size_t *pages);
 
-void reserve_kernel_pages(size_t paddr, size_t size);
+void alloc_kernel_pages(size_t paddr, size_t size);
 unsigned num_kernel_pages(void);
 size_t kernel_pages_pstart(void);
 

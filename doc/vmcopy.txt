@@ -1,0 +1,18 @@
+
+                  Copying an Address Space
+
+Steps
+  1. Shallow copy the kernel mappings.
+      HIGH SHALLOW
+  2. Shallow copy the read-only mappings.
+      LOW SHALLOW
+  3. Copy-on-write copy the read-write mappings.
+      LOW SHALLOW
+
+Operations
+  - HIGH SHALLOW: Only copy page directory entries.
+  - LOW SHALLOW:
+    1. For each mapping, get the physical page mapped and increment its
+    reference counter.
+    2. Create page tables, if necessary, and copy page table entries.
+    3. For copy-on-write, mark pages as copy-on-write.

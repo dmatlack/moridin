@@ -167,9 +167,10 @@ static inline int entry_is_dirty(entry_t *entry) {
  * Available, bits 9, 10, 11
  *   These bits are available for use by the system programmer.
  */
-#define ENTRY_AVAIL 9
-#define   ENTRY_TABLE_UNMAP (1 << 9) // used to mark page directory entries
-#define ENTRY_AVAIL_MASK MASK(3)
+#define ENTRY_AVAIL             9
+#define ENTRY_AVAIL_MASK        MASK(3)
+#define   ENTRY_TABLE_UNMAP     (1 << 9)  // used to mark page directory entries
+#define   ENTRY_COPY_ON_WRITE   (1 << 11)
 
 /*
  * Page Table Base Address (PT) or Physical Page Address (PP)

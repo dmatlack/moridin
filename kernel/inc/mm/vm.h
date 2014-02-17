@@ -8,6 +8,7 @@
 #ifndef __MM_VM_H__
 #define __MM_VM_H__
 
+#include <string.h>
 #include <stddef.h>
 #include <list.h>
 
@@ -24,6 +25,18 @@ struct vm_region {
   size_t address;
   size_t size;
   vm_flags_t flags;
+
+  /*
+   * When performing copy-on-write and zero-fill-on-demand, regions of
+   * memory will be shared with other processes until they are accessed.
+   * At that point we need to fulfill the page request with a physical
+   * page. These pages are reserved by this region. This counter keeps
+   * track of how many pages have been reserved but not allocated. Thus
+   * if a process doesn't end up accessing the page, we don't forget to
+   * free it.
+   */
+  unsigned int unfulfilled_ppages;
+
   list_link(struct vm_region) link;
 };
 
@@ -31,6 +44,11 @@ list_typedef(struct vm_region) vm_region_list_t;
 
 struct vm_space {
   void *object;
+
+  struct vm_region *kernel_region;
+  struct vm_region *stack_region;
+  struct vm_region *heap_region;
+  vm_region_list_t other_regions;
 };
 
 extern struct vm_space boot_vm_space;

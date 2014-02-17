@@ -326,6 +326,10 @@ close_elf_ret:
   return ret;
 }
 
+/**
+ * @brief Parse the ELF file referenced by <file> and build the exec_file
+ * struct based on the contents.
+ */
 int elf32_parse(struct exec_file *exec, struct vfs_file *file) {
   struct elf32_ehdr *ehdr;
 

@@ -60,7 +60,7 @@ struct page *get_page(size_t address) {
 }
 
 /**
- * @brief Reserve a region of physical memory for use by the kernel.
+ * @brief Allocate a region of physical memory for use by the kernel.
  * 
  * This function is needed to remap the kernel after system startup.
  * After being loaded, one of the first things the kernel does is
@@ -71,13 +71,14 @@ struct page *get_page(size_t address) {
  * @param paddr The physical address of the first page to reserve.
  * @param size The size in bytes of the region to reserve.
  */
-void reserve_kernel_pages(size_t paddr, size_t size) {
+void alloc_kernel_pages(size_t paddr, size_t size) {
   unsigned i;
 
   TRACE("paddr=0x%x, size=0x%x", paddr, size);
 
   ASSERT(IS_PAGE_ALIGNED(paddr));
   ASSERT(IS_PAGE_ALIGNED(size));
+  ASSERT_GREATER(__nfree, size / PAGE_SIZE);
 
   for (i = 0; i < size / PAGE_SIZE; i++) {
     struct page *p = get_page(paddr + (i*PAGE_SIZE));
@@ -98,28 +99,16 @@ size_t kernel_pages_pstart(void) {
   return page_address(__kernel_pages);
 }
 
-/**
- * @brief Request <n> arbitrarily placed pages throughout physical memory.
- *
- * @param n the number of pages to allocate
- * @param pages a buffer in which to store the physical address of each
- *  page allocated
- *
- * @return
- *    ENOMEM if there are no available pages
- *    0 on success
- */
-int alloc_pages(unsigned n, size_t *pages) {
-  unsigned count, iter;
-
-  TRACE("n=%d, pages=%p", n, pages);
-
+static inline int __reserve_pages(unsigned n) {
   if (n > __nfree) {
     return ENOMEM;
   }
-  if (0 == n) {
-    return 0;
-  }
+  __nfree -= n;
+  return 0;
+}
+
+static inline void __fulfill_pages(unsigned n, size_t *pages) {
+  unsigned count, iter;
 
   for (count = iter = 0; iter < __npages; iter++) {
     if (0 == __pages[__index].count) {
@@ -133,12 +122,70 @@ int alloc_pages(unsigned n, size_t *pages) {
     __index = (__index + 1) % __npages;
   }
 
-  if (iter == __npages) {
-    free_pages(count, pages);
-    return ENOMEM;
+  /*
+   * This function should never fail to fulfill all n pages.
+   */
+  ASSERT_EQUALS(count, n);
+}
+
+/**
+ * @brief Request <n> pages be reserved for future use.
+ *
+ * This function decrements the counter that keeps track of how many pages
+ * are available for use globally but does not actually increase the reference
+ * counters of any pages.
+ *
+ * @return
+ *    ENOMEM if there are no available pages
+ *    0 on success
+ */
+int reserve_pages(unsigned n) {
+  int ret;
+
+  //lock
+  ret = __reserve_pages(n);
+  //unlock
+
+  return ret;
+}
+
+/**
+ * @brief Fulfill a previous request for reserved pages.
+ *
+ * This function assumes you previously called reserve_pages() and now want
+ * some or all of those physical pages.
+ */
+void fulfill_pages(unsigned n, size_t *pages) {
+  //lock
+  __fulfill_pages(n, pages);
+  //unlock
+}
+
+/**
+ * @brief Request <n> arbitrarily placed pages throughout physical memory.
+ *
+ * @param n the number of pages to allocate
+ * @param pages a buffer in which to store the physical address of each
+ *  page allocated
+ *
+ * @return
+ *    ENOMEM if there are no available pages
+ *    0 on success
+ */
+int alloc_pages(unsigned n, size_t *pages) {
+  int ret;
+
+  TRACE("n=%d, pages=%p", n, pages);
+
+  //lock
+
+  ret = __reserve_pages(n);
+  if (0 == ret) {
+    __fulfill_pages(n, pages);
   }
 
-  return 0;
+  //unlock
+  return ret;
 }
 
 /**
@@ -157,5 +204,38 @@ void free_pages(unsigned n, size_t *pages) {
     ASSERT_GREATER(get_page(pages[i])->count, 0);
     (get_page(pages[i]))->count--;
   }
+}
+
+/**
+ * @brief Perform a "reference copy" of the given <n> physical pages.
+ *
+ * This function preforms 2 steps:
+ *  1. Increment the reference count of each page provided.
+ *  2. Reserve n pages for future fulfillment.
+ *
+ * This function is provided for copy-on-write.
+ *
+ * @return
+ *    ENOMEM if n pages can't be reserved
+ *    0 on success
+ */
+int refcopy_pages(unsigned n, size_t *pages) {
+  int ret;
+
+  //lock
+
+  ret = __reserve_pages(n);
+  if (0 == ret) {
+    unsigned i;
+    for (i = 0; i < n; i++) {
+      struct page *p = get_page(pages[i]);
+
+      ASSERT_GREATER(p->count, 0);
+      p->count++;
+    }
+  }
   
+  //unlock
+ 
+  return ret;
 }

@@ -35,7 +35,7 @@ default: kernel
 	
 kernel: $(OFILES) $(HFILES) linker.ld
 	$(CC) -T linker.ld -o KERNEL.o -ffreestanding -O2 -nostdlib $(OFILES) -lgcc
-	objdump -DgFS KERNEL.o > KERNEL.S
+	objdump -Dg KERNEL.o > KERNEL.S
 
 clean:
 	rm -rf KERNEL.S
