@@ -207,16 +207,3 @@ void x86_exn_handle_all(struct x86_exn_args args) {
 void x86_exn_set_handler(void (*handler)(struct x86_exn_args *)) {
   exn_handler = handler;
 }
-
-void x86_exn_setup_idt(void) {
-  int vector;
-
-  /*
-   * Install handlers in the IDT for each exception type.
-   */
-  for (vector = 0; vector < X86_NUM_EXCEPTIONS; vector++) {
-    idt_exn_gate(vector, x86_exceptions[vector].handler);
-  }
-
-  exn_handler = x86_exn_panic;
-}

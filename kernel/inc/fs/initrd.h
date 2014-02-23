@@ -34,6 +34,6 @@ struct initrd_file {
   uint32_t length;
 };
 
-int initrd_init(size_t ramdisk);
+void initrd_init(void);
 
 #endif /* !__FS_INITRD_H__ */

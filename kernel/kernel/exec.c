@@ -23,23 +23,20 @@
 extern struct vm_space *postboot_vm_space;
 struct proc_struct init_proc;
 
-#ifdef ARCH_X86
-#include <arch/x86/cpu.h>
-void jump_to_userspace(struct thread_struct *thread) {
-  iret_to_userspace(thread->kstack_hi, (size_t) thread->proc->space->object,
-                    thread->proc->exec->entry, thread->ustack_entry);
-}
-#endif
+#include <arch/x86/cpu.h> // iret_to_userspace
 
 /**
  * @brief Load and initialize the first process that will run.
  */
 void run_first_proc(char *execpath, int argc, char **argv) {
   struct vfs_file *file;
+  struct thread_struct *thread;
   int ret;
 
   ret = proc_fork(NULL, &init_proc);
   ASSERT_EQUALS(ret, 0);
+
+  thread = list_head(&init_proc.threads);
 
   file = vfs_file_get(execpath);
   ASSERT(NULL != file);
@@ -58,8 +55,9 @@ void run_first_proc(char *execpath, int argc, char **argv) {
   /*
    * Create a runtime stack for the process.
    */
-  ret = create_user_stack(list_head(&init_proc.threads), argc, argv);
+  ret = create_user_stack(thread, argc, argv);
   ASSERT_EQUALS(ret, 0);
 
-  jump_to_userspace(list_head(&init_proc.threads));
+  iret_to_userspace(thread->kstack_hi, (size_t) thread->proc->space->object,
+                    thread->proc->exec->entry, thread->ustack_entry);
 }

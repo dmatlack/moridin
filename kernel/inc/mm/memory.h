@@ -26,10 +26,6 @@ extern char kbss_end[];
 extern char *kheap_start;
 extern char *kheap_end;
 
-extern char boot_stack_top[];
-extern char boot_stack_bottom[];
-extern char boot_page_dir[];
-
 extern size_t phys_mem_bytes;
 extern size_t phys_mem_pages;
 

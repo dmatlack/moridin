@@ -29,31 +29,8 @@
 #include <debug.h>
 #include <errno.h>
 
+#include <fs/initrd.h>
 #include <fs/vfs.h>
-
-/**
- * @brief Kernel initialization functions that need to run with interrupts
- * off.
- *
- * You probably don't want to mess with the order of these functions.
- */
-void pre_irq_init(void) {
-  debug_init();
-
-  pages_init();
-  vm_init();
-  exn_init();
-  irq_init();
-  timer_init();
-}
-
-/**
- * @brief Kernel initialization functions that can, or should, run with
- * interrupts enabled.
- */
-void post_irq_init(void) {
-  pci_init();
-}
 
 /**
  * @brief This is main logical entry point for the kernel, not to be confused
@@ -62,12 +39,31 @@ void post_irq_init(void) {
  * point.
  */
 void kernel_main() {
-  pre_irq_init();
+  /*
+   * Set up kmalloc to only allocate dynamic memory in the first 16 MB of
+   * memory. This will allow us to use kmalloc during early startup.
+   *
+   * NOTE: if we use a higher half kernel we'll have to offset these
+   * values
+   */
+  kmalloc_early_init((size_t) kheap_start,
+                    ((size_t) kheap_end - (size_t) kheap_start));
+  debug_init();
+
+  pages_init();
+  vm_init();
+  exn_init();
+  irq_init();
+  timer_init();
+  initrd_init();
 
   enable_irqs();
 
-  post_irq_init();
+  pci_init();
 
+  /////////////////////////////////////////////////////////////////////////////
+  // Temporary hack to get to userspace with some test argv/arc
+  /////////////////////////////////////////////////////////////////////////////
   {
     char *argv[4] = { "/init", "arg1", "arg2", ":)" };
     int argc = 4;

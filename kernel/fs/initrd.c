@@ -13,6 +13,8 @@
 #include <assert.h>
 #include <debug.h>
 
+size_t initrd_location; // set externally
+
 /*
  * initrdfs specific metadata
  */
@@ -153,28 +155,23 @@ static void initrd_init_file(struct vfs_dirent *d, struct vfs_inode *i,
  *
  *    0 on success
  */
-int initrd_init(size_t address) {
+void initrd_init(void) {
   struct vfs_inode *cur_inode;
   struct vfs_dirent *cur_dirent;
   unsigned i;
 
-  initrd = (struct initrd_hdr *) address;
-  initrd_files = (struct initrd_file *) (address + sizeof(struct initrd_hdr));
+  initrd = (struct initrd_hdr *) initrd_location;
+  initrd_files = (struct initrd_file *) (initrd_location + sizeof(struct initrd_hdr));
 
-  if (INITRD_MAGIC != initrd->magic) {
-    return EINVAL;
-  }
+  ASSERT_EQUALS(INITRD_MAGIC, initrd->magic);
 
   initrd_inodes_size = sizeof(struct vfs_inode) * initrd->nfiles + 1;
   initrd_inodes = kmalloc(initrd_inodes_size);
-  if (NULL == initrd_inodes) return ENOMEM;
+  ASSERT_NOT_NULL(initrd_inodes);
 
   initrd_dirents_size = sizeof(struct vfs_dirent) * (initrd->nfiles + 1);
   initrd_dirents = kmalloc(initrd_dirents_size);
-  if (NULL == initrd_dirents) {
-    kfree(initrd_inodes, initrd_inodes_size);
-    return ENOMEM;
-  }
+  ASSERT_NOT_NULL(initrd_dirents);
 
   initrd_init_fops();
 
@@ -203,7 +200,6 @@ int initrd_init(size_t address) {
   }
 
   vfs_chroot(initrd_root_dirent);
-  return 0;
 }
 
 static inline struct initrd_file *initrd_find(struct vfs_file *f) {

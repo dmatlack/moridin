@@ -21,9 +21,6 @@ int debug_putchar(int c) {
   return c;
 }
 
-#include <boot/multiboot.h>
-struct multiboot_info *__mb_info;
-
 void debug_init(void) {
   serial_port_init();
   debug_serial_port = reserve_serial_port("debug");
@@ -31,6 +28,4 @@ void debug_init(void) {
     panic("Could not reserve serial port for debugging.\n");
   }
   log_init(debug_putchar, LOG_LEVEL_DEBUG);
-
-  mb_dump(__log, __mb_info);
 }

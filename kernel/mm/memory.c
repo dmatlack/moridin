@@ -49,4 +49,7 @@ void mem_mb_init(struct multiboot_info *mb_info) {
   }
 
   kheap_end = (char *) MB(16);
+
+  kprintf("kernel image:  0x%08x, 0x%08x\n", (size_t) kimg_start, (size_t) kimg_end);
+  kprintf("kernel heap:   0x%08x, 0x%08x\n", kheap_start, kheap_end);
 }
