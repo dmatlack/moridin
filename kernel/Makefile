@@ -5,26 +5,13 @@
 ###############################################################################
 include ../config.mk
 
-ifeq ($(ARCH),ARCH_X86)
-	ARCHDIR := arch/x86
-endif
-
-#
-# Create a symbolic link for architecture-specific header files:
-# 		e.g inc/arch -> ../arch/x86/inc
-# 
-# Note the '..' is needed so that inc/arch knows to look up in the
-# parent directory first.
-#
-$(shell ln -s ../$(ARCHDIR)/inc inc/arch)
-
-SRCDIRS = boot      \
-          dev       \
-          fs        \
-          kernel    \
-          lib       \
-          mm 				\
-					$(ARCHDIR)
+SRCDIRS = boot      		\
+          dev       		\
+          fs        		\
+          kernel    		\
+          lib       		\
+          mm 						\
+				  arch/$(ARCH)
 
 INCDIRS = inc      \
           inc/lib
@@ -38,19 +25,29 @@ INCLUDES = $(addprefix -I, $(INCDIRS))
 
 CFLAGS += -DKDEBUG
 
-.PHONY: default clean 
+.PHONY: default clean arch kernel
 
 default: kernel
 	
-kernel: $(OFILES) $(HFILES) linker.ld
+kernel: arch $(OFILES) $(HFILES) linker.ld
 	$(CC) -T linker.ld -o KERNEL.o -ffreestanding -O2 -nostdlib $(OFILES) -lgcc
 	objdump -Dg KERNEL.o > KERNEL.S
 
+#
+# Create a symbolic link for architecture-specific header files:
+# 		e.g inc/arch -> ../arch/x86/inc
+# 
+# Note the '..' is needed so that inc/arch knows to look up in the
+# parent directory first.
+#
+arch:
+	ln -s ../arch/$(ARCH)/inc inc/arch
+
 clean:
-	rm inc/arch
-	rm -rf KERNEL.S
-	rm -rf KERNEL.o
-	rm -rf $(OFILES)
+	rm -f inc/arch
+	rm -f KERNEL.S
+	rm -f KERNEL.o
+	rm -f $(OFILES)
 
 %.o: %.S
 	$(CC) $(CFLAGS) $(INCLUDES) -DASSEMBLER -c -o $@ $<

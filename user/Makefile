@@ -23,8 +23,9 @@ clean:
 # contains the code needed to make system calls, initializes the runtime,
 # etc.
 #
-SYS_CFILES = $(shell find sys/ -type f -name "*.c")
-SYS_SFILES = $(shell find sys/ -type f -name "*.S")
+SYS_SRCDIRS = sys sys/arch/$(ARCH)
+SYS_CFILES = $(shell find $(SYS_SRCDIRS) -maxdepth 1 -type f -name "*.c")
+SYS_SFILES = $(shell find $(SYS_SRCDIRS) -maxdepth 1 -type f -name "*.S")
 SYS_OFILES = $(patsubst %.c,%.o,$(SYS_CFILES)) $(patsubst %.S,%.o,$(SYS_SFILES))
 
 sys: $(SYS_OFILES)
