@@ -17,28 +17,32 @@ void x86_acknowledge_irq(int irq);
 void x86_enable_irqs(void);
 void x86_disable_irqs(void);
 
+/*
+ * Invoke the assembly instruction "int $n"
+ */
 void __int(uint8_t n);
+
 void __enable_interrupts(void);
 void __disable_interrupts(void);
 
 /*
  * Entrypoints for IRQs. These are installed in the IDT.
  */
-void __irq0(void);
-void __irq1(void);
-void __irq2(void);
-void __irq3(void);
-void __irq4(void);
-void __irq5(void);
-void __irq6(void);
-void __irq7(void);
-void __irq8(void);
-void __irq9(void);
-void __irq10(void);
-void __irq11(void);
-void __irq12(void);
-void __irq13(void);
-void __irq14(void);
-void __irq15(void);
+void irq_0(void);
+void irq_1(void);
+void irq_2(void);
+void irq_3(void);
+void irq_4(void);
+void irq_5(void);
+void irq_6(void);
+void irq_7(void);
+void irq_8(void);
+void irq_9(void);
+void irq_10(void);
+void irq_11(void);
+void irq_12(void);
+void irq_13(void);
+void irq_14(void);
+void irq_15(void);
 
 #endif /* !__X86_IRQ_H__ */

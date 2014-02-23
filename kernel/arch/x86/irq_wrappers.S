@@ -4,8 +4,8 @@
 
 .macro irq_handler_macro irq
 
-.global __irq\irq
-__irq\irq:
+.global irq_\irq
+irq_\irq:
   pusha
   pushl %gs             # push all data segment registers
   pushl %fs

@@ -39,22 +39,22 @@ int x86_init_irq(struct machine_irq_info *info) {
   /*
    * Install the IRQ handlers
    */
-  idt_irq_gate(IDT_PIC_MASTER_OFFSET + 0, __irq0);
-  idt_irq_gate(IDT_PIC_MASTER_OFFSET + 1, __irq1);
-  idt_irq_gate(IDT_PIC_MASTER_OFFSET + 2, __irq2);
-  idt_irq_gate(IDT_PIC_MASTER_OFFSET + 3, __irq3);
-  idt_irq_gate(IDT_PIC_MASTER_OFFSET + 4, __irq4);
-  idt_irq_gate(IDT_PIC_MASTER_OFFSET + 5, __irq5);
-  idt_irq_gate(IDT_PIC_MASTER_OFFSET + 6, __irq6);
-  idt_irq_gate(IDT_PIC_MASTER_OFFSET + 7, __irq7);
-  idt_irq_gate(IDT_PIC_SLAVE_OFFSET  + 0, __irq8);
-  idt_irq_gate(IDT_PIC_SLAVE_OFFSET  + 1, __irq9);
-  idt_irq_gate(IDT_PIC_SLAVE_OFFSET  + 2, __irq10);
-  idt_irq_gate(IDT_PIC_SLAVE_OFFSET  + 3, __irq11);
-  idt_irq_gate(IDT_PIC_SLAVE_OFFSET  + 4, __irq12);
-  idt_irq_gate(IDT_PIC_SLAVE_OFFSET  + 5, __irq13);
-  idt_irq_gate(IDT_PIC_SLAVE_OFFSET  + 6, __irq14);
-  idt_irq_gate(IDT_PIC_SLAVE_OFFSET  + 7, __irq15);
+  idt_irq_gate(IDT_PIC_MASTER_OFFSET + 0, irq_0);
+  idt_irq_gate(IDT_PIC_MASTER_OFFSET + 1, irq_1);
+  idt_irq_gate(IDT_PIC_MASTER_OFFSET + 2, irq_2);
+  idt_irq_gate(IDT_PIC_MASTER_OFFSET + 3, irq_3);
+  idt_irq_gate(IDT_PIC_MASTER_OFFSET + 4, irq_4);
+  idt_irq_gate(IDT_PIC_MASTER_OFFSET + 5, irq_5);
+  idt_irq_gate(IDT_PIC_MASTER_OFFSET + 6, irq_6);
+  idt_irq_gate(IDT_PIC_MASTER_OFFSET + 7, irq_7);
+  idt_irq_gate(IDT_PIC_SLAVE_OFFSET  + 0, irq_8);
+  idt_irq_gate(IDT_PIC_SLAVE_OFFSET  + 1, irq_9);
+  idt_irq_gate(IDT_PIC_SLAVE_OFFSET  + 2, irq_10);
+  idt_irq_gate(IDT_PIC_SLAVE_OFFSET  + 3, irq_11);
+  idt_irq_gate(IDT_PIC_SLAVE_OFFSET  + 4, irq_12);
+  idt_irq_gate(IDT_PIC_SLAVE_OFFSET  + 5, irq_13);
+  idt_irq_gate(IDT_PIC_SLAVE_OFFSET  + 6, irq_14);
+  idt_irq_gate(IDT_PIC_SLAVE_OFFSET  + 7, irq_15);
 
   for (i = 0; i < PIC_IRQ_COUNT; i++) spurious_irqs[i] = 0;
 

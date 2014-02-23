@@ -51,7 +51,7 @@ extern struct x86_exn x86_exceptions[X86_NUM_EXCEPTIONS];
 // WARNING
 //  If you change this macro, you must also change the macro in
 //  x86/exn_wrappers.S !!!!!!!!!!
-#define EXN_HANDLER_NAME(vector)        x86_exn_handle_##vector
+#define EXN_HANDLER_NAME(vector) exn_##vector
 
 #define EXN_HANDLER_PROTOTYPE(vector)   void EXN_HANDLER_NAME(vector)(void)
 

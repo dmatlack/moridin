@@ -20,8 +20,9 @@
 #include <kernel/debug.h>
 #include <errno.h>
 
-#define X86_IS_PAGE_ALIGNED(addr)\
-  (FLOOR(X86_PAGE_SIZE, addr) == addr)
+static inline bool is_page_aligned(size_t addr) {
+  return FLOOR(X86_PAGE_SIZE, addr) == addr;
+}
 
 int x86_init_page_dir(struct entry_table **object) {
   struct entry_table *page_directory;
@@ -117,8 +118,8 @@ int x86_map_page(struct entry_table *pd, size_t vpage, size_t ppage,
   entry_t *pde, *pte;
 
   TRACE("pd=%p, vpage=0x%x, ppage=0x%x, flags=0x%x", pd, vpage, ppage, flags);
-  ASSERT(X86_IS_PAGE_ALIGNED(vpage));
-  ASSERT(X86_IS_PAGE_ALIGNED(ppage));
+  ASSERT(is_page_aligned(vpage));
+  ASSERT(is_page_aligned(ppage));
 
   pde = get_pde(pd, vpage);
 
@@ -176,8 +177,8 @@ void x86_unmap_pages(struct entry_table *pd, size_t addr, size_t size,
   TRACE("pd=%p, addr=0x%x, size=0x%x, ppages=%p",
         pd, addr, size, ppages);
 
-  ASSERT(X86_IS_PAGE_ALIGNED(addr));
-  ASSERT(X86_IS_PAGE_ALIGNED(size));
+  ASSERT(is_page_aligned(addr));
+  ASSERT(is_page_aligned(size));
 
   for (i = 0; i < num_pages; i++) {
     vpage = addr + (i * X86_PAGE_SIZE);
@@ -246,8 +247,8 @@ int x86_map_pages(struct entry_table *pd, size_t addr, size_t size,
   TRACE("pd=%p, addr=0x%x, size=0x%x, ppages=%p",
         pd, addr, size, ppages);
 
-  ASSERT(X86_IS_PAGE_ALIGNED(addr));
-  ASSERT(X86_IS_PAGE_ALIGNED(size));
+  ASSERT(is_page_aligned(addr));
+  ASSERT(is_page_aligned(size));
 
   for (i = 0; i < (int) (size / X86_PAGE_SIZE); i++) {
     size_t vpage = addr + (i * X86_PAGE_SIZE);
