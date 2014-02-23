@@ -22,37 +22,37 @@
 GENERATE_CRX_SET_BIT_FN(0)
 GENERATE_CRX_SET_BIT_FN(4)
 
-void x86_enable_paging(void) {
+void enable_paging(void) {
   TRACE();
   cr0_set_bit(CR0_PG, 1);
 }
 
-void x86_disable_paging(void) {
+void disable_paging(void) {
   TRACE();
   cr0_set_bit(CR0_PG, 0);
 }
 
-void x86_enable_protected_mode(void) {
+void enable_protected_mode(void) {
   TRACE();
   cr0_set_bit(CR0_PE, 1);
 }
 
-void x86_enable_real_mode(void) {
+void enable_real_mode(void) {
   TRACE();
   cr0_set_bit(CR0_PE, 0);
 }
 
-void x86_disable_fpu(void) {
+void disable_fpu(void) {
   TRACE();
   cr0_set_bit(CR0_EM, 1);
 }
 
-void x86_enable_global_pages(void) {
+void enable_global_pages(void) {
   TRACE();
   cr4_set_bit(CR4_PGE, 1);
 }
 
-void x86_enable_write_protect(void) {
+void enable_write_protect(void) {
   TRACE();
   cr0_set_bit(CR0_WP, 1);
 }

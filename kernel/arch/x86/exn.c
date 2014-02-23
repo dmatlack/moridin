@@ -196,14 +196,8 @@ void x86_exn_panic(struct x86_exn_args *args) {
   panic("Exception %d during boot. Aborting.", exn->vector);
 }
 
-
-
-static void (*exn_handler)(struct x86_exn_args *args);
+static void (*exn_handler)(struct x86_exn_args *args) = x86_exn_panic;
 
 void x86_exn_handle_all(struct x86_exn_args args) {
   exn_handler(&args);
-}
-
-void x86_exn_set_handler(void (*handler)(struct x86_exn_args *)) {
-  exn_handler = handler;
 }

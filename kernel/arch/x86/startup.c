@@ -9,7 +9,7 @@
 #include <kernel/debug.h>
 #include <assert.h>
 
-extern void x86_syscall(void);
+extern void __syscall_entry(void);
 
 extern char kernel_idt[];
 extern char kernel_gdt[];
@@ -36,7 +36,7 @@ void arch_startup(void) {
   kprintf("boot_stack:    0x%08x, 0x%08x\n", boot_stack_bottom, boot_stack_top);
   kprintf("boot_page_dir: 0x%08x\n", boot_page_dir);
 
-  x86_disable_fpu();
+  disable_fpu();
 
   /*
    * Install default handlers for all IDT entries so we panic before 
@@ -52,10 +52,9 @@ void arch_startup(void) {
   for (vector = 0; vector < X86_NUM_EXCEPTIONS; vector++) {
     idt_exn_gate(vector, x86_exceptions[vector].handler);
   }
-  x86_exn_set_handler(x86_exn_panic);
 
   /*
    * Install the global system call handler.
    */
-  idt_syscall_gate(0x80, x86_syscall);
+  idt_syscall_gate(0x80, __syscall_entry);
 }

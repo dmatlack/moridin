@@ -24,8 +24,8 @@
 
 .extern syscall_table
 
-.global x86_syscall
-x86_syscall:
+.global __syscall_entry
+__syscall_entry:
 
   #
   # push all the possible arguments onto the stack. it doesn't matter if
