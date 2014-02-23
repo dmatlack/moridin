@@ -14,28 +14,36 @@
 #include <kernel/debug.h>
 #include <assert.h>
 
-int spurious_irqs[PIC_IRQ_COUNT];
+/*
+ * Invoke the assembly instruction "int $n"
+ */
+void __int(uint8_t n);
 
-struct machine_irq_interface x86_irq_interface = {
-  .init = x86_init_irq,
-  .generate_irq = x86_generate_irq,
-  .acknowledge_irq = x86_acknowledge_irq,
-  .enable_irqs = x86_enable_irqs,
-  .disable_irqs = x86_disable_irqs
-};
+/*
+ * Entrypoints for IRQs. See irq_wrappers.S
+ */
+void irq_0(void);
+void irq_1(void);
+void irq_2(void);
+void irq_3(void);
+void irq_4(void);
+void irq_5(void);
+void irq_6(void);
+void irq_7(void);
+void irq_8(void);
+void irq_9(void);
+void irq_10(void);
+void irq_11(void);
+void irq_12(void);
+void irq_13(void);
+void irq_14(void);
+void irq_15(void);
 
-int x86_init_irq(struct machine_irq_info *info) {
-  int i, ret;
+int spurious_irqs[MAX_NUM_IRQS];
+
+void pic_irq_init(void) {
+  int i;
   
-  info->max_irqs = PIC_IRQ_COUNT;
-
-  /*
-   * Initialize the hardware to receive interrupts.
-   */
-  if (0 != (ret = pic_init())) {
-    return ret;
-  }
-
   /*
    * Install the IRQ handlers
    */
@@ -56,15 +64,22 @@ int x86_init_irq(struct machine_irq_info *info) {
   idt_irq_gate(IDT_PIC_SLAVE_OFFSET  + 6, irq_14);
   idt_irq_gate(IDT_PIC_SLAVE_OFFSET  + 7, irq_15);
 
-  for (i = 0; i < PIC_IRQ_COUNT; i++) spurious_irqs[i] = 0;
+  /*
+   * Remap the master and the slave so they invode the correct service routines
+   * in the IDT.
+   */
+  pic_remap(IDT_PIC_MASTER_OFFSET, IDT_PIC_SLAVE_OFFSET);
 
-  return 0;
+  for (i = 0; i < MAX_NUM_IRQS; i++) spurious_irqs[i] = 0;
 }
 
 /**
  * @brief Generate an interrupt request.
  */
-void x86_generate_irq(int irq) {
+void generate_irq(int irq) {
+  ASSERT_GREATEREQ(irq, 0);
+  ASSERT_LESS(irq, 16);
+
   if (irq < 8) {
     __int(IDT_PIC_MASTER_OFFSET + irq);
   }
@@ -85,7 +100,7 @@ void x86_generate_irq(int irq) {
 bool is_spurious_irq(int irq) {
   uint16_t isr;
 
-  if (0 > irq || irq >= PIC_IRQ_COUNT) return false;
+  if (0 > irq || irq >= MAX_NUM_IRQS) return false;
 
   isr = pic_get_isr();
 
@@ -98,10 +113,10 @@ bool is_spurious_irq(int irq) {
  * installed in the IDT). The job of this function is to pass 
  * the irq up to the kernel to handle.
  */
-void x86_handle_irq(int irq) {
+void interrupt_request(int irq) {
 
   ASSERT_GREATEREQ(irq, 0);
-  ASSERT_LESS(irq, PIC_IRQ_COUNT);
+  ASSERT_LESS(irq, MAX_NUM_IRQS);
 
   /*
    * Check for spurious IRQs
@@ -126,7 +141,7 @@ void x86_handle_irq(int irq) {
   /*
    * Pass the interrupt request up to the kernel
    */
-  handle_irq(irq);
+  kernel_irq_handler(irq);
 }
 
 /**
@@ -135,13 +150,3 @@ void x86_handle_irq(int irq) {
 void x86_acknowledge_irq(int irq) {
   pic_eoi(irq);
 }
-
-void x86_enable_irqs(void) {
-  __enable_interrupts();
-}
-
-void x86_disable_irqs(void) {
-  __disable_interrupts();
-}
-
-

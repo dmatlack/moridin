@@ -7,14 +7,14 @@
 .global irq_\irq
 irq_\irq:
   pusha
-  pushl %gs             # push all data segment registers
+  pushl %gs              # push all data segment registers
   pushl %fs
   pushl %es
   pushl %ds
-  pushl $\irq           # push the irq number
-  call x86_handle_irq   # call the central handler
-  addl $4, %esp         # pop the irq number
-  popl %ds              # pop the data segment registers off the stack
+  pushl $\irq            # push the irq number
+  call interrupt_request # call the central handler
+  addl $4, %esp          # pop the irq number
+  popl %ds               # pop the data segment registers off the stack
   popl %es
   popl %fs
   popl %gs

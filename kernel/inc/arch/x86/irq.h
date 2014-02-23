@@ -8,41 +8,47 @@
 
 #include <kernel/irq.h>
 #include <arch/x86/idt.h>
+#include <arch/x86/pic.h>
 #include <list.h>
 
-int  x86_init_irq(struct machine_irq_info *info);
-void x86_generate_irq(int irq);
-void x86_handle_irq(int irq);
-void x86_acknowledge_irq(int irq);
-void x86_enable_irqs(void);
-void x86_disable_irqs(void);
-
 /*
- * Invoke the assembly instruction "int $n"
+ *
+ * x86 Hardware Interrupts
+ * 
+ * 8259A Input pin  Interrupt Number  Description
+ * ------------------------------------------------------------------
+ * IRQ0             0x08              Timer
+ * IRQ1             0x09              Keyboard
+ * IRQ2             0x0A              Cascade for 8259A Slave controller
+ * IRQ3             0x0B              Serial port 2
+ * IRQ4             0x0C              Serial port 1
+ * IRQ5             0x0D              AT systems: Parallel Port 2. PS/2 systems: reserved
+ * IRQ6             0x0E              Diskette drive
+ * IRQ7             0x0F              Parallel Port 1
+ * IRQ8/IRQ0        0x70              CMOS Real time clock
+ * IRQ9/IRQ1        0x71              CGA vertical retrace
+ * IRQ10/IRQ2       0x72              Reserved
+ * IRQ11/IRQ3       0x73              Reserved
+ * IRQ12/IRQ4       0x74              AT systems: reserved. PS/2: auxiliary device
+ * IRQ13/IRQ5       0x75              FPU
+ * IRQ14/IRQ6       0x76              Hard disk controller
+ * IRQ15/IRQ7       0x77              Reserved
+ *
  */
-void __int(uint8_t n);
+#define MAX_NUM_IRQS       16
+#define IRQ_TIMER           0
+#define IRQ_KEYBOARD        1
+#define IRQ_SERIAL2         3
+#define IRQ_SERIAL1         4
 
-void __enable_interrupts(void);
-void __disable_interrupts(void);
+void pic_irq_init(void);
 
-/*
- * Entrypoints for IRQs. These are installed in the IDT.
- */
-void irq_0(void);
-void irq_1(void);
-void irq_2(void);
-void irq_3(void);
-void irq_4(void);
-void irq_5(void);
-void irq_6(void);
-void irq_7(void);
-void irq_8(void);
-void irq_9(void);
-void irq_10(void);
-void irq_11(void);
-void irq_12(void);
-void irq_13(void);
-void irq_14(void);
-void irq_15(void);
+#define ack_irq(irq) pic_eoi(irq)
+
+void generate_irq(int irq);
+
+void enable_irqs(void);
+
+void disable_irqs(void);
 
 #endif /* !__X86_IRQ_H__ */

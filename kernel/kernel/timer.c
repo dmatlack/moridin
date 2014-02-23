@@ -40,5 +40,5 @@ void timer_init(void) {
   __timer_handler.top_handler    = NULL;
   __timer_handler.bottom_handler = NULL;
 
-  register_irq(0, &__timer_handler);
+  register_irq(IRQ_TIMER, &__timer_handler);
 }

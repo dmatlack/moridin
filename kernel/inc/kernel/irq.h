@@ -8,27 +8,9 @@
 
 #include <list.h>
 
-/*
- * Information about the systems IRQs that must be provided by the machine
- * dependent code.
- */
-struct machine_irq_info {
-  int max_irqs;
-};
-
-struct machine_irq_interface {
-  /**
-   * @brief The init function must do two things:
-   * 1. Populate all fields of the machine_irq_info struct.
-   * 2. Initialize interrupts so that when they are generated, they call 
-   * the handle_irq() function in this file.
-   */
-  int  (*init)(struct machine_irq_info *info);
-  void (*generate_irq)(int irq);
-  void (*acknowledge_irq)(int irq);
-  void (*disable_irqs)(void);
-  void (*enable_irqs)(void);
-};
+#ifdef ARCH_X86
+#include <arch/x86/irq.h>
+#endif
 
 struct irq_context {
   int irq;
@@ -70,11 +52,11 @@ struct irq_state {
 };
 
 void irq_init(void);
-void generate_irq(int irq);
-void handle_irq(int irq);
+
+void kernel_irq_handler(int irq);
+
 void register_irq(int irq, struct irq_handler *new_handler);
-void enable_irqs(void);
-void disable_irqs(void);
+
 void irq_status_bar(int bar_row);
 
 #endif /* !__KERNEL_IRQ_H__ */

@@ -158,13 +158,13 @@ get_esp:
     movl %esp, %eax
     ret
 
-.global __enable_interrupts
-__enable_interrupts:
+.global enable_irqs
+enable_irqs:
   sti
   ret
 
-.global __disable_interrupts
-__disable_interrupts:
+.global disable_irqs
+disable_irqs:
   cli
   ret
 

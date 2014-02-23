@@ -9,16 +9,6 @@
 #include <kernel/debug.h>
 #include <kernel/kprintf.h>
 
-int pic_init(void) {
-  /*
-   * Remap the master and the slave so they invode the correct service routines
-   * in the IDT.
-   */
-  pic_remap(IDT_PIC_MASTER_OFFSET, IDT_PIC_SLAVE_OFFSET);
-
-  return 0;
-}
-
 void pic_remap(uint32_t master_offset, uint32_t slave_offset) {
   uint8_t slave_irq_mask, master_irq_mask;
 

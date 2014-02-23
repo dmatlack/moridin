@@ -5,6 +5,7 @@
 #include <arch/x86/reg.h>
 #include <arch/x86/exn.h>
 #include <arch/x86/idt.h>
+#include <arch/x86/irq.h>
 
 #include <kernel/debug.h>
 #include <assert.h>
@@ -57,4 +58,9 @@ void arch_startup(void) {
    * Install the global system call handler.
    */
   idt_syscall_gate(0x80, __syscall_entry);
+
+  /*
+   * Initialize the interrupt controller and associated handlers.
+   */
+  pic_irq_init();
 }
