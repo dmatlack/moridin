@@ -239,7 +239,7 @@ bool x86_vtop(struct entry_table *pd,  size_t vaddr, size_t *paddrp);
 bool x86_is_mapped(struct entry_table *pd, size_t vaddr);
 
 int x86_map_pages(struct entry_table *pd, size_t addr, size_t size,
-                  size_t *ppages, vm_flags_t flags);
+                  size_t *ppages, int flags);
 
 void x86_unmap_pages(struct entry_table *pd, size_t addr, size_t size,
                      size_t *ppages);

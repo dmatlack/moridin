@@ -79,9 +79,9 @@ void entry_table_free(struct entry_table *ptr) {
 }
 
 /**
- * @brief Set the entry flags to match the provided vm_flags_t.
+ * @brief Set the entry flags to match the provided vm flags.
  */
-void entry_set_flags(entry_t *entry, vm_flags_t flags) {
+void entry_set_flags(entry_t *entry, int flags) {
   if (flags & VM_W) {
     entry_set_readwrite(entry);
     TRACE("RW");
@@ -111,8 +111,7 @@ void entry_set_flags(entry_t *entry, vm_flags_t flags) {
  *      table data structure and the system has run out of available
  *      memory.
  */
-int x86_map_page(struct entry_table *pd, size_t vpage, size_t ppage,
-                 vm_flags_t flags) {
+int x86_map_page(struct entry_table *pd, size_t vpage, size_t ppage, int flags) {
   struct entry_table *pt;
   size_t vtop;
   entry_t *pde, *pte;
@@ -241,7 +240,7 @@ void x86_unmap_pages(struct entry_table *pd, size_t addr, size_t size,
  * @return 0 on success, non-0 on error
  */
 int x86_map_pages(struct entry_table *pd, size_t addr, size_t size,
-                  size_t *ppages, vm_flags_t flags) {
+                  size_t *ppages, int flags) {
   int i;
 
   TRACE("pd=%p, addr=0x%x, size=0x%x, ppages=%p",

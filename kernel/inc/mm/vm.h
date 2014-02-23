@@ -12,8 +12,6 @@
 #include <stddef.h>
 #include <list.h>
 
-typedef int vm_flags_t;
-
 #define VM_R (1 << 0) // read
 #define VM_W (1 << 1) // write
 #define VM_X (1 << 2) // execute
@@ -24,7 +22,7 @@ typedef int vm_flags_t;
 struct vm_region {
   size_t address;
   size_t size;
-  vm_flags_t flags;
+  int flags;
 
   /*
    * When performing copy-on-write and zero-fill-on-demand, regions of
@@ -56,8 +54,8 @@ extern struct vm_space boot_vm_space;
 void vm_init(void);
 int  vm_space_init(struct vm_space *space);
 void *__vm_space_switch(void *space_object);
-int  vm_map(struct vm_space *space, size_t address, size_t size, vm_flags_t flags);
-int  __vm_map(struct vm_space *space, size_t address, size_t size, size_t *ppages, vm_flags_t flags);
+int  vm_map(struct vm_space *space, size_t address, size_t size, int flags);
+int  __vm_map(struct vm_space *space, size_t address, size_t size, size_t *ppages, int flags);
 void vm_unmap(struct vm_space *space, size_t address, size_t size);
 
 void tlb_flush(void);

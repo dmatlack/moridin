@@ -126,8 +126,7 @@ void *__vm_space_switch(void *object) {
   return old_object;
 }
 
-int __vm_map(struct vm_space *space, size_t address, size_t size,
-             size_t *ppages, vm_flags_t flags) {
+int __vm_map(struct vm_space *space, size_t address, size_t size, size_t *ppages, int flags) {
   int ret;
 
 #ifdef ARCH_X86
@@ -152,8 +151,7 @@ int __vm_map(struct vm_space *space, size_t address, size_t size,
  *    ENOMEM
  *    other non-0 on architecture-dependent errors
  */
-int vm_map(struct vm_space *space, size_t address, size_t size,
-           vm_flags_t flags) {
+int vm_map(struct vm_space *space, size_t address, size_t size, int flags) {
   size_t *ppages;
   int num_pages;
   int ret = 0;
