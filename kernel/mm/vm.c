@@ -20,7 +20,7 @@ struct page *   kernel_pages; /* all the physical pages in the kernel's address 
 unsigned long   num_kernel_pages; /* the number of pages in kernel_pages */
 
 void vm_init(void) {
-  struct page *p;
+  struct page *page;
 
   TRACE();
 
@@ -42,12 +42,12 @@ void vm_init(void) {
 
   TRACE_OFF; // about to map a lot of pages, so disable debug call tracing
 
-  for (p = kernel_pages; p < kernel_pages + num_kernel_pages; p++) {
-    size_t phys = page_address(p);
+  for (page = kernel_pages; page < kernel_pages + num_kernel_pages; page++) {
+    size_t phys = page_address(page);
     size_t virt = CONFIG_KERNEL_VIRTUAL_START + phys;
     int ret;
 
-    ret = map_pages(kernel_space.object, virt, PAGE_SIZE, &phys, VM_S | VM_G | VM_R | VM_W);
+    ret = map_page(kernel_space.object, virt, page, VM_S | VM_G | VM_R | VM_W);
     ASSERT_EQUALS(0, ret);
   }
 
@@ -111,10 +111,18 @@ void *__vm_space_switch(void *object) {
   return swap_address_space(object);
 }
 
-int __vm_map(struct vm_space *space, size_t address, size_t size, size_t *ppages, int flags) {
+int __vm_map(struct vm_space *space, size_t address, struct page *pages, unsigned num_pages, int flags) {
+  struct page *page;
   int ret;
+  
+  for (page = pages; page < pages + num_pages; page++) {
+    size_t virt = address + (page_address(page) - page_address(pages));
 
-  ret = map_pages(space->object, address, size, ppages, flags);
+    ret = map_page(space->object, virt, page, flags);
+
+    //FIXME
+    ASSERT_EQUALS(0, ret);
+  }
 
   return ret;
 }
@@ -135,37 +143,28 @@ int __vm_map(struct vm_space *space, size_t address, size_t size, size_t *ppages
  *    other non-0 on architecture-dependent errors
  */
 int vm_map(struct vm_space *space, size_t address, size_t size, int flags) {
-  size_t *ppages;
+  struct page *pages;
   int num_pages;
   int ret = 0;
-  int map_failed;
 
-  TRACE("space=%p, address=0x%x, size=0x%x, flags=0x%x",
-        space, address, size, flags);
+  TRACE("space=%p, address=0x%x, size=0x%x, flags=0x%x", space, address, size, flags);
 
   address = PAGE_ALIGN_DOWN(address);
   size = PAGE_ALIGN_UP(size);
   num_pages = size / PAGE_SIZE;
 
-  ppages = kmalloc(sizeof(size_t) * num_pages);
-  if (NULL == ppages) {
+  pages = alloc_pages(num_pages);
+  if (!pages) {
     return ENOMEM;
   }
 
-  ret = alloc_pages(num_pages, ppages);
-  if (ret != 0) goto map_free_ppages;
-
-  map_failed = __vm_map(space, address, size, ppages, flags);
-
-  if (map_failed) {
-    ret = map_failed;
-    free_pages(num_pages, ppages);
-    goto map_free_ppages;
+  ret = __vm_map(space, address, pages, num_pages, flags);
+  if (ret) {
+    NEW_free_pages(pages, num_pages);
+    return ret;
   }
 
-map_free_ppages:
-  kfree(ppages, sizeof(size_t) * num_pages);
-  return ret;
+  return 0;
 }
 
 void vm_unmap(struct vm_space *space, size_t address, size_t size) {

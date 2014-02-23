@@ -214,30 +214,11 @@ alloc_pages_out:
  *    NULL if n contiguous pages could not be found
  *    0 otherwise
  */
-struct page *NEW_alloc_pages(unsigned long n) {
+struct page *alloc_pages(unsigned long n) {
   TRACE("n=%d", n);
   ASSERT_NOTEQUALS(n, 0);
   return __alloc_pages(n, zones);
 }
-
-// TODO: This is the old alloc_pages interface. Remove this and convert
-// the rest of the kernel to using the new alloc_pages.
-int alloc_pages(unsigned n, size_t *page_addrs) {
-  struct page *pages;
-  unsigned i;
-
-  pages = NEW_alloc_pages(n);
-  if (!pages) {
-    return ENOMEM;
-  }
-
-  for (i = 0; i < n; i++) {
-    page_addrs[i] = page_address(pages + i);
-  }
-
-  return 0;
-}
-
 
 void __free_pages(struct page *pages, unsigned long n, struct page_zone *zone) {
   struct page *p;

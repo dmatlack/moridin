@@ -12,16 +12,24 @@
 #include <stddef.h>
 #include <list.h>
 
+struct vm_region {
+  /*
+   * The physical pages this region is mapped to.
+   */
+  struct page *pages;
+  unsigned long num_pages;
+
+  /*
+   * The virtual address of the region.
+   */
+  size_t address;
+
 #define VM_R (1 << 0) // read
 #define VM_W (1 << 1) // write
 #define VM_X (1 << 2) // execute
 #define VM_U (1 << 3) // user
 #define VM_S (1 << 4) // supervisor
 #define VM_G (1 << 5) // global
-
-struct vm_region {
-  size_t address;
-  size_t size;
   int flags;
 
   /*
@@ -42,11 +50,7 @@ list_typedef(struct vm_region) vm_region_list_t;
 
 struct vm_space {
   void *object;
-
-  struct vm_region *kernel_region;
-  struct vm_region *stack_region;
-  struct vm_region *heap_region;
-  vm_region_list_t other_regions;
+  vm_region_list_t user_regions;
 };
 
 extern struct vm_space boot_vm_space;
@@ -55,7 +59,6 @@ void vm_init(void);
 int  vm_space_init(struct vm_space *space);
 void *__vm_space_switch(void *space_object);
 int  vm_map(struct vm_space *space, size_t address, size_t size, int flags);
-int  __vm_map(struct vm_space *space, size_t address, size_t size, size_t *ppages, int flags);
 void vm_unmap(struct vm_space *space, size_t address, size_t size);
 
 #endif /* !__MM_VM_H__ */

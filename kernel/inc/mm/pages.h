@@ -37,11 +37,10 @@ struct page_zone {
 
 struct page *alloc_pages_at(size_t addr, unsigned long n);
 
-int alloc_pages(unsigned n, size_t *pages);
-//TODO: struct page *alloc_pages(unsigned long n);
+struct page *alloc_pages(unsigned long n);
 
 
 void free_pages(unsigned n, size_t *pages);
-//TODO: void free_pages(struct page *pages, unsigned long n);
+void NEW_free_pages(struct page *pages, unsigned long n);
 
 #endif /* !__MM_PAGES_H__ */

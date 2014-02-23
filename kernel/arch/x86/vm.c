@@ -14,6 +14,7 @@
 
 #include <mm/memory.h>
 #include <mm/vm.h>
+#include <mm/pages.h>
 
 #include <stddef.h>
 #include <assert.h>
@@ -137,97 +138,13 @@ bool __vtop(struct entry_table *pd, size_t v, size_t *pp) {
   return true;
 }
 
-
 /**
- * @brief Maps the virtual page, <vpage>, to the physical page, <ppage>.
- *
- * @return
- *    0 on success, non-0 if the mapping could not be completed.
- *
- *    ENOMEM if mapping this page requires allocating a new page
- *      table data structure and the system has run out of available
- *      memory.
+ * @brief Free the empty page tables referenced by the page directory. Only
+ * look at PDEs marked with ENTRY_TABLE_UNMAP to check if empty.
  */
-int map_page(struct entry_table *pd, size_t vpage, size_t ppage, int flags) {
-  struct entry_table *pt;
-  size_t phys;
-  entry_t *pde, *pte;
-
-  TRACE("pd=%p, vpage=0x%x, ppage=0x%x, flags=0x%x", pd, vpage, ppage, flags);
-  ASSERT(is_page_aligned(vpage));
-  ASSERT(is_page_aligned(ppage));
-
-  pde = get_pde(pd, vpage);
-
-  if (!entry_is_present(pde)) {
-    pt = new_entry_table();
-    if (!pt) {
-      return ENOMEM;
-    }
-
-    entry_set_addr(pde, (size_t) pt);
-    entry_set_present(pde);
-    entry_set_flags(pde, VM_R | VM_W | VM_U);
-  }
-  else {
-    pt = (struct entry_table *) entry_get_addr(pde);
-  }
-
-  ASSERT(entry_is_present(pde));
-
-  pte = get_pte(pt, vpage);
-
-  entry_set_addr(pte, ppage);
-  entry_set_present(pte);
-  entry_set_flags(pte, flags);
-
-  ASSERT(__vtop(pd, vpage, &phys));
-  ASSERT_EQUALS(ppage, phys);
-
-  return 0;
-}
-
-/**
- * @brief Unmap the set of pages.
- *
- * This function only unmaps the pages in the x86 virtual memory
- * data structures. It does not decrease the reference counter to the
- * unmapped pages or "free" them in any way. That is up to the caller.
- *
- * @param pd The page directory
- * @param addr The start address of the region to map
- * @param size The size of the region to map
- * @param ppages The physical addresses of the pages that were unmapped
- */
-void __unmap_pages(struct entry_table *pd, size_t addr, size_t size, size_t *ppages) {
-  size_t vpage;
+void free_marked_page_tables(struct entry_table *pd) {
   entry_t *pde, *pte;
   int i, j;
-  int num_pages = size / PAGE_SIZE;
-
-  for (i = 0; i < num_pages; i++) {
-    vpage = addr + (i * X86_PAGE_SIZE);
-
-    /*
-     * Mark the page _directory_ entry so we know that we unmapped a page
-     * in this page table.
-     */
-    pde = get_pde(pd, vpage);
-    *pde = *pde | ENTRY_TABLE_UNMAP;
-
-    ASSERT(entry_is_present(pde));
-
-    /*
-     * Mark the page _table_ entry as not present, effectively unmapping
-     * the page.
-     */
-    pte = get_pte((struct entry_table *) entry_get_addr(pde), vpage);
-
-    ASSERT(entry_is_present(pte));
-    entry_set_absent(pte);
-
-    ppages[i] = entry_get_addr(pte);
-  }
 
   for (i = 0; i < (int) ENTRY_TABLE_SIZE; i++) {
     pde = pd->entries + i;
@@ -262,6 +179,64 @@ void __unmap_pages(struct entry_table *pd, size_t addr, size_t size, size_t *ppa
   }
 }
 
+/**
+ * @brief Unmap the set of pages.
+ *
+ * This function only unmaps the pages in the x86 virtual memory
+ * data structures. It does not decrease the reference counter to the
+ * unmapped pages or "free" them in any way. That is up to the caller.
+ *
+ * @param pd The page directory
+ * @param addr The start address of the region to map
+ * @param size The size of the region to map
+ * @param ppages The physical addresses of the pages that were unmapped
+ */
+void __unmap_pages(struct entry_table *pd, size_t addr, size_t size, size_t *ppages) {
+  size_t vpage;
+  entry_t *pde, *pte;
+  int num_pages = size / PAGE_SIZE;
+  int i;
+
+  for (i = 0; i < num_pages; i++) {
+    vpage = addr + (i * X86_PAGE_SIZE);
+
+    pde = get_pde(pd, vpage);
+
+    /*
+     * Mark the page _directory_ entry so we know that we unmapped a page
+     * in this page table and we can free it later (if it's empty). Don't
+     * mark the page directory entry if it global though because it is
+     * being shared with other processes.
+     */
+    if (!entry_is_global(pde)) {
+      *pde = *pde | ENTRY_TABLE_UNMAP;
+    }
+    else {
+      /*
+       * Actually...
+       *  If the entry is global, there is probably a bug. Eventually it
+       *  might be ok to unmap a global entry, but for now just panic.
+       */
+      panic("Trying to unmap global page: 0x%08x (virtual)", vpage);
+    }
+
+    ASSERT(entry_is_present(pde));
+
+    /*
+     * Mark the page _table_ entry as not present, effectively unmapping
+     * the page.
+     */
+    pte = get_pte((struct entry_table *) entry_get_addr(pde), vpage);
+
+    ASSERT(entry_is_present(pte));
+    entry_set_absent(pte);
+
+    ppages[i] = entry_get_addr(pte);
+  }
+
+  free_marked_page_tables(pd);
+}
+
 void unmap_pages(void *pd, size_t addr, size_t size, size_t *ppages) {
   TRACE("pd=%p, addr=0x%x, size=0x%x, ppages=%p", pd, addr, size, ppages);
 
@@ -271,37 +246,100 @@ void unmap_pages(void *pd, size_t addr, size_t size, size_t *ppages) {
   return __unmap_pages((struct entry_table *) pd, addr, size, ppages);
 }
 
-int __map_pages(struct entry_table *pd, size_t addr, size_t size, size_t *ppages, int flags) {
-  int i;
+/**
+ * @brief Maps virt to phys with the given flags.
+ *
+ * @return
+ *    0 on success, non-0 if the mapping could not be completed.
+ *
+ *    ENOMEM if mapping this page requires allocating a new page
+ *      table data structure and the system has run out of available
+ *      memory.
+ */
+static int map(struct entry_table *pd, size_t virt, size_t phys, int flags) {
+  struct entry_table *pt;
+  entry_t *pde, *pte;
 
-  for (i = 0; i < (int) (size / X86_PAGE_SIZE); i++) {
-    size_t vpage = addr + (i * X86_PAGE_SIZE);
+  /*
+   * Create a page directory if there is not one already present for the
+   * 4MB chunk containing this page.
+   */
+  pde = get_pde(pd, virt);
+  if (!entry_is_present(pde)) {
+    pt = new_entry_table();
+    if (!pt) {
+      return ENOMEM;
+    }
+
+    entry_set_addr(pde, (size_t) pt);
+    entry_set_present(pde);
+    entry_set_flags(pde, VM_R | VM_W | VM_U);
+  }
+  else {
+    pt = (struct entry_table *) entry_get_addr(pde);
+  }
+  ASSERT(entry_is_present(pde));
+
+  /*
+   * Write the physical address into the page table entry for the given
+   * virtual address we are mapping.
+   */
+  pte = get_pte(pt, virt);
+  entry_set_addr(pte, phys);
+  entry_set_present(pte);
+  entry_set_flags(pte, flags);
+
+  {
+    size_t _phys;
+    ASSERT(__vtop(pd, virt, &_phys));
+    ASSERT_EQUALS(phys, _phys);
+  }
+
+  return 0;
+}
+
+int __map_page(struct entry_table *pd, size_t virt, struct page *page, int flags) {
+  unsigned i;
+
+  /*
+   * We don't assume the system-wide page size (PAGE_SIZE) is the same as the
+   * page size on x86 (X86_PAGE_SIZE).
+   */
+  for (i = 0; i < PAGE_SIZE / X86_PAGE_SIZE; i++) {
+    size_t v = virt + (i * X86_PAGE_SIZE);
+    size_t p = page_address(page) + (i * X86_PAGE_SIZE);
     int ret;
    
-    ret = map_page(pd, vpage, ppages[i], flags);
-    if (0 != ret) {
-      __unmap_pages(pd, addr, i * X86_PAGE_SIZE, ppages);
-      return ret;
-    }
+    ret = map(pd, v, p, flags);
+
+    //FIXME: rollback previous mappings if we fail
+    // e.g.
+    //    if (0 != ret) {
+    //      __unmap(pd, virt, i * X86_PAGE_SIZE);
+    //      return ret;
+    //    }
+    ASSERT_EQUALS(0, ret);
   }
 
   return 0;
 }
 
 /**
- * @brief Map a region of memory into the page directory.
+ * @brief Map a page of physical memory into the virtual address space.
  *
- * @warning ppages must be an array of at least length <size> / PAGE_SIZE.
+ * @param pd The address of the page directory
+ * @param virt The virtual address to map
+ * @param page The physical page to map.
+ * @param flags
  *
  * @return 0 on success, non-0 on error
  */
-int map_pages(void *pd, size_t addr, size_t size, size_t *ppages, int flags) {
-  TRACE("pd=%p, addr=0x%x, size=0x%x, ppages=%p", pd, addr, size, ppages);
+int map_page(void *pd, size_t virt, struct page *page, int flags) {
+  TRACE("pd=%p, virt=0x%x, page=0x%x, flags=%p", pd, virt, page_address(page), flags);
 
-  ASSERT(is_page_aligned(addr));
-  ASSERT(is_page_aligned(size));
+  ASSERT(is_page_aligned(virt));
 
-  return __map_pages((struct entry_table *) pd, addr, size, ppages, flags);
+  return __map_page((struct entry_table *) pd, virt, page, flags);
 }
 
 

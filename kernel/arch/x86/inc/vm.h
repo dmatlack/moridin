@@ -163,6 +163,13 @@ static inline int entry_is_dirty(entry_t *entry) {
  *   ONLY FOR > PENTIUM PRO PROCESSORS
  */
 #define ENTRY_GLOBAL 8
+static inline void entry_set_global(entry_t *entry) {
+  set_bit(entry, ENTRY_GLOBAL, 1);
+}
+static inline int entry_is_global(entry_t *entry) {
+  return get_bit(*entry, ENTRY_GLOBAL);
+}
+
 
 /*
  * Available, bits 9, 10, 11
@@ -243,8 +250,9 @@ static inline void *swap_address_space(void *new) {
 }
 
 #define vtop(v, pp) __vtop((struct entry_table *) get_cr3(), v, pp)
+#define phys(v) 
 
-int map_pages(void *pd, size_t addr, size_t size, size_t *ppages, int flags);
+int map_page(void *pd, size_t virt, struct page *page, int flags);
 
 void unmap_pages(void *pd, size_t addr, size_t size, size_t *ppages);
 
