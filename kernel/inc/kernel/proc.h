@@ -6,9 +6,10 @@
 #ifndef __KERNEL_PROC_H__
 #define __KERNEL_PROC_H__
 
-#include <list.h>
+#include <kernel/loader.h>
 #include <mm/memory.h>
-
+#include <mm/vm.h>
+#include <list.h>
 
 struct thread_struct;
 struct proc_struct;
@@ -74,12 +75,12 @@ struct proc_struct {
   /*
    * The virtual address space shared by all threads running in the process.
    */
-  struct vm_space *space;
+  struct vm_space space;
 
   /*
    * The file this process is executing
    */
-  struct exec_file *exec;
+  struct exec_file exec;
 
   /*
    * The region of memory where process arguments are stored. This is usually

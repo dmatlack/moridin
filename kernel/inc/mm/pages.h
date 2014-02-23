@@ -35,9 +35,7 @@ struct page_zone {
   (page_address((zone)->pages + ((zone)->num_pages - 1)))
 
 
-void alloc_kernel_pages(size_t paddr, size_t size);
-//TODO: struct page *alloc_pages_at(size_t addr, unsigned long n);
-
+struct page *alloc_pages_at(size_t addr, unsigned long n);
 
 int alloc_pages(unsigned n, size_t *pages);
 //TODO: struct page *alloc_pages(unsigned long n);

@@ -20,7 +20,6 @@
 #include <assert.h>
 #include <list.h>
 
-extern struct vm_space *postboot_vm_space;
 struct proc_struct init_proc;
 
 #include <arch/cpu.h> // iret_to_userspace
@@ -34,30 +33,32 @@ void run_first_proc(char *execpath, int argc, char **argv) {
   int ret;
 
   ret = proc_fork(NULL, &init_proc);
-  ASSERT_EQUALS(ret, 0);
+  ASSERT_EQUALS(0, ret);
 
   thread = list_head(&init_proc.threads);
 
   file = vfs_file_get(execpath);
-  ASSERT(NULL != file);
+  ASSERT_NOT_NULL(file);
 
-  init_proc.exec = exec_file_get(file);
-  ASSERT(NULL != init_proc.exec);
+  ret = exec_file_init(&init_proc.exec, file);
+  ASSERT_EQUALS(0, ret);
 
-  init_proc.space = postboot_vm_space;
+  ret = vm_space_init(&init_proc.space);
+  ASSERT_EQUALS(0, ret);
+  __vm_space_switch(init_proc.space.object);
 
   /*
    * Load the executable into memory
    */
-  ret = load(init_proc.exec, init_proc.space);
-  ASSERT_EQUALS(ret, 0);
+  ret = load(&init_proc.exec, &init_proc.space);
+  ASSERT_EQUALS(0, ret);
 
   /*
    * Create a runtime stack for the process.
    */
   ret = create_user_stack(thread, argc, argv);
-  ASSERT_EQUALS(ret, 0);
+  ASSERT_EQUALS(0, ret);
 
-  iret_to_userspace(thread->kstack_hi, (size_t) thread->proc->space->object,
-                    thread->proc->exec->entry, thread->ustack_entry);
+  iret_to_userspace(thread->kstack_hi, (size_t) thread->proc->space.object,
+                    thread->proc->exec.entry, thread->ustack_entry);
 }

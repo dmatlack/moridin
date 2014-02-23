@@ -98,14 +98,12 @@ int proc_fork(struct proc_struct *parent, struct proc_struct *child) {
     child->parent = parent;
     list_insert_tail(&parent->children, child, sibling_link);
 
-    child->exec = exec_file_copy(parent->exec);
+    exec_file_copy(&child->exec, &parent->exec);
 
     child->arg_start = parent->arg_start;
     child->arg_size = parent->arg_size;
     child->argc_addr = parent->argc_addr;
     child->argv_addr = parent->argv_addr;
-
-    //TODO child->space
 
     ret = thread_fork(list_head(&parent->threads), list_head(&child->threads));
     if (ret) {

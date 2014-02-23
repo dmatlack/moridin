@@ -72,6 +72,15 @@ void *new_address_space(void) {
 }
 
 /**
+ * @brief share_mappings() is expected to make a high level copy of the from_pd
+ * address space to to_pd. This means that after this function is called, to_pd
+ * should have the exact same mappings as from_pd.
+ */
+void share_mappings(struct entry_table *to_pd, struct entry_table *from_pd) {
+  memcpy(to_pd, from_pd, sizeof(struct entry_table));
+}
+
+/**
  * @brief This function looks at the flags (see mm/vm.h) and sets the
  * correct bits in the page (table|directory) entry.
  */

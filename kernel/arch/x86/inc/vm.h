@@ -248,6 +248,8 @@ int map_pages(void *pd, size_t addr, size_t size, size_t *ppages, int flags);
 
 void unmap_pages(void *pd, size_t addr, size_t size, size_t *ppages);
 
+void share_mappings(struct entry_table *to_pd, struct entry_table *from_pd);
+
 void tlb_flush(void);
 void tlb_invalidate(size_t addr, size_t size);
 

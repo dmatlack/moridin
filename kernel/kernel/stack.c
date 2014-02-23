@@ -145,7 +145,7 @@ int create_user_stack(struct thread_struct *thread, int argc, char **argv) {
   thread->proc->arg_start = CONFIG_USER_VIRTUAL_TOP - PAGE_SIZE;
   thread->proc->arg_size  = PAGE_ALIGN_UP(arg_size(argc, argv));
 
-  ret = vm_map(thread->proc->space,
+  ret = vm_map(&thread->proc->space,
                thread->proc->arg_start, thread->proc->arg_size,
                VM_U | VM_W);
   if (ret) {
@@ -158,11 +158,11 @@ int create_user_stack(struct thread_struct *thread, int argc, char **argv) {
   thread->ustack_size  = PAGE_SIZE;
   thread->ustack_start = thread->proc->arg_start - thread->ustack_size;
 
-  ret = vm_map(thread->proc->space,
+  ret = vm_map(&thread->proc->space,
                thread->ustack_start, thread->ustack_size,
                VM_U | VM_W);
   if (ret) {
-    vm_unmap(thread->proc->space, thread->proc->arg_start, thread->proc->arg_size);
+    vm_unmap(&thread->proc->space, thread->proc->arg_start, thread->proc->arg_size);
     return ret;
   }
 

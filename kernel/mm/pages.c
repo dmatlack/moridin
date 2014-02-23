@@ -215,7 +215,7 @@ alloc_pages_out:
  *    0 otherwise
  */
 struct page *NEW_alloc_pages(unsigned long n) {
-  TRACE("n=%d");
+  TRACE("n=%d", n);
   ASSERT_NOTEQUALS(n, 0);
   return __alloc_pages(n, zones);
 }

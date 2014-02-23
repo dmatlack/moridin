@@ -5,13 +5,13 @@
 ###############################################################################
 include ../config.mk
 
-SRCDIRS = boot      		\
-          dev       		\
-          fs        		\
-          kernel    		\
-          lib       		\
-          mm 						\
-				  arch/$(ARCH)
+SRCDIRS = boot          \
+          dev           \
+          fs            \
+          kernel        \
+          lib           \
+          mm            \
+          arch/$(ARCH)
 
 INCDIRS = inc      \
           inc/lib
@@ -28,7 +28,7 @@ CFLAGS += -DKDEBUG
 .PHONY: default clean arch kernel
 
 default: kernel
-	
+
 kernel: arch $(OFILES) $(HFILES) linker.ld
 	$(CC) -T linker.ld -o KERNEL.o -ffreestanding -O2 -nostdlib $(OFILES) -lgcc
 	objdump -Dg KERNEL.o > KERNEL.S
@@ -41,6 +41,7 @@ kernel: arch $(OFILES) $(HFILES) linker.ld
 # parent directory first.
 #
 arch:
+	rm -f inc/arch
 	ln -s ../arch/$(ARCH)/inc inc/arch
 
 clean:

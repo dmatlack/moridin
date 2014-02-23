@@ -42,36 +42,6 @@ int load(struct exec_file *exec, struct vm_space *space) {
   return ret;
 }
 
-struct exec_file *exec_file_get(struct vfs_file *file) {
-  struct exec_file *exec;
-  int ret = 0;
-
-  exec = kmalloc(sizeof(struct exec_file));
-  if (NULL == exec) return NULL;
-
-  ret = exec_file_init(exec, file);
-  if (ret) {
-    kfree(exec, sizeof(struct exec_file));
-    exec = NULL;
-  }
-
-  return exec;
-}
-
-struct exec_file *exec_file_copy(struct exec_file *exec) {
-  atomic_add(&exec->refs, 1);
-  return exec;
-}
-
-void exec_file_put(struct exec_file *exec) {
-  atomic_add(&exec->refs, 1);
-
-  if (0 == exec->refs) {
-    vfs_file_put(exec->file);
-    kfree(exec, sizeof(struct exec_file));
-  }
-}
-
 /**
  * @brief Initialize an exec_file struct.
  */
@@ -124,4 +94,9 @@ int exec_file_init(struct exec_file *exec, struct vfs_file *file) {
 
   vfs_close(file);
   return ret;
+}
+
+void exec_file_copy(struct exec_file *to, struct exec_file *from) { 
+  memcpy(to, from, sizeof(struct exec_file));
+  atomic_add(&to->file->refs, 1);
 }
