@@ -3,7 +3,7 @@
  */
 #include <kernel/debug.h>
 #include <kernel/log.h>
-#include <kernel/bochs.h>
+#include <dev/bochs.h>
 
 #include <dev/serial.h>
 

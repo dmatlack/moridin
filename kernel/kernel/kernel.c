@@ -6,6 +6,7 @@
  * @author David Matlack
  */
 #include <kernel/config.h>
+#include <kernel/debug.h>
 #include <kernel/exec.h>
 #include <kernel/irq.h>
 #include <kernel/kmalloc.h>
@@ -23,7 +24,6 @@
 #include <dev/pci.h>
 
 #include <assert.h>
-#include <kernel/debug.h>
 #include <errno.h>
 
 #include <fs/initrd.h>
