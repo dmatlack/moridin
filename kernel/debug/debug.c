@@ -5,8 +5,6 @@
 #include <debug/log.h>
 #include <debug/bochs.h>
 
-#include <kernel.h>
-
 #include <dev/serial.h>
 
 struct serial_port *debug_serial_port;

@@ -7,8 +7,8 @@
  */
 #include <kernel/irq.h>
 #include <kernel/atomic.h>
+#include <kernel/kmalloc.h>
 
-#include <kernel.h>
 #include <debug.h>
 #include <assert.h>
 #include <list.h>

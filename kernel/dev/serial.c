@@ -5,7 +5,6 @@
  */
 #include <dev/serial.h>
 
-#include <kernel.h>
 #include <stddef.h>
 #include <types.h>
 

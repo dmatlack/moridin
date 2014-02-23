@@ -5,7 +5,6 @@
 #include <boot/multiboot.h>
 #include <stddef.h>
 #include <assert.h>
-#include <kernel.h>
 
 size_t phys_mem_bytes; /* size of physical memory in bytes */
 size_t phys_mem_pages; /* size of physical memory in pages */

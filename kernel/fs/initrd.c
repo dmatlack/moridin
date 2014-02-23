@@ -5,8 +5,8 @@
  */
 #include <fs/initrd.h>
 #include <fs/vfs.h>
+#include <kernel/kmalloc.h>
 
-#include <kernel.h>
 #include <errno.h>
 #include <string.h>
 #include <math.h>

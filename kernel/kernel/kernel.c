@@ -5,11 +5,8 @@
  *
  * @author David Matlack
  */
-#include <kernel.h>
-
 #include <kernel/config.h>
 #include <kernel/exec.h>
-#include <kernel/exn.h>
 #include <kernel/irq.h>
 #include <kernel/kmalloc.h>
 #include <kernel/loader.h>
@@ -52,7 +49,6 @@ void kernel_main() {
 
   pages_init();
   vm_init();
-  exn_init();
   irq_init();
   timer_init();
   initrd_init();

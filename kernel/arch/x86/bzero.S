@@ -2,7 +2,7 @@
  * Written by J.T. Conklin <jtc@netbsd.org>.
  * Public domain.
  */
-#include <asm_style.h>
+#include "asm_style.h"
 
 #if defined(LIBC_SCCS)
 	RCSID("$NetBSD: bzero.S,v 1.8 1995/04/28 22:57:58 jtc Exp $")

@@ -23,7 +23,7 @@
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
  */
-#include <asm_style.h>
+#include "asm_style.h"
 
 
 #if 0 /* is this useful? */

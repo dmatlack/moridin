@@ -5,10 +5,10 @@
  *
  * @author David Matlack
  */
-#include <kernel.h>
 #include <kernel/proc.h>
 #include <kernel/atomic.h>
 #include <kernel/loader.h>
+#include <kernel/kmalloc.h>
 
 #include <mm/vm.h>
 

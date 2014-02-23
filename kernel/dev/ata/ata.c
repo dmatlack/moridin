@@ -7,7 +7,6 @@
  */
 #include <dev/ata.h>
 
-#include <kernel.h>
 #include <kernel/irq.h>
 #include <errno.h>
 #include <debug.h>
