@@ -90,7 +90,7 @@
 /* Is there video information? */
 #define MULTIBOOT_INFO_VIDEO_INFO               0x00000800
 
-#ifndef ASM_FILE
+#ifndef ASSEMBLER
 
 typedef unsigned short          multiboot_uint16_t;
 typedef unsigned int            multiboot_uint32_t;
@@ -223,6 +223,6 @@ typedef struct multiboot_mod_list multiboot_module_t;
 void mb_dump(printf_f p, struct multiboot_info *mb_info);
 size_t mb_mod_start(struct multiboot_info *mb_info, int index);
 
-#endif /* ! ASM_FILE */
+#endif /* !ASSEMBLER */
 
-#endif /* ! MULTIBOOT_HEADER */
+#endif /* !MULTIBOOT_HEADER */

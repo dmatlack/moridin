@@ -8,7 +8,6 @@
 #
 # @author David Matlack
 ###
-#define ASM_FILE
 
 #
 # @brief This macro generates a function for a given exception
@@ -99,5 +98,3 @@ x86_exn_handler_macro 16, 0
 x86_exn_handler_macro 17, 1
 x86_exn_handler_macro 18, 0
 x86_exn_handler_macro 19, 0
-
-#undef ASM_FILE

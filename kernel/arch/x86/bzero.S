@@ -2,8 +2,6 @@
  * Written by J.T. Conklin <jtc@netbsd.org>.
  * Public domain.
  */
-#define ASM_FILE
-
 #include <asm_style.h>
 
 #if defined(LIBC_SCCS)
@@ -46,5 +44,3 @@ L1:	movl	%edx,%ecx		/* zero remainder by bytes */
 
 	popl	%edi
 	ret
-
-#undef ASM_FILE

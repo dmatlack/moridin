@@ -1,5 +1,5 @@
 ###############################################################################
-# @file boot/boot.S
+# @file arch/x86/boot.S
 #
 # The Bare Bones tutorial on osdev served as a starting point for this
 # file: http://wiki.osdev.org/Bare_Bones
@@ -11,8 +11,6 @@
 #
 # @author David Matlack
 ###############################################################################
-#define ASM_FILE
-
 #include <boot/multiboot.h>
 #include <arch/x86/seg.h>
 
@@ -246,5 +244,3 @@ boot_page_dir:
 boot_stack_bottom:
   .space 4096
 boot_stack_top:
-
-#undef ASM_FILE
