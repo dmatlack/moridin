@@ -19,9 +19,19 @@
 
 struct vm_space *postboot_vm_space;
 
-static void vm_map_kernel_pages(void) {
+void vm_init(void) {
   unsigned i, nkpages;
+  size_t ksize;
   int ret;
+
+  TRACE();
+
+  /*
+   * Reserve the first 1/4 of physical memory
+   */
+  ksize = PAGE_ALIGN_DOWN(phys_mem_bytes / 4 * 1);
+  ASSERT_GREATEREQ(ksize, MB(16));
+  alloc_kernel_pages(0x0, ksize);
 
   postboot_vm_space = kmalloc(sizeof(struct vm_space));
   if (NULL == postboot_vm_space) {
@@ -34,9 +44,9 @@ static void vm_map_kernel_pages(void) {
 
   TRACE_OFF; // about to map a lot of pages, so disable debug call tracing
 
-  nkpages = num_kernel_pages();
+  nkpages = ksize / PAGE_SIZE;
   for (i = 0; i < nkpages; i++) {
-    size_t paddr = kernel_pages_pstart() + i*PAGE_SIZE;
+    size_t paddr = 0x0 + i*PAGE_SIZE;
     size_t vaddr = CONFIG_KERNEL_VIRTUAL_START + i*PAGE_SIZE;
 
 #ifdef ARCH_X86
@@ -49,24 +59,6 @@ static void vm_map_kernel_pages(void) {
   }
 
   TRACE_ON;
-}
-
-void vm_init(void) {
-  size_t ksize;
-
-  TRACE();
-
-  /*
-   * Reserve the first 1/4 of physical memory
-   */
-  ksize = PAGE_ALIGN_DOWN(phys_mem_bytes / 4 * 1);
-  ASSERT_GREATEREQ(ksize, MB(16));
-  alloc_kernel_pages(0x0, ksize);
-
-  /*
-   * Map the pages into a new virtual address space
-   */
-  vm_map_kernel_pages();
 
   /*
    * Finally switch off the boot virtual address space and into our new,

@@ -31,6 +31,7 @@ extern char boot_stack_bottom[];
 extern char boot_page_dir[];
 
 extern size_t phys_mem_bytes;
+extern size_t phys_mem_pages;
 
 void mem_mb_init(struct multiboot_info *mb_info);
 

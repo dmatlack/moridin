@@ -16,3 +16,47 @@ Operations
     reference counter.
     2. Create page tables, if necessary, and copy page table entries.
     3. For copy-on-write, mark pages as copy-on-write.
+
+Virtual Memory -- Use Cases
+---------------------------
+
+1. exec(): Load an elf into memory. For each region in the elf, memory
+   the region in virtual memory with the right flags (e.g. read-only for
+   the text region) and copy the elf contents to memory.
+
+2. stack: Create a region of memory at the top of the address space.
+   This region should be able to grow down.
+
+3. heap: Create a region of memory starting at some address. This region
+   should be able to grow up.
+   --> mmap(), brk(), sbrk()
+
+4. fork(): Copy an address space
+
+    copy_address_space( from_space, to_space ) {
+      copy_kernel_region(from_space->kernel_region, to_space->kernel_region)
+    
+      for (from_region : from_space->user_regions) {
+        to_region = malloc_new_region(from_region)
+    
+        if (READ_WRITE(from_region)) {
+          reserve_pages(to_region->size / PAGE_SIZE);
+        }
+    
+        refcopy_region(from_space, to_space, from_region, to_region)
+      }
+    }
+
+Example interface for growing memory regions:
+
+grow_region(space->stack_region, PAGE_SIZE, GROW_START);
+grow_region(space->heap_region, PAGE_SIZE, GROW_END);
+  GROW_START:
+      either increase or decrease the start of the
+      memory region (aka region->address)
+  GROW_END: 
+      either increase or decrease the end of the memory
+      region (aka region->address + region->size).
+
+
+

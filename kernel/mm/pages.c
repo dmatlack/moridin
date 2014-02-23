@@ -15,227 +15,257 @@
 #include <assert.h>
 #include <string.h>
 
-struct page {
-  int count;
-};
+struct page *phys_pages;    /* All pages in physical memory */
+struct page_zone *zones;  /* Physical memory divided up into zones */
 
-/*
- * A struct page for every physical page on the system.
+/**
+ * @brief Initialize all the page_zones.
  */
-struct page *__pages;
+void page_zones_init(void) {
+  struct page_zone *zone;
 
-static unsigned __npages;   /* size of __pages */
-static unsigned __nfree;    /* number of available pages in __pages */
-static unsigned __index;    /* last used lookup index in __pages */
+  zones = kmalloc(sizeof(struct page_zone) * MAX_ZONES);
+  ASSERT_NOT_NULL(zones);
 
-static struct page *__kernel_pages;
-static unsigned     __kernel_npages;
+  memset(zones, 0, sizeof(struct page_zone) * MAX_ZONES);
+
+  /*
+   * We don't do anything fancy like NUMA. There is just one contiguous page
+   * zone covering all of physical memory.
+   */
+  zone = zones;
+  zone->pages = phys_pages;
+  zone->num_pages = phys_mem_pages;
+  zone->num_free = phys_mem_pages;
+  zone->index = 0;
+}
+
 
 /**
  * @breif Initialize the physical page management system.
  */
 void pages_init(void) {
 
-  __npages = phys_mem_bytes / PAGE_SIZE;
-  __nfree = __npages;
-  __index = 0;
+  phys_pages = kmalloc(sizeof(struct page) * phys_mem_pages);
+  ASSERT_NOT_NULL(phys_pages);
 
-  __pages = kmalloc(sizeof(struct page) * __npages);
-  if (NULL == __pages) {
-    panic("Not enough memory to allocate the page list.");  
-  }
+  memset(phys_pages, 0, sizeof(struct page) * phys_mem_pages);
 
-  memset(__pages, 0, sizeof(struct page) * __npages);
+  kprintf("phys_pages: %d pages (page list: %d KB total)\n",
+          phys_mem_pages,
+          phys_mem_pages * sizeof(struct page) / KB(1));
 
-  kprintf("system page list: %d pages (%d KB total)\n", __npages,
-          __npages * sizeof(struct page) / KB(1));
+  page_zones_init();
 }
 
+/**
+ * @brief Given a struct page, return the physical address of the page.
+ */
 size_t page_address(struct page *p) {
-  return (((size_t) p - (size_t) __pages) / sizeof(struct page)) * PAGE_SIZE;
+  return (((size_t) p - (size_t) phys_pages) / sizeof(struct page)) * PAGE_SIZE;
 }
 
+/**
+ * @brief Given the physical address of a page, return the struct page.
+ */
 struct page *get_page(size_t address) {
-  return __pages + (address / PAGE_SIZE);
+  return phys_pages + (address / PAGE_SIZE);
 }
 
 /**
- * @brief Allocate a region of physical memory for use by the kernel.
- * 
- * This function is needed to remap the kernel after system startup.
- * After being loaded, one of the first things the kernel does is
- * enable paging, mapping the first 16 MB of memory. Later the kernel
- * needs to set up its virtual memory properly it will need to reserve
- * a set of physical pages.
- *
- * @param paddr The physical address of the first page to reserve.
- * @param size The size in bytes of the region to reserve.
+ * @brief Return true the the given zone contains the given address.
  */
-void alloc_kernel_pages(size_t paddr, size_t size) {
-  unsigned i;
+bool zone_contains(struct page_zone *zone, size_t addr) {
+  size_t page_addr = PAGE_ALIGN_DOWN(addr);
 
-  TRACE("paddr=0x%x, size=0x%x", paddr, size);
-
-  ASSERT(IS_PAGE_ALIGNED(paddr));
-  ASSERT(IS_PAGE_ALIGNED(size));
-  ASSERT_GREATER(__nfree, size / PAGE_SIZE);
-
-  for (i = 0; i < size / PAGE_SIZE; i++) {
-    struct page *p = get_page(paddr + (i*PAGE_SIZE));
-    p->count = 1;
-  }
-
-  __kernel_pages = get_page(paddr);
-  __kernel_npages = size / PAGE_SIZE;
-
-  __nfree -= __kernel_npages;;
+  return ZONE_START_PAGE_ADDR(zone) <= page_addr &&
+         ZONE_END_PAGE_ADDR(zone)   >= page_addr;
 }
 
-unsigned num_kernel_pages(void) {
-  return __kernel_npages;
-}
+/**
+ * @brief Return the zone that contains the given address.
+ */
+struct page_zone *zone_containing(size_t addr) {
+  struct page_zone *zone;
 
-size_t kernel_pages_pstart(void) {
-  return page_address(__kernel_pages);
-}
-
-static inline int __reserve_pages(unsigned n) {
-  if (n > __nfree) {
-    return ENOMEM;
-  }
-  __nfree -= n;
-  return 0;
-}
-
-static inline void __fulfill_pages(unsigned n, size_t *pages) {
-  unsigned count, iter;
-
-  for (count = iter = 0; iter < __npages; iter++) {
-    if (0 == __pages[__index].count) {
-      struct page *p = __pages + __index;
-      pages[count] = page_address(p);
-      p->count++;
-      count++;
-      if (count == n) break;
+  for (zone = zones; zone < zones + MAX_ZONES; zone++) {
+    if (zone && zone_contains(zone, addr)) {
+      return zone;
     }
-
-    __index = (__index + 1) % __npages;
   }
 
-  /*
-   * This function should never fail to fulfill all n pages.
-   */
-  ASSERT_EQUALS(count, n);
+  return NULL;
 }
 
-/**
- * @brief Request <n> pages be reserved for future use.
- *
- * This function decrements the counter that keeps track of how many pages
- * are available for use globally but does not actually increase the reference
- * counters of any pages.
- *
- * @return
- *    ENOMEM if there are no available pages
- *    0 on success
- */
-int reserve_pages(unsigned n) {
-  int ret;
+static struct page *__alloc_pages_at(size_t addr, unsigned long n, struct page_zone *zone) {
+  struct page *page;
+  struct page *end;
 
-  //lock
-  ret = __reserve_pages(n);
-  //unlock
+  // zone lock
 
-  return ret;
-}
+  end = get_page(addr + (n * PAGE_SIZE));
 
-/**
- * @brief Fulfill a previous request for reserved pages.
- *
- * This function assumes you previously called reserve_pages() and now want
- * some or all of those physical pages.
- */
-void fulfill_pages(unsigned n, size_t *pages) {
-  //lock
-  __fulfill_pages(n, pages);
-  //unlock
-}
-
-/**
- * @brief Request <n> arbitrarily placed pages throughout physical memory.
- *
- * @param n the number of pages to allocate
- * @param pages a buffer in which to store the physical address of each
- *  page allocated
- *
- * @return
- *    ENOMEM if there are no available pages
- *    0 on success
- */
-int alloc_pages(unsigned n, size_t *pages) {
-  int ret;
-
-  TRACE("n=%d, pages=%p", n, pages);
-
-  //lock
-
-  ret = __reserve_pages(n);
-  if (0 == ret) {
-    __fulfill_pages(n, pages);
-  }
-
-  //unlock
-  return ret;
-}
-
-/**
- * @brief Free <n> pages by decrementing their reference count.
- *
- * @param n The number of pages to free.
- * @param pages The physical address of the pages to free
- */
-void free_pages(unsigned n, size_t *pages) {
-  unsigned i;
-
-  TRACE("n=%d, pages=%p", n, pages);
-
-  for (i = 0; i < n; i++) {
-    ASSERT_GREATEREQ(pages[i], MB(16)); // temporary check (don't free kernel pages)
-    ASSERT_GREATER(get_page(pages[i])->count, 0);
-    (get_page(pages[i]))->count--;
-  }
-}
-
-/**
- * @brief Perform a "reference copy" of the given <n> physical pages.
- *
- * This function preforms 2 steps:
- *  1. Increment the reference count of each page provided.
- *  2. Reserve n pages for future fulfillment.
- *
- * This function is provided for copy-on-write.
- *
- * @return
- *    ENOMEM if n pages can't be reserved
- *    0 on success
- */
-int refcopy_pages(unsigned n, size_t *pages) {
-  int ret;
-
-  //lock
-
-  ret = __reserve_pages(n);
-  if (0 == ret) {
-    unsigned i;
-    for (i = 0; i < n; i++) {
-      struct page *p = get_page(pages[i]);
-
-      ASSERT_GREATER(p->count, 0);
-      p->count++;
+  for (page = get_page(addr); page < end; page++) {
+    if (page->count) {
+      return NULL;
     }
   }
   
-  //unlock
- 
-  return ret;
+  for (page = get_page(addr); page < end; page++) {
+    page->count++;
+  }
+
+  zone->num_free -= n;
+
+  // zone unlock
+
+  return get_page(addr);
+}
+
+/**
+ * @brief Attempt to allocate the n physical pages starting at address addr.
+ *
+ * @param addr The physical address of the first page to reserve.
+ * @param n The number of pages to allocate.
+ */
+struct page *alloc_pages_at(size_t addr, unsigned long n) {
+  TRACE("addr=0x%x, n=0x%x", addr, n);
+
+  ASSERT(IS_PAGE_ALIGNED(addr));
+  ASSERT_EQUALS(zone_containing(addr), zone_containing(addr + PAGE_SIZE * n));
+
+  return __alloc_pages_at(addr, n, zone_containing(addr));
+}
+
+// TODO: remove this function and replace references to it with alloc_pages_at
+void alloc_kernel_pages(size_t paddr, size_t size) {
+  ASSERT_NOT_NULL(alloc_pages_at(paddr, size / PAGE_SIZE)); 
+}
+
+/**
+ * @brief Find n contiguous (unused) pages in the zone.
+ *
+ * Assumes the zone lock is already held.
+ */
+static struct page *find_contig_pages(unsigned long n, struct page_zone *zone) {
+  unsigned long num_contig;
+  struct page *start;
+  struct page *page;
+  
+  start = zone->pages + zone->index;
+  page = start;
+  num_contig = 0;
+
+  do {
+    if ((page + n) > (zone->pages + zone->num_pages)) {
+      num_contig = 0;
+      zone->index = 0;
+    }
+    else {
+      /*
+       * This page is in use.
+       */
+      if (page->count) {
+        num_contig = 0;
+      }
+      else {
+        num_contig++;
+
+        if (n == num_contig) {
+          return page - (n - 1);
+        }
+      }
+
+      zone->index = (zone->index + 1) % zone->num_pages;
+    }
+
+    page = zone->pages + zone->index;
+  } while (page != start);
+  
+  return NULL;
+}
+
+struct page *__alloc_pages(unsigned long n, struct page_zone *zone) {
+  struct page *pages;
+  struct page *p;
+
+  // zone lock
+
+  pages = find_contig_pages(n, zone);
+  if (!pages) {
+    goto alloc_pages_out;
+  }
+
+  for (p = pages; p < pages + n; p++) {
+    p->count++;
+  }
+
+  zone->num_free -= n;
+
+alloc_pages_out:
+  // zone unlock
+  return pages;
+}
+
+/**
+ * @brief Allocate n continuous pages.
+ *
+ * @return
+ *    NULL if n contiguous pages could not be found
+ *    0 otherwise
+ */
+struct page *NEW_alloc_pages(unsigned long n) {
+  TRACE("n=%d");
+  ASSERT_NOTEQUALS(n, 0);
+  return __alloc_pages(n, zones);
+}
+
+// TODO: This is the old alloc_pages interface. Remove this and convert
+// the rest of the kernel to using the new alloc_pages.
+int alloc_pages(unsigned n, size_t *page_addrs) {
+  struct page *pages;
+  unsigned i;
+
+  pages = NEW_alloc_pages(n);
+  if (!pages) {
+    return ENOMEM;
+  }
+
+  for (i = 0; i < n; i++) {
+    page_addrs[i] = page_address(pages + i);
+  }
+
+  return 0;
+}
+
+
+void __free_pages(struct page *pages, unsigned long n, struct page_zone *zone) {
+  struct page *p;
+
+  // zone lock
+  
+  for (p = pages; p < pages + n; p++) {
+    p->count--;
+  }
+
+  zone->num_free += n;
+
+  // zone unlock
+}
+
+/**
+ * @brief Release n contiguous pages.
+ */
+void NEW_free_pages(struct page *pages, unsigned long n) {
+  __free_pages(pages, n, zone_containing(page_address(pages))); 
+}
+
+// TODO: This is the old free_pages interface. Remove this and convert the
+// rest of the kernel to use the new free_pages.
+void free_pages(unsigned n, size_t *pages) {
+  struct page *p;
+  
+  p = get_page(pages[0]);
+
+  NEW_free_pages(p, n);
 }

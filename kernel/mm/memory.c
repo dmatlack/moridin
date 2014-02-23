@@ -7,13 +7,11 @@
 #include <assert.h>
 #include <kernel.h>
 
-/*
- * The size of physical memory in bytes
- */
-size_t phys_mem_bytes;
+size_t phys_mem_bytes; /* size of physical memory in bytes */
+size_t phys_mem_pages; /* size of physical memory in pages */
 
-char *kheap_start;
-char *kheap_end;
+char *kheap_start; /* The start address of the kernel heap */
+char *kheap_end; /* The end address of the kernel heap */
 
 /**
  * @brief Initialize basic memory contructs from the multiboot environment
@@ -26,6 +24,7 @@ void mem_mb_init(struct multiboot_info *mb_info) {
   }
 
   phys_mem_bytes = MB(1) + (KB(1) * mb_info->mem_upper);
+  phys_mem_pages = phys_mem_bytes / PAGE_SIZE;
 
   kprintf("RAM: %d MB\n", phys_mem_bytes / MB(1));
 
