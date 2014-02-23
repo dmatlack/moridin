@@ -8,7 +8,7 @@
 #include <kernel/proc.h>
 #include <kernel/fork.h>
 
-#include <debug.h>
+#include <kernel/debug.h>
 
 #define SYS_WRITE     0
 #define SYS_GETPID    1

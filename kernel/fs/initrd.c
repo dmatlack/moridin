@@ -11,7 +11,7 @@
 #include <string.h>
 #include <math.h>
 #include <assert.h>
-#include <debug.h>
+#include <kernel/debug.h>
 
 size_t initrd_location; // set externally
 

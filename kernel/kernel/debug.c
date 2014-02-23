@@ -1,9 +1,9 @@
 /**
  * @file debug/debug.c
  */
-#include <debug.h>
-#include <debug/log.h>
-#include <debug/bochs.h>
+#include <kernel/debug.h>
+#include <kernel/log.h>
+#include <kernel/bochs.h>
 
 #include <dev/serial.h>
 

@@ -6,7 +6,6 @@
 include ../config.mk
 
 SRCDIRS = boot      \
-          debug     \
           dev       \
           fs        \
           kernel    \

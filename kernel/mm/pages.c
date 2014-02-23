@@ -8,7 +8,7 @@
 
 #include <kernel/kmalloc.h>
 #include <kernel/kprintf.h> //remove me
-#include <debug.h>
+#include <kernel/debug.h>
 
 #include <errno.h>
 #include <stddef.h>

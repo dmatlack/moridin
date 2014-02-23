@@ -17,7 +17,7 @@
 
 #include <stddef.h>
 #include <assert.h>
-#include <debug.h>
+#include <kernel/debug.h>
 #include <errno.h>
 
 #define X86_IS_PAGE_ALIGNED(addr)\

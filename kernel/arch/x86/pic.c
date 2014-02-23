@@ -6,7 +6,7 @@
 #include <arch/x86/pic.h>
 #include <arch/x86/io.h>
 #include <arch/x86/idt.h>
-#include <debug.h>
+#include <kernel/debug.h>
 #include <kernel/kprintf.h>
 
 int pic_init(void) {

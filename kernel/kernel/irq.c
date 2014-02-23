@@ -9,7 +9,7 @@
 #include <kernel/atomic.h>
 #include <kernel/kmalloc.h>
 
-#include <debug.h>
+#include <kernel/debug.h>
 #include <assert.h>
 #include <list.h>
 #include <errno.h>

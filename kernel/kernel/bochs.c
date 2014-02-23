@@ -5,7 +5,7 @@
  *
  * @author David Matlack
  */
-#include <debug/bochs.h>
+#include <kernel/bochs.h>
 #include <kernel/io.h>
 
 void bochs_putchar(char c) {

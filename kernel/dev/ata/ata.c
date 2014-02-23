@@ -9,7 +9,7 @@
 
 #include <kernel/irq.h>
 #include <errno.h>
-#include <debug.h>
+#include <kernel/debug.h>
 #include <string.h>
 
 #include <kernel/io.h>

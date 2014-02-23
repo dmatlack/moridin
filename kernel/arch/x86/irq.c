@@ -11,7 +11,7 @@
 #include <kernel/atomic.h>
 #include <kernel/irq.h>
 
-#include <debug.h>
+#include <kernel/debug.h>
 #include <assert.h>
 
 int spurious_irqs[PIC_IRQ_COUNT];

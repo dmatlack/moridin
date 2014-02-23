@@ -6,7 +6,7 @@
 #include <arch/x86/exn.h>
 #include <arch/x86/idt.h>
 
-#include <debug.h>
+#include <kernel/debug.h>
 #include <assert.h>
 
 extern void x86_syscall(void);

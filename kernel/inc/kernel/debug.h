@@ -5,8 +5,8 @@
  *
  * @author David Matlack
  */
-#include <debug/log.h>
-#include <debug/bochs.h>
+#include <kernel/log.h>
+#include <kernel/bochs.h>
 #include <assert.h>
 
 #ifndef __DEBUG_H__

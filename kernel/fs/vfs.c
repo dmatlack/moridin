@@ -13,7 +13,7 @@
 #include <types.h>
 #include <string.h>
 #include <list.h>
-#include <debug.h>
+#include <kernel/debug.h>
 #include <errno.h>
 
 struct vfs_dirent *__vfs_root_dirent;

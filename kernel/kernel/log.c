@@ -3,7 +3,7 @@
  *
  * @author David Matlack
  */
-#include <debug.h>
+#include <kernel/debug.h>
 
 #include <stddef.h>
 #include <types.h>

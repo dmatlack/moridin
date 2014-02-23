@@ -9,7 +9,7 @@
 
 #include <dev/pit.h>
 
-#include <debug.h>
+#include <kernel/debug.h>
 #include <errno.h>
 
 struct irq_handler __timer_handler;

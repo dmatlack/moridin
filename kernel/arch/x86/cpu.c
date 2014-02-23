@@ -11,7 +11,7 @@
 #include <arch/x86/seg.h>
 #include <stdint.h>
 #include <stddef.h>
-#include <debug.h>
+#include <kernel/debug.h>
 
 #define GENERATE_CRX_SET_BIT_FN(_CRX_) \
   void cr##_CRX_##_set_bit(int index, int bit) { \

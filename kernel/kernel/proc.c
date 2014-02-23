@@ -14,7 +14,7 @@
 
 #include <string.h>
 #include <errno.h>
-#include <debug.h>
+#include <kernel/debug.h>
 #include <assert.h>
 #include <list.h>
 

@@ -6,7 +6,7 @@
 #include <dev/pci.h>
 #include <string.h>
 #include <stdint.h>
-#include <debug.h>
+#include <kernel/debug.h>
 #include <errno.h>
 #include <kernel/io.h>
 #include <types.h>

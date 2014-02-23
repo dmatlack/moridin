@@ -23,7 +23,7 @@
 #include <dev/pci.h>
 
 #include <assert.h>
-#include <debug.h>
+#include <kernel/debug.h>
 #include <errno.h>
 
 #include <fs/initrd.h>

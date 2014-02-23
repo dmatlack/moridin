@@ -14,7 +14,7 @@
 #endif
 
 #include <assert.h>
-#include <debug.h>
+#include <kernel/debug.h>
 #include <errno.h>
 
 struct vm_space *postboot_vm_space;

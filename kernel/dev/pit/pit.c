@@ -10,7 +10,7 @@
 #include <kernel/io.h>
 #include <kernel/kprintf.h>
 #include <stddef.h>
-#include <debug.h>
+#include <kernel/debug.h>
 
 static int freq_hz;
 

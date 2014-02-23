@@ -2,7 +2,7 @@
  * @file lib/assert.c
  */
 #include <assert.h>
-#include <debug.h>
+#include <kernel/debug.h>
 #include <errno.h>
 
 #define ASSERT_FUNCTION_GENERATOR(_name, _op)                    \
