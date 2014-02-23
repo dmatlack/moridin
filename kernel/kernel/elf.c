@@ -18,6 +18,10 @@
 #include <kernel/debug.h>
 #include <assert.h>
 
+#ifdef ARCH_X86
+  #include <arch/x86/vm.h>
+#endif
+
 /**
  * @brief Read the elf32_ehdr from the file.
  *

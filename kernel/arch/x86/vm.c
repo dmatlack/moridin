@@ -24,34 +24,19 @@ static inline bool is_page_aligned(size_t addr) {
   return FLOOR(X86_PAGE_SIZE, addr) == addr;
 }
 
-int x86_init_page_dir(struct entry_table **object) {
-  struct entry_table *page_directory;
-  int ret;
-
-  ASSERT_EQUALS(PAGE_SIZE, X86_PAGE_SIZE);
-
-  page_directory = entry_table_alloc();
-  if (NULL == page_directory) return ENOMEM;
-
-  ret = entry_table_init(page_directory);
-  if (0 != ret) {
-    entry_table_free(page_directory); 
-    return ret;
-  }
-
-  *object = page_directory;
-  return 0;
-}
-
 /**
- * @brief Initialize a page table or page directory (struct entry_table).
+ * @brief Allocate a new entry_table, with the proper memory address alignment.
  *
- * This sets all entries in the table to 0. Most importantly, it marks all
- * entries as *not* present.
+ * @return NULL if the allocation fails.
  */
-int entry_table_init(struct entry_table *tbl) {
-  unsigned int i;
-  TRACE("tbl=%p", tbl);
+static struct entry_table *new_entry_table(void) {
+  struct entry_table *tbl;
+  unsigned i;
+
+  TRACE();
+
+  tbl = kmemalign(X86_PAGE_SIZE, sizeof(struct entry_table));
+
   for (i = 0; i < ENTRY_TABLE_SIZE; i++) {
     /*
      * zero out the entry to be safe but all that matters here is that the
@@ -60,26 +45,35 @@ int entry_table_init(struct entry_table *tbl) {
     tbl->entries[i] = 0;
     entry_set_absent(tbl->entries + i);
   }
-  return 0;
+
+  return tbl;
 }
 
-/**
- * @brief Allocate a new entry_table, with the proper memory address alignment.
- *
- * @return NULL if the allocation fails.
- */
-struct entry_table *entry_table_alloc(void) {
-  TRACE();
-  return kmemalign(X86_PAGE_SIZE, sizeof(struct entry_table));
-}
-
-void entry_table_free(struct entry_table *ptr) {
+static void free_entry_table(struct entry_table *ptr) {
   TRACE("ptr=%p", ptr);
   kfree(ptr, sizeof(struct entry_table));
 }
 
 /**
- * @brief Set the entry flags to match the provided vm flags.
+ * @brief Allocate a page directory to be used in a new address space.
+ *
+ * @return NULL if allocating a page of memory failed, the address of the 
+ * page directory otherwise.
+ */
+void *new_address_space(void) {
+  struct entry_table *page_directory;
+
+  page_directory = new_entry_table();
+  if (!page_directory) {
+    return NULL;
+  }
+
+  return (void *) page_directory;
+}
+
+/**
+ * @brief This function looks at the flags (see mm/vm.h) and sets the
+ * correct bits in the page (table|directory) entry.
  */
 void entry_set_flags(entry_t *entry, int flags) {
   if (flags & VM_W) {
@@ -102,6 +96,40 @@ void entry_set_flags(entry_t *entry, int flags) {
 }
 
 /**
+ * @brief Convert the virtual address into the physical address it is
+ * mapped to.
+ *
+ * @param pp If not NULL, the physical address will be written here.
+ *
+ * @return TRUE (non-zero) if the address is mapped, FALSE (zero) if the
+ * address is not mapped.
+ */
+bool __vtop(struct entry_table *pd, size_t v, size_t *pp) {
+  struct entry_table *pt;
+  entry_t *pde, *pte;
+
+  pde = get_pde(pd, v);
+
+  if (!entry_is_present(pde)) { 
+    return false;
+  }
+
+  pt = (struct entry_table *) entry_get_addr(pde);
+  pte = get_pte(pt, v);
+
+  if (!entry_is_present(pte)) { 
+    return false;
+  }
+
+  if (pp) {
+    *pp = entry_get_addr(pte) + PHYS_OFFSET(v);
+  }
+
+  return true;
+}
+
+
+/**
  * @brief Maps the virtual page, <vpage>, to the physical page, <ppage>.
  *
  * @return
@@ -111,9 +139,9 @@ void entry_set_flags(entry_t *entry, int flags) {
  *      table data structure and the system has run out of available
  *      memory.
  */
-int x86_map_page(struct entry_table *pd, size_t vpage, size_t ppage, int flags) {
+int map_page(struct entry_table *pd, size_t vpage, size_t ppage, int flags) {
   struct entry_table *pt;
-  size_t vtop;
+  size_t phys;
   entry_t *pde, *pte;
 
   TRACE("pd=%p, vpage=0x%x, ppage=0x%x, flags=0x%x", pd, vpage, ppage, flags);
@@ -123,18 +151,14 @@ int x86_map_page(struct entry_table *pd, size_t vpage, size_t ppage, int flags) 
   pde = get_pde(pd, vpage);
 
   if (!entry_is_present(pde)) {
-    pt = entry_table_alloc();
-
-    if (NULL == pt) {
+    pt = new_entry_table();
+    if (!pt) {
       return ENOMEM;
     }
-    else {
-      entry_table_init(pt);
 
-      entry_set_addr(pde, (size_t) pt);
-      entry_set_present(pde);
-      entry_set_flags(pde, VM_R | VM_W | VM_U);
-    }
+    entry_set_addr(pde, (size_t) pt);
+    entry_set_present(pde);
+    entry_set_flags(pde, VM_R | VM_W | VM_U);
   }
   else {
     pt = (struct entry_table *) entry_get_addr(pde);
@@ -148,8 +172,8 @@ int x86_map_page(struct entry_table *pd, size_t vpage, size_t ppage, int flags) 
   entry_set_present(pte);
   entry_set_flags(pte, flags);
 
-  ASSERT(x86_vtop(pd, vpage, &vtop));
-  ASSERT_EQUALS(ppage, vtop);
+  ASSERT(__vtop(pd, vpage, &phys));
+  ASSERT_EQUALS(ppage, phys);
 
   return 0;
 }
@@ -166,18 +190,11 @@ int x86_map_page(struct entry_table *pd, size_t vpage, size_t ppage, int flags) 
  * @param size The size of the region to map
  * @param ppages The physical addresses of the pages that were unmapped
  */
-void x86_unmap_pages(struct entry_table *pd, size_t addr, size_t size,
-                     size_t *ppages) {
+void __unmap_pages(struct entry_table *pd, size_t addr, size_t size, size_t *ppages) {
   size_t vpage;
   entry_t *pde, *pte;
   int i, j;
   int num_pages = size / PAGE_SIZE;
-
-  TRACE("pd=%p, addr=0x%x, size=0x%x, ppages=%p",
-        pd, addr, size, ppages);
-
-  ASSERT(is_page_aligned(addr));
-  ASSERT(is_page_aligned(size));
 
   for (i = 0; i < num_pages; i++) {
     vpage = addr + (i * X86_PAGE_SIZE);
@@ -189,11 +206,15 @@ void x86_unmap_pages(struct entry_table *pd, size_t addr, size_t size,
     pde = get_pde(pd, vpage);
     *pde = *pde | ENTRY_TABLE_UNMAP;
 
+    ASSERT(entry_is_present(pde));
+
     /*
      * Mark the page _table_ entry as not present, effectively unmapping
      * the page.
      */
     pte = get_pte((struct entry_table *) entry_get_addr(pde), vpage);
+
+    ASSERT(entry_is_present(pte));
     entry_set_absent(pte);
 
     ppages[i] = entry_get_addr(pte);
@@ -224,12 +245,38 @@ void x86_unmap_pages(struct entry_table *pd, size_t addr, size_t size,
        */
       if (is_empty) {
         entry_set_absent(pde);
-        entry_table_free(pt);
+        free_entry_table(pt);
       }
 
       *pde &= ~ENTRY_TABLE_UNMAP;
     }
   }
+}
+
+void unmap_pages(void *pd, size_t addr, size_t size, size_t *ppages) {
+  TRACE("pd=%p, addr=0x%x, size=0x%x, ppages=%p", pd, addr, size, ppages);
+
+  ASSERT(is_page_aligned(addr));
+  ASSERT(is_page_aligned(size));
+
+  return __unmap_pages((struct entry_table *) pd, addr, size, ppages);
+}
+
+int __map_pages(struct entry_table *pd, size_t addr, size_t size, size_t *ppages, int flags) {
+  int i;
+
+  for (i = 0; i < (int) (size / X86_PAGE_SIZE); i++) {
+    size_t vpage = addr + (i * X86_PAGE_SIZE);
+    int ret;
+   
+    ret = map_page(pd, vpage, ppages[i], flags);
+    if (0 != ret) {
+      __unmap_pages(pd, addr, i * X86_PAGE_SIZE, ppages);
+      return ret;
+    }
+  }
+
+  return 0;
 }
 
 /**
@@ -239,66 +286,15 @@ void x86_unmap_pages(struct entry_table *pd, size_t addr, size_t size,
  *
  * @return 0 on success, non-0 on error
  */
-int x86_map_pages(struct entry_table *pd, size_t addr, size_t size,
-                  size_t *ppages, int flags) {
-  int i;
-
-  TRACE("pd=%p, addr=0x%x, size=0x%x, ppages=%p",
-        pd, addr, size, ppages);
+int map_pages(void *pd, size_t addr, size_t size, size_t *ppages, int flags) {
+  TRACE("pd=%p, addr=0x%x, size=0x%x, ppages=%p", pd, addr, size, ppages);
 
   ASSERT(is_page_aligned(addr));
   ASSERT(is_page_aligned(size));
 
-  for (i = 0; i < (int) (size / X86_PAGE_SIZE); i++) {
-    size_t vpage = addr + (i * X86_PAGE_SIZE);
-    int ret;
-   
-    ret = x86_map_page(pd, vpage, ppages[i], flags);
-    if (0 != ret) {
-      x86_unmap_pages(pd, addr, i * X86_PAGE_SIZE, ppages);
-      return ret;
-    }
-  }
-
-  return 0;
+  return __map_pages((struct entry_table *) pd, addr, size, ppages, flags);
 }
 
-/**
- * @brief Convert the virtual address into the physical address it is
- * mapped to.
- *
- * @return TRUE (non-zero) if the address is mapped, FALSE (zero) if the
- * address is not mapped.
- */
-bool x86_vtop(struct entry_table *pd,  size_t vaddr, size_t *paddrp) {
-  struct entry_table *pt;
-  entry_t *pde, *pte;
-
-  //TRACE("pd=0x%x, vaddr=0x%x, paddrp=%p", pd, vaddr, paddrp);
-  ASSERT_NOT_NULL(paddrp);
-  
-  pde = get_pde(pd, vaddr);
-
-  if (!entry_is_present(pde)) { 
-    return false;
-  }
-
-  pt = (struct entry_table *) entry_get_addr(pde);
-  pte = get_pte(pt, vaddr);
-
-  if (!entry_is_present(pte)) { 
-    return false;
-  }
-
-  *paddrp = entry_get_addr(pte) + PHYS_OFFSET(vaddr);
-  return true;
-}
-
-bool x86_is_mapped(struct entry_table *pd, size_t addr) {
-  size_t ignore;
-
-  return x86_vtop(pd, addr, &ignore);
-}
 
 void x86_set_pagedir(struct entry_table *pd) {
   set_cr3((int32_t) pd);
@@ -306,4 +302,30 @@ void x86_set_pagedir(struct entry_table *pd) {
 
 struct entry_table *x86_get_pagedir(void) {
   return (struct entry_table *) get_cr3();
+}
+
+/**
+ * @brief Flush the contents of the TLB, invalidating all cached virtual
+ * address lookups.
+ */
+void tlb_flush(void) {
+  set_cr3(get_cr3());
+}
+
+/**
+ * @brief Invalidate a set of pages in the TLB. This should be called
+ * after vm_map if you want to write to or read from the pages you just
+ * mapped.
+ */
+void tlb_invalidate(size_t addr, size_t size) {
+  (void) addr; (void) size;
+
+  // TODO implement this with invlpg
+  // e.g.
+  //
+  // addr = PAGE_ALIGN_DOWN( addr )
+  // size = PAGE_ALIGN_UP( size )
+  // for (p = addr; p < addr + size; p += page_size) x86_invlpg(p)
+  //
+  tlb_flush();
 }

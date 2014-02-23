@@ -10,7 +10,6 @@
 #include <stdint.h>
 #include <assert.h>
 #include <kernel/kprintf.h>
-#include <arch/x86/exn.h>
 
 size_t mb_mod_start(struct multiboot_info *mb_info, int index) {
   return (size_t)

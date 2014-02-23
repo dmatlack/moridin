@@ -9,13 +9,13 @@
 #include <kernel/config.h>
 #include <kernel/kmalloc.h>
 
-#ifdef ARCH_X86
-  #include <arch/x86/vm.h>
-#endif
-
 #include <assert.h>
 #include <kernel/debug.h>
 #include <errno.h>
+
+#ifdef ARCH_X86
+  #include <arch/x86/vm.h>
+#endif
 
 struct vm_space *postboot_vm_space;
 
@@ -49,10 +49,8 @@ void vm_init(void) {
     size_t paddr = 0x0 + i*PAGE_SIZE;
     size_t vaddr = CONFIG_KERNEL_VIRTUAL_START + i*PAGE_SIZE;
 
-#ifdef ARCH_X86
-    ret = x86_map_pages(postboot_vm_space->object, vaddr, PAGE_SIZE,
-                        &paddr, VM_S | VM_G | VM_R | VM_W);
-#endif
+    ret = map_pages(postboot_vm_space->object, vaddr, PAGE_SIZE, &paddr,
+        VM_S | VM_G | VM_R | VM_W);
     if (ret) {
       panic("Couldn't map kernel address space: %d/%s", ret, strerr(ret));
     }
@@ -83,14 +81,10 @@ void vm_init(void) {
  *    non-0 on error (architecture-dependent)
  */
 int vm_space_init(struct vm_space *space) {
-  int ret;
-  
-#ifdef ARCH_X86
-  ret = x86_init_page_dir((struct entry_table **) &space->object);  
-  if (ret != 0) {
-    return ret;
+  space->object = new_address_space();
+  if (!space->object) {
+    return ENOMEM;
   }
-#endif
 
   return 0;
 }
@@ -114,24 +108,13 @@ void vm_space_destroy(struct vm_space *space) {
  * @return The old object.
  */
 void *__vm_space_switch(void *object) {
-  void *old_object;
-
-  TRACE("object=%p", object);
-
-#ifdef ARCH_X86
-  old_object = x86_get_pagedir();
-  x86_set_pagedir(object);
-#endif
-
-  return old_object;
+  return swap_address_space(object);
 }
 
 int __vm_map(struct vm_space *space, size_t address, size_t size, size_t *ppages, int flags) {
   int ret;
 
-#ifdef ARCH_X86
-    ret = x86_map_pages(space->object, address, size, ppages, flags);
-#endif
+  ret = map_pages(space->object, address, size, ppages, flags);
 
   return ret;
 }
@@ -189,7 +172,7 @@ void vm_unmap(struct vm_space *space, size_t address, size_t size) {
   int num_pages;
   int i;
 
-  //TRACE("space=%p, address=0x%x, size=0x%x", space, address, size);
+  TRACE("space=%p, address=0x%x, size=0x%x", space, address, size);
 
   address = PAGE_ALIGN_DOWN(address);
   size = PAGE_ALIGN_UP(size);
@@ -199,42 +182,8 @@ void vm_unmap(struct vm_space *space, size_t address, size_t size) {
     size_t vpage = address + (i * PAGE_SIZE);
     size_t ppage;
 
-#ifdef ARCH_X86
-    if (x86_is_mapped(space->object, vpage)) {
-      x86_unmap_pages(space->object, vpage, PAGE_SIZE,  &ppage); 
-      free_pages(1, &ppage);
-    }
-#endif
-
+    unmap_pages(space->object, vpage, PAGE_SIZE,  &ppage); 
+    free_pages(1, &ppage);
   }
 }
 
-/**
- * @brief Flush the contents of the TLB, invalidating all cached virtual
- * address lookups.
- */
-void tlb_flush(void) {
-  void *object;
-
-#ifdef ARCH_X86
-  object = x86_get_pagedir();
-  x86_set_pagedir(object);
-#endif
-}
-
-/**
- * @brief Invalidate a set of pages in the TLB. This should be called
- * after vm_map if you want to write to or read from the pages you just
- * mapped.
- */
-void tlb_invalidate(size_t addr, size_t size) {
-  // TODO implement this with invlpg
-  // e.g.
-  //
-  // addr = PAGE_ALIGN_DOWN( addr )
-  // size = PAGE_ALIGN_UP( size )
-  // for (p = addr; p < addr + size; p += page_size) x86_invlpg(p)
-  //
-  (void) addr; (void) size;
-  tlb_flush();
-}

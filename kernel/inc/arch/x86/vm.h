@@ -28,6 +28,7 @@
 #include <types.h>
 #include <stddef.h>
 #include <assert.h>
+#include <arch/x86/reg.h>
 
 typedef int32_t entry_t;
 
@@ -233,18 +234,21 @@ static inline entry_t* get_pte(struct entry_table *pt, size_t vaddr) {
   return &(pt->entries[PT_OFFSET(vaddr)]);
 }
 
-int x86_init_page_dir(struct entry_table **pd);
+void *new_address_space(void);
 
-bool x86_vtop(struct entry_table *pd,  size_t vaddr, size_t *paddrp);
-bool x86_is_mapped(struct entry_table *pd, size_t vaddr);
+static inline void *swap_address_space(void *new) {
+  void *old = (void *) get_cr3();
+  set_cr3((uint32_t) new);
+  return old;
+}
 
-int x86_map_pages(struct entry_table *pd, size_t addr, size_t size,
-                  size_t *ppages, int flags);
+#define vtop(v, pp) __vtop((struct entry_table *) get_cr3(), v, pp)
 
-void x86_unmap_pages(struct entry_table *pd, size_t addr, size_t size,
-                     size_t *ppages);
+int map_pages(void *pd, size_t addr, size_t size, size_t *ppages, int flags);
 
-struct entry_table *x86_get_pagedir(void);
-void x86_set_pagedir(struct entry_table *pd);
+void unmap_pages(void *pd, size_t addr, size_t size, size_t *ppages);
+
+void tlb_flush(void);
+void tlb_invalidate(size_t addr, size_t size);
 
 #endif /* !__X86_VM_H__ */
