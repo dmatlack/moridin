@@ -23,12 +23,12 @@
 
 #include <kernel/config.h>
 #include <mm/vm.h>
-#include <arch/x86/page.h>
+#include <arch/page.h>
 #include <stdint.h>
 #include <types.h>
 #include <stddef.h>
 #include <assert.h>
-#include <arch/x86/reg.h>
+#include <arch/reg.h>
 
 typedef int32_t entry_t;
 

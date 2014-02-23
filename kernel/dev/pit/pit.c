@@ -7,7 +7,7 @@
  */
 #include <dev/pit.h>
 
-#include <kernel/io.h>
+#include <arch/io.h>
 #include <kernel/kprintf.h>
 #include <stddef.h>
 #include <kernel/debug.h>

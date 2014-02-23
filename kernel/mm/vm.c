@@ -13,9 +13,7 @@
 #include <kernel/debug.h>
 #include <errno.h>
 
-#ifdef ARCH_X86
-  #include <arch/x86/vm.h>
-#endif
+#include <arch/vm.h>
 
 struct vm_space *postboot_vm_space;
 

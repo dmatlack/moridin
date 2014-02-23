@@ -5,10 +5,10 @@
  *
  * @author David Matlack
  */
-#include <arch/x86/vm.h>
-#include <arch/x86/page.h>
-#include <arch/x86/reg.h>
-#include <arch/x86/cpu.h>
+#include <arch/vm.h>
+#include <arch/page.h>
+#include <arch/reg.h>
+#include <arch/cpu.h>
 
 #include <kernel/kmalloc.h>
 

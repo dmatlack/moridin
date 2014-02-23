@@ -6,8 +6,9 @@
  * @author David Matlack
  */
 #include <kernel/irq.h>
-#include <kernel/atomic.h>
 #include <kernel/kmalloc.h>
+
+#include <arch/atomic.h>
 
 #include <kernel/debug.h>
 #include <assert.h>

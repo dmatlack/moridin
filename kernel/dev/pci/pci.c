@@ -8,7 +8,7 @@
 #include <stdint.h>
 #include <kernel/debug.h>
 #include <errno.h>
-#include <kernel/io.h>
+#include <arch/io.h>
 #include <types.h>
 #include <stddef.h>
 #include <mm/memory.h>

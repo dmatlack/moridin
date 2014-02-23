@@ -16,8 +16,9 @@ struct proc_struct;
 list_typedef(struct thread_struct) thread_list_t;
 list_typedef(struct proc_struct) proc_list_t;
 
+//FIXME: get_esp() should probably be called something else
 #ifdef ARCH_X86
-#include <arch/x86/reg.h>
+#include <arch/reg.h>
 #endif
 
 #define CURRENT_THREAD \

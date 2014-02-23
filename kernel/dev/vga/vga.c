@@ -6,7 +6,7 @@
  * @author David Matlack
  */
 #include <dev/vga.h>
-#include <kernel/io.h>
+#include <arch/io.h>
 
 #include <assert.h>
 #include <kernel/debug.h>

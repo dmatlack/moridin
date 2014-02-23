@@ -3,9 +3,9 @@
  *
  * @author David Matlack
  */
-#include <arch/x86/exn.h>
-#include <arch/x86/idt.h>
-#include <arch/x86/reg.h>
+#include <arch/exn.h>
+#include <arch/idt.h>
+#include <arch/reg.h>
 
 #include <kernel/kprintf.h>
 #include <assert.h>

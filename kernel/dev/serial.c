@@ -8,7 +8,7 @@
 #include <stddef.h>
 #include <types.h>
 
-#include <kernel/io.h>
+#include <arch/io.h>
 
 //static unsigned default_serial_ports[4] = { 0x3F8, 0x2F8, 0x3E8, 0x2E8 };
 static unsigned default_serial_irqs[4]  = {     4,     3,     4,     3 };

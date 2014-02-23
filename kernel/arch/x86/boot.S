@@ -1,5 +1,5 @@
 ###############################################################################
-# @file arch/x86/boot.S
+# @file arch/boot.S
 #
 # The Bare Bones tutorial on osdev served as a starting point for this
 # file: http://wiki.osdev.org/Bare_Bones
@@ -12,7 +12,7 @@
 # @author David Matlack
 ###############################################################################
 #include <boot/multiboot.h>
-#include <arch/x86/seg.h>
+#include <arch/seg.h>
 
 .global kernel_idt
 .global kernel_gdt
@@ -106,7 +106,7 @@ kernel_gdt:
 kernel_tss:
   # TSS_SINGLE_TASK
   .space 8
-  .word 0x0018 # ss0 = SEGSEL_KERNEL_DS in <arch/x86/seg.h>
+  .word 0x0018 # ss0 = SEGSEL_KERNEL_DS in <arch/seg.h>
   .space 92
   .word 0x0068 # IOBP = sizeof(TSS) = 104 = 0x68
 

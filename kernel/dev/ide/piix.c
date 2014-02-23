@@ -19,7 +19,7 @@
 #include <errno.h>
 #include <kernel/debug.h>
 #include <assert.h>
-#include <kernel/io.h>
+#include <arch/io.h>
 
 struct ide_device piix_pri_ide;
 struct ide_device piix_sec_ide;

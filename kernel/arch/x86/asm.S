@@ -1,9 +1,9 @@
 ###
-# @file arch/x86/x86.S
+# @file arch/x86.S
 #
 # @brief Assembly routines needed to program the x86 architecture.
 ###
-#include <arch/x86/seg.h>
+#include <arch/seg.h>
 
 .global outb
 outb:

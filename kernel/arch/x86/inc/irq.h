@@ -7,8 +7,8 @@
 #define __X86_IRQ_H__
 
 #include <kernel/irq.h>
-#include <arch/x86/idt.h>
-#include <arch/x86/pic.h>
+#include <arch/idt.h>
+#include <arch/pic.h>
 #include <list.h>
 
 /*

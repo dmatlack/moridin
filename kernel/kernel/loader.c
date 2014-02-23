@@ -3,11 +3,12 @@
  *
  * @brief Loading executables into memory.
  */
-#include <kernel/atomic.h>
 #include <kernel/loader.h>
 #include <kernel/kmalloc.h>
 #include <kernel/kprintf.h>
 #include <kernel/elf.h>
+
+#include <arch/atomic.h>
 
 #include <errno.h>
 #include <kernel/debug.h>

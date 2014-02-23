@@ -23,7 +23,7 @@
 extern struct vm_space *postboot_vm_space;
 struct proc_struct init_proc;
 
-#include <arch/x86/cpu.h> // iret_to_userspace
+#include <arch/cpu.h> // iret_to_userspace
 
 /**
  * @brief Load and initialize the first process that will run.

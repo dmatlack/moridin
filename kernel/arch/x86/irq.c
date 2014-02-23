@@ -1,14 +1,14 @@
 /**
- * @file arch/x86/irq.c
+ * @file arch/irq.c
  *
  * @brief x86-dependent IRQ code.
  */
-#include <arch/x86/irq.h>
-#include <arch/x86/idt.h>
-#include <arch/x86/pic.h>
-#include <arch/x86/io.h>
+#include <arch/irq.h>
+#include <arch/idt.h>
+#include <arch/pic.h>
+#include <arch/io.h>
+#include <arch/atomic.h>
 
-#include <kernel/atomic.h>
 #include <kernel/irq.h>
 
 #include <kernel/debug.h>

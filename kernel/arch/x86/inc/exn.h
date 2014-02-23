@@ -25,8 +25,8 @@
 #include <stdint.h>
 #include <types.h>
 
-#include <arch/x86/reg.h>
-#include <arch/x86/idt.h>
+#include <arch/reg.h>
+#include <arch/idt.h>
 
 #define X86_TRAP  0x1
 #define X86_FAULT 0x2

@@ -8,7 +8,7 @@
 #ifndef __DEV_PIT_H__
 #define __DEV_PIT_H__
 
-#include <arch/x86/pic.h>
+#include <arch/pic.h>
 
 #define PIT_FREQ_HZ 1193182
 

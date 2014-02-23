@@ -7,10 +7,7 @@
 #define __KERNEL_IRQ_H__
 
 #include <list.h>
-
-#ifdef ARCH_X86
-#include <arch/x86/irq.h>
-#endif
+#include <arch/irq.h>
 
 struct irq_context {
   int irq;

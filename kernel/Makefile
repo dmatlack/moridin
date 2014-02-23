@@ -5,16 +5,26 @@
 ###############################################################################
 include ../config.mk
 
+ifeq ($(ARCH),ARCH_X86)
+	ARCHDIR := arch/x86
+endif
+
+#
+# Create a symbolic link for architecture-specific header files:
+# 		e.g inc/arch -> ../arch/x86/inc
+# 
+# Note the '..' is needed so that inc/arch knows to look up in the
+# parent directory first.
+#
+$(shell ln -s ../$(ARCHDIR)/inc inc/arch)
+
 SRCDIRS = boot      \
           dev       \
           fs        \
           kernel    \
           lib       \
-          mm
-
-ifeq ($(ARCH),ARCH_X86)
-SRCDIRS += arch/x86
-endif
+          mm 				\
+					$(ARCHDIR)
 
 INCDIRS = inc      \
           inc/lib
@@ -37,6 +47,7 @@ kernel: $(OFILES) $(HFILES) linker.ld
 	objdump -Dg KERNEL.o > KERNEL.S
 
 clean:
+	rm inc/arch
 	rm -rf KERNEL.S
 	rm -rf KERNEL.o
 	rm -rf $(OFILES)

@@ -1,11 +1,11 @@
 /**
  * @file x86/startup.c
  */
-#include <arch/x86/cpu.h>
-#include <arch/x86/reg.h>
-#include <arch/x86/exn.h>
-#include <arch/x86/idt.h>
-#include <arch/x86/irq.h>
+#include <arch/cpu.h>
+#include <arch/reg.h>
+#include <arch/exn.h>
+#include <arch/idt.h>
+#include <arch/irq.h>
 
 #include <kernel/debug.h>
 #include <assert.h>
@@ -32,7 +32,7 @@ void arch_startup(void) {
   ASSERT_EQUALS((size_t) kernel_tss, 0x10083c);
 
   /*
-   * Print out some symbols defined in arch/x86/boot.S
+   * Print out some symbols defined in arch/boot.S
    */
   kprintf("boot_stack:    0x%08x, 0x%08x\n", boot_stack_bottom, boot_stack_top);
   kprintf("boot_page_dir: 0x%08x\n", boot_page_dir);

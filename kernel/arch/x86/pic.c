@@ -3,9 +3,9 @@
  *
  * @author David Matlack
  */
-#include <arch/x86/pic.h>
-#include <arch/x86/io.h>
-#include <arch/x86/idt.h>
+#include <arch/pic.h>
+#include <arch/io.h>
+#include <arch/idt.h>
 #include <kernel/debug.h>
 #include <kernel/kprintf.h>
 
