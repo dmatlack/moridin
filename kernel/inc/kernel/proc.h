@@ -11,11 +11,11 @@
 #include <mm/vm.h>
 #include <list.h>
 
-struct thread_struct;
-struct proc_struct;
+struct thread;
+struct process;
 
-list_typedef(struct thread_struct) thread_list_t;
-list_typedef(struct proc_struct) proc_list_t;
+list_typedef(struct thread) thread_list_t;
+list_typedef(struct process) proc_list_t;
 
 //FIXME: get_esp() should probably be called something else
 #ifdef ARCH_X86
@@ -23,14 +23,14 @@ list_typedef(struct proc_struct) proc_list_t;
 #endif
 
 #define CURRENT_THREAD \
-  ((struct thread_struct *) PAGE_ALIGN_DOWN(get_esp()))
+  ((struct thread *) PAGE_ALIGN_DOWN(get_esp()))
 
 #define CURRENT_PROC \
   ((CURRENT_THREAD)->proc)
 
 #define THREAD_STRUCT_ALIGN PAGE_SIZE
 #define THREAD_KSTACK_SIZE 2048
-struct thread_struct {
+struct thread {
   /*
    * the kernel stack used by this thread. MUST BE PAGE-ALIGNED.
    */
@@ -41,12 +41,12 @@ struct thread_struct {
   /*
    * the process this thread is a part of
    */
-  struct proc_struct *proc;
+  struct process *proc;
 
   /*
-   * each thread_struct is part of a linked list of siblings
+   * each thread is part of a linked list of siblings
    */
-  list_link(struct thread_struct) thread_link;
+  list_link(struct thread) thread_link;
 
   /*
    * The location of the user runtime stack.
@@ -58,14 +58,14 @@ struct thread_struct {
   int tid;
 };
 
-struct proc_struct {
+struct process {
   /*
    * the process family hierarchy: a pointer to your parent, and a list
    * of your children.
    */
-  struct proc_struct *parent; 
+  struct process *parent; 
   proc_list_t children;
-  list_link(struct proc_struct) sibling_link;
+  list_link(struct process) sibling_link;
 
   /*
    * All the threads in this process
@@ -99,6 +99,6 @@ struct proc_struct {
   int pid;
 };
 
-int proc_fork(struct proc_struct *parent, struct proc_struct *child);
+int proc_fork(struct process *parent, struct process *child);
 
 #endif /* !_KERNEL_PROC_H__ */

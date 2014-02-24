@@ -234,9 +234,9 @@ jump_stacks:
   movl %ecx, -0x4(%eax)        # push ecx at top of new stack
   movl $0xDEADBEEF, -0x8(%eax) # push bogus return address of <func>
 
-  movl 0xC(%ebp), %ecx         # save the address of <func> in ecx
+  leal 0xC(%ebp), %ecx         # save the address of <func> in ecx
   
   movl $0xDEADBABE, %ebp       # load a bogus old stack frame for <func>
   leal -0x8(%eax), %esp        # point esp to the new stack
 
-  jmp %ecx                     # jmp to <func>
+  jmp *(%ecx)                  # jmp to <func>

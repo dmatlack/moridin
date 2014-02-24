@@ -12,10 +12,10 @@
 #include <errno.h>
 
 int sys_fork(void) {
-  struct proc_struct *child;
+  struct process *child;
   int ret;
 
-  child = kmalloc(sizeof(struct proc_struct));
+  child = kmalloc(sizeof(struct process));
   if (NULL == child) {
     return ENOMEM;
   }
@@ -26,6 +26,6 @@ int sys_fork(void) {
   }
 
 free_child_and_ret:
-  kfree(child, sizeof(struct proc_struct));
+  kfree(child, sizeof(struct process));
   return ret;
 }

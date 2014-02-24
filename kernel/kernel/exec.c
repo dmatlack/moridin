@@ -20,7 +20,7 @@
 #include <assert.h>
 #include <list.h>
 
-struct proc_struct init_proc;
+struct process init_proc;
 
 #include <arch/cpu.h> // iret_to_userspace, jump_stacks
 

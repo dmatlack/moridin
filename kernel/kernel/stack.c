@@ -60,7 +60,7 @@ static size_t arg_size(int argc, char **argv) {
  *
  * @param argv The location of the argument array on the stack.
  */
-void setup_runtime_stack(struct thread_struct *thread, int argc, char **argv) {
+void setup_runtime_stack(struct thread *thread, int argc, char **argv) {
 
   thread->ustack_entry = thread->ustack_start + thread->ustack_size;
 
@@ -92,7 +92,7 @@ void setup_runtime_stack(struct thread_struct *thread, int argc, char **argv) {
  * @brief Copy the program arguments onto a region of the program's runtime
  * stack.
  */
-void setup_arg_stack(struct thread_struct *thread, int argc, char **argv) {
+void setup_arg_stack(struct thread *thread, int argc, char **argv) {
   char **stack_argv;
   char *stack_arg;
   int i;
@@ -130,13 +130,13 @@ void setup_arg_stack(struct thread_struct *thread, int argc, char **argv) {
  *     arguments to those pages.
  *  2. Allocate some number of pages for the runtime stack.
  *
- *  This function populates the thread_struct fields with the location of
+ *  This function populates the thread fields with the location of
  *  argc, argv, and the runtime stack.
  *
  * @return
  *    0 on success
  */
-int create_user_stack(struct thread_struct *thread, int argc, char **argv) {
+int create_user_stack(struct thread *thread, int argc, char **argv) {
   int ret;
 
   /*
