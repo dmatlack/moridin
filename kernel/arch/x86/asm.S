@@ -214,3 +214,29 @@ restore_registers:
   # All that's left is the iret stack, so we'll iret to it
   #
   iret
+
+#
+# void jump_stacks(uint32_t stack, void (*func)(void *), void *arg);
+#
+# Run function <func> with arg <arg> on the stack pointed to by
+# <stack> (the top of the stack).
+#
+# NOTE: <func> MUST NEVER RETURN!!!!!!
+#
+.global jump_stacks
+jump_stacks:
+  push %ebp
+  mov %esp, %ebp
+
+  movl 0x8(%ebp), %eax         # the top of the new stack
+
+  movl 0x10(%ebp), %ecx        # ecx = argument to <func>
+  movl %ecx, -0x4(%eax)        # push ecx at top of new stack
+  movl $0xDEADBEEF, -0x8(%eax) # push bogus return address of <func>
+
+  movl 0xC(%ebp), %ecx         # save the address of <func> in ecx
+  
+  movl $0xDEADBABE, %ebp       # load a bogus old stack frame for <func>
+  leal -0x8(%eax), %esp        # point esp to the new stack
+
+  jmp %ecx                     # jmp to <func>

@@ -8,10 +8,10 @@
 #define ASSERT_FUNCTION_GENERATOR(_name, _op)                    \
     inline ASSERT_FUNCTION_PROTOTYPE(_name) {                    \
       if (!(left _op right)) {                                   \
-        panic("%s:%s:%u: Failed assert!\n"                       \
+        panic("%s:%u:%s: Failed assert!\n"                       \
               "   EXPECTED: %s "#_op" %s\n"                      \
               "        GOT: 0x%x <> 0x%x",                       \
-              file, func, line, leftstr, rightstr, left, right); \
+              file, line, func, leftstr, rightstr, left, right); \
       }                                                          \
     }
 

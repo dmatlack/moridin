@@ -103,6 +103,11 @@ void entry_set_flags(entry_t *entry, int flags) {
     TRACE("USER");
     entry_set_user(entry);
   }
+
+  if (flags & VM_G) {
+    TRACE("GLOBAL");
+    entry_set_global(entry);
+  }
 }
 
 /**
@@ -153,7 +158,7 @@ void free_marked_page_tables(struct entry_table *pd) {
      * If we marked the page _directory_ entry, then we need to check 
      * if the corresponding page table is empty, and if so free it.
      */
-    if (*pde & ENTRY_TABLE_UNMAP) {
+    if (entry_is_present(pde) && (*pde & ENTRY_TABLE_UNMAP)) {
       struct entry_table *pt = (struct entry_table *) entry_get_addr(pde);
       bool is_empty = true;
 
@@ -202,36 +207,38 @@ void __unmap_pages(struct entry_table *pd, size_t addr, size_t size, size_t *ppa
 
     pde = get_pde(pd, vpage);
 
-    /*
-     * Mark the page _directory_ entry so we know that we unmapped a page
-     * in this page table and we can free it later (if it's empty). Don't
-     * mark the page directory entry if it global though because it is
-     * being shared with other processes.
-     */
-    if (!entry_is_global(pde)) {
-      *pde = *pde | ENTRY_TABLE_UNMAP;
-    }
-    else {
+    if (entry_is_present(pde)) {
       /*
-       * Actually...
-       *  If the entry is global, there is probably a bug. Eventually it
-       *  might be ok to unmap a global entry, but for now just panic.
+       * Mark the page _directory_ entry so we know that we unmapped a page
+       * in this page table and we can free it later (if it's empty). Don't
+       * mark the page directory entry if it global though because it is
+       * being shared with other processes.
        */
-      panic("Trying to unmap global page: 0x%08x (virtual)", vpage);
+      if (!entry_is_global(pde)) {
+        *pde = *pde | ENTRY_TABLE_UNMAP;
+      }
+      else {
+        /*
+         * Actually...
+         *  If the entry is global, there is probably a bug. Eventually it
+         *  might be ok to unmap a global entry, but for now just panic.
+         */
+        panic("Trying to unmap global page: 0x%08x (virtual)", vpage);
+      }
+
+      ASSERT(entry_is_present(pde));
+
+      /*
+       * Mark the page _table_ entry as not present, effectively unmapping
+       * the page.
+       */
+      pte = get_pte((struct entry_table *) entry_get_addr(pde), vpage);
+
+      ASSERT(entry_is_present(pte));
+      entry_set_absent(pte);
+
+      ppages[i] = entry_get_addr(pte);
     }
-
-    ASSERT(entry_is_present(pde));
-
-    /*
-     * Mark the page _table_ entry as not present, effectively unmapping
-     * the page.
-     */
-    pte = get_pte((struct entry_table *) entry_get_addr(pde), vpage);
-
-    ASSERT(entry_is_present(pte));
-    entry_set_absent(pte);
-
-    ppages[i] = entry_get_addr(pte);
   }
 
   free_marked_page_tables(pd);

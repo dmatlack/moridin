@@ -95,5 +95,5 @@ void iret_to_userspace(uint32_t kstack, uint32_t page_dir,
       get_eflags(),                 // eflags
       ustack,                       // esp
       SEGSEL_USER_DS                // ss
-  );
+);
 }

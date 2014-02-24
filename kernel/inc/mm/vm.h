@@ -50,7 +50,7 @@ list_typedef(struct vm_region) vm_region_list_t;
 
 struct vm_space {
   void *object;
-  vm_region_list_t user_regions;
+  vm_region_list_t regions;
 };
 
 extern struct vm_space boot_vm_space;

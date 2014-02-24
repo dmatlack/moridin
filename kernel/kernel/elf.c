@@ -193,6 +193,14 @@ int elf32_map_ps(struct vm_space *space, struct elf32_phdr *phdr) {
   return 0;
 }
 
+static void log_phdr(struct elf32_phdr *p) {
+  INFO("  %-4s %-10s %-10s %-10s %-6s %-6s %-4s %-6s\n"
+       "  %-4d 0x%08x 0x%08x 0x%08x %-6d %-6d 0x%02x 0x%04x",
+       "type", "offset", "vaddr", "paddr", "filesz", "memsz", "flg", "align",
+       p->p_type, p->p_offset, p->p_vaddr, p->p_paddr, p->p_filesz,
+       p->p_memsz, p->p_flags, p->p_align);
+}
+
 /**
  * @brief Load the program sections of the elf32 executable into memory
  *
@@ -213,20 +221,12 @@ int __elf32_load(struct vfs_file *file, struct vm_space *space,
     return ENOMEM;
   }
 
-  // TODO we could probably get the old_space_object's corresponding vm_space
-  // struct by examining the currently running thread.
   old_space_object = __vm_space_switch(space->object);
 
   for (i = 0; i < ehdr->e_phnum; i++) {
     struct elf32_phdr *p = phdrs + i;
 
-    INFO("%s: elf32_phdr %d\n"
-         "  %-4s %-10s %-10s %-10s %-6s %-6s %-4s %-6s\n"
-         "  %-4d 0x%08x 0x%08x 0x%08x %-6d %-6d 0x%02x 0x%04x",
-         file->dirent->name, i,
-         "type", "offset", "vaddr", "paddr", "filesz", "memsz", "flg", "align",
-         p->p_type, p->p_offset, p->p_vaddr, p->p_paddr, p->p_filesz,
-         p->p_memsz, p->p_flags, p->p_align);
+    log_phdr(p);
 
     /*
      * Map the memory needed by the program section into virtual memory
@@ -299,10 +299,12 @@ int elf32_load(struct vfs_file *file, struct vm_space *space) {
   }
   if (ELFDATA2LSB != ehdr->e_ident[EI_DATA]) {
     DEBUG("%s: unsupported big endian", file->dirent->name);
+    ret = ENOEXEC;
     goto free_ehdr_ret;
   }
   if (ELFCLASS32 != ehdr->e_ident[EI_CLASS]) {
     DEBUG("%s: unsupported 64-bit elf", file->dirent->name);
+    ret = ENOEXEC;
     goto free_ehdr_ret;
   }
 

@@ -40,7 +40,7 @@ void vm_init(void) {
   kernel_space.object = new_address_space();
   ASSERT_NOT_NULL(kernel_space.object);
 
-  TRACE_OFF; // about to map a lot of pages, so disable debug call tracing
+  TRACE_OFF;
 
   for (page = kernel_pages; page < kernel_pages + num_kernel_pages; page++) {
     size_t phys = page_address(page);
@@ -185,4 +185,3 @@ void vm_unmap(struct vm_space *space, size_t address, size_t size) {
     free_pages(1, &ppage);
   }
 }
-

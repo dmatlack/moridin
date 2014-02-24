@@ -26,5 +26,7 @@ void set_esp0(uint32_t);
 
 // FIXME: move this somewhere else?
 void iret_to_userspace(uint32_t kstack, uint32_t page_dir, uint32_t entry, uint32_t ustack);
+// FIXME: move this somewhere else?
+void jump_stacks(uint32_t stack, void (*func)(void *), void *arg);
 
 #endif /* !__X86_CPU_H__ */

@@ -22,43 +22,75 @@
 
 struct proc_struct init_proc;
 
-#include <arch/cpu.h> // iret_to_userspace
+#include <arch/cpu.h> // iret_to_userspace, jump_stacks
+
+struct exec_args {
+  char * execpath;
+  int    argc;
+  char **argv;
+};
+
+void finish_run_first_proc(struct exec_args *args) {
+  struct vfs_file *file;
+  int ret;
+
+  /*
+   * Make sure jump_stacks worked.
+   */
+  ASSERT_EQUALS(CURRENT_PROC, &init_proc);
+
+
+
+  file = vfs_file_get(args->execpath);
+  ASSERT_NOT_NULL(file);
+
+  ret = exec_file_init(&CURRENT_PROC->exec, file);
+  ASSERT_EQUALS(0, ret);
+
+  ret = vm_space_init(&CURRENT_PROC->space);
+  ASSERT_EQUALS(0, ret);
+
+  __vm_space_switch(CURRENT_PROC->space.object);
+
+  ret = load(&CURRENT_PROC->exec, &CURRENT_PROC->space);
+  ASSERT_EQUALS(0, ret);
+
+  ret = create_user_stack(CURRENT_THREAD, args->argc, args->argv);
+  ASSERT_EQUALS(0, ret);
+
+  iret_to_userspace(CURRENT_THREAD->kstack_hi,
+                    (size_t) CURRENT_PROC->space.object,
+                    CURRENT_PROC->exec.entry,
+                    CURRENT_THREAD->ustack_entry);
+}
 
 /**
  * @brief Load and initialize the first process that will run.
  */
 void run_first_proc(char *execpath, int argc, char **argv) {
-  struct vfs_file *file;
-  struct thread_struct *thread;
+  struct exec_args args;
+  size_t init_kernel_stack;
   int ret;
 
   ret = proc_fork(NULL, &init_proc);
   ASSERT_EQUALS(0, ret);
 
-  thread = list_head(&init_proc.threads);
+  args.execpath = execpath;
+  args.argc = argc;
+  args.argv = argv;
 
-  file = vfs_file_get(execpath);
-  ASSERT_NOT_NULL(file);
+  init_kernel_stack = list_head(&init_proc.threads)->kstack_hi;
 
-  ret = exec_file_init(&init_proc.exec, file);
-  ASSERT_EQUALS(0, ret);
+  kprintf("init_kernel_stack: 0x%08x\n", init_kernel_stack);
+  kprintf("finish_run_first_proc: %p\n", finish_run_first_proc);
+  kprintf("args: %p\n", &args);
 
-  ret = vm_space_init(&init_proc.space);
-  ASSERT_EQUALS(0, ret);
-  __vm_space_switch(init_proc.space.object);
-
-  /*
-   * Load the executable into memory
-   */
-  ret = load(&init_proc.exec, &init_proc.space);
-  ASSERT_EQUALS(0, ret);
+  BOCHS_MAGIC_BREAK;
 
   /*
-   * Create a runtime stack for the process.
+   * Jump off of this initial boot stack and onto init's kernel
+   * stack. This will allow the startup routines to the "get the
+   * current process" by using the esp trick.
    */
-  ret = create_user_stack(thread, argc, argv);
-  ASSERT_EQUALS(0, ret);
-
-  iret_to_userspace(thread->kstack_hi, (size_t) thread->proc->space.object,
-                    thread->proc->exec.entry, thread->ustack_entry);
+  jump_stacks(init_kernel_stack, (void(*)(void*)) finish_run_first_proc, &args);
 }
