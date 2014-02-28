@@ -25,10 +25,10 @@ struct exec_file {
    * @brief Load this executable file into the provided virtual memory
    * address space.
    */
-  int (*load)(struct vfs_file *file, struct vm_space *space);
+  int (*load)(struct vfs_file *file);
 };
 
-int load(struct exec_file *file, struct vm_space *space);
+int load(struct exec_file *file);
 
 int exec_file_init(struct exec_file *exec, struct vfs_file *file);
 

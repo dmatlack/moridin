@@ -9,7 +9,9 @@
 #include <kernel/kmalloc.h>
 
 #include <fs/vfs.h>
+
 #include <mm/vm.h>
+#include <mm/memory.h>
 
 #include <lib/elf/elf32.h>
 
@@ -90,107 +92,18 @@ phdrs_cleanup:
   return NULL;
 }
 
-static inline int elf32_to_vm_flags(elf32_word_t p_flags) {
-  int v = 0;
-  v |= (p_flags & PF_X) ? VM_X : 0;
-  v |= (p_flags & PF_R) ? VM_R : 0;
-  v |= (p_flags & PF_W) ? VM_W : 0;
-  return v | VM_U;
-}
-
-/**
- * @brief Load the program section into the virtual address space.
- *
- * @warning This function assumes <space> is the currently in-use vm_space.
- *
- * @return
- *    0 on success
- *    EINVAL if the header is not a loadable section
- *    EFAULT if the section could not be read from the file
- *    ENOMEM if we ran out of memory while trying to load the section
- *    other non-0 error codes if virtual memory mapping or file reading fails
- */
-int elf32_load_phdr(struct vfs_file *file, struct elf32_phdr *phdr,
-                    char *buf, int bufsz) {
-  ssize_t bytes;
-  size_t offset;
-  int ret;
-
-  if (PT_LOAD != phdr->p_type) {
-    WARN("%s: Non loadable elf32 program section type: %d", file->dirent->name,
-         phdr->p_type);
-    return EINVAL;
-  }
-
-  offset = 0;
-  if (phdr->p_filesz > 0) {
-    ret = vfs_seek(file, phdr->p_offset, SEEK_SET);
-    if (ret != (int) phdr->p_offset) {
-      return EFAULT;
-    }
-
-    /*
-     * Copy the program section contents from the file,
-     * into memory.
-     */
-    do {
-      bytes = vfs_read(file, buf, bufsz);
-      if (bytes < 0) {
-        return bytes;
-      }
-      memcpy((void *) (phdr->p_vaddr + offset), buf, bytes);
-
-      offset += bytes;
-    } while (offset < phdr->p_filesz);
-  }
-
-  /*
-   * Finally write 0s if the size of the section in memory is
-   * larger than the size of the section in the file.
-   */
-  if (offset < phdr->p_memsz) {
-    memset((void *) (phdr->p_vaddr + offset), 0, phdr->p_memsz - offset);
-  }
-
-  return 0;
-}
-
 /**
  * @brief Unload the elf from memory by unmapping the virtual memory and
  * free the physical pages that were backing them.
  */
-void __elf32_unload(struct vm_space *space, struct elf32_ehdr *ehdr,
+void __elf32_unload(struct elf32_ehdr *ehdr,
                     struct elf32_phdr *phdrs) {
   int i;
   for (i = 0; i < ehdr->e_phnum; i++) {
     struct elf32_phdr *p = phdrs + i;
-    vm_unmap(space, p->p_vaddr, p->p_memsz);
-    tlb_invalidate(p->p_vaddr, p->p_memsz);
+    (void)p;
+    panic("implement vm_munmap() plz");
   }
-}
-
-/**
- * @brief Map the elf program section into virtual memory.
- */
-int elf32_map_ps(struct vm_space *space, struct elf32_phdr *phdr) {
-  int ret;
-  int flags;
-
-  flags = elf32_to_vm_flags(phdr->p_flags);
-
-  /*
-   * Map the region into virtual memory.
-   */
-  ret = vm_map(space, phdr->p_vaddr, phdr->p_memsz, flags);
-  if (ret) return ret;
-  
-  /*
-   * Flush these pages from the TLB so we don't page fault trying to write
-   * to them.
-   */
-  tlb_invalidate(phdr->p_vaddr, phdr->p_memsz);
-
-  return 0;
 }
 
 static void log_phdr(struct elf32_phdr *p) {
@@ -207,51 +120,45 @@ static void log_phdr(struct elf32_phdr *p) {
  * @return
  *    0 on success
  */
-int __elf32_load(struct vfs_file *file, struct vm_space *space,
-                 struct elf32_ehdr *ehdr, struct elf32_phdr *phdrs) {
-  void *old_space_object;
-  char *buf;
-  int bufsz;
-  int ret;
+int __elf32_load(struct vfs_file *file, struct elf32_ehdr *ehdr, struct elf32_phdr *phdrs) {
+  unsigned long error;
   int i;
-
-  bufsz = 1024;
-  buf = kmalloc(bufsz);
-  if (NULL == buf) {
-    return ENOMEM;
-  }
-
-  old_space_object = __vm_space_switch(space->object);
 
   for (i = 0; i < ehdr->e_phnum; i++) {
     struct elf32_phdr *p = phdrs + i;
+    int flags, prot = 0;
 
     log_phdr(p);
 
+    if (p->p_flags & PF_X) prot |= PROT_EXEC;
+    if (p->p_flags & PF_R) prot |= PROT_READ;
+    if (p->p_flags & PF_W) prot |= PROT_WRITE;
+
+    flags = MAP_PRIVATE | MAP_FIXED;
+
     /*
-     * Map the memory needed by the program section into virtual memory
+     * Map the elf into memory.
      */
-    ret = elf32_map_ps(space, p);
-    if (ret) {
-      __elf32_unload(space, ehdr, phdrs);
-      goto __elf32_load_cleanup;
+    error = vm_mmap(p->p_vaddr, p->p_memsz, prot, flags, file, p->p_offset);
+    error %= PAGE_SIZE;
+    if (error) {
+      goto load_fail;      
     }
 
     /*
-     * Copy the file contents into memory
+     * Finally write 0s if the size of the section in memory is larger than
+     * the size of the section in the file.
      */
-    ret = elf32_load_phdr(file, p, buf, bufsz);
-    if (ret) {
-      __elf32_unload(space, ehdr, phdrs);
-      goto __elf32_load_cleanup;
+    if (p->p_filesz < p->p_memsz) {
+      memset((void *) (p->p_vaddr + p->p_filesz), 0, p->p_memsz - p->p_filesz);
     }
   }
 
-  ret = 0;
-__elf32_load_cleanup:
-  __vm_space_switch(old_space_object);
-  kfree(buf, bufsz);
-  return ret;
+  return 0;
+
+load_fail:
+  panic("TODO: unmap the elf");
+  return (int) error;
 }
 
 /**
@@ -262,7 +169,7 @@ __elf32_load_cleanup:
  *    ENOEXEC if the file could not be loaded
  *    0 on success
  */
-int elf32_load(struct vfs_file *file, struct vm_space *space) {
+int elf32_load(struct vfs_file *file) {
   struct elf32_ehdr *ehdr;
   struct elf32_phdr *phdrs;
   int ret = 0;
@@ -320,7 +227,7 @@ int elf32_load(struct vfs_file *file, struct vm_space *space) {
   /*
    * Now we load the file into the virtual address space.
    */
-  ret = __elf32_load(file, space, ehdr, phdrs);
+  ret = __elf32_load(file, ehdr, phdrs);
 
   kfree(phdrs, sizeof(struct elf32_phdr) * ehdr->e_phnum);
 free_ehdr_ret:

@@ -184,26 +184,16 @@ void free_marked_page_tables(struct entry_table *pd) {
   }
 }
 
-/**
- * @brief Unmap the set of pages.
- *
- * This function only unmaps the pages in the x86 virtual memory
- * data structures. It does not decrease the reference counter to the
- * unmapped pages or "free" them in any way. That is up to the caller.
- *
- * @param pd The page directory
- * @param addr The start address of the region to map
- * @param size The size of the region to map
- * @param ppages The physical addresses of the pages that were unmapped
- */
-void __unmap_pages(struct entry_table *pd, size_t addr, size_t size, size_t *ppages) {
+struct page *unmap_page(void *pd, unsigned long virt) {
   size_t vpage;
   entry_t *pde, *pte;
-  int num_pages = size / PAGE_SIZE;
   int i;
+  struct page *page = NULL;
 
-  for (i = 0; i < num_pages; i++) {
-    vpage = addr + (i * X86_PAGE_SIZE);
+  TRACE("pd=%p, virt=0x%x", pd, virt);
+
+  for (i = 0; i < PAGE_SIZE / X86_PAGE_SIZE; i++) {
+    vpage = virt + (i * X86_PAGE_SIZE);
 
     pde = get_pde(pd, vpage);
 
@@ -226,23 +216,30 @@ void __unmap_pages(struct entry_table *pd, size_t addr, size_t size, size_t *ppa
         panic("Trying to unmap global page: 0x%08x (virtual)", vpage);
       }
 
-      ASSERT(entry_is_present(pde));
+      pte = get_pte((struct entry_table *) entry_get_addr(pde), vpage);
+
+      /*
+       * This page wasn't mapped in the first place. Return NULL to indicate
+       * no page was unmapped.
+       */
+      if (!entry_is_present(pte)) {
+        return NULL;
+      }
 
       /*
        * Mark the page _table_ entry as not present, effectively unmapping
        * the page.
        */
-      pte = get_pte((struct entry_table *) entry_get_addr(pde), vpage);
-
-      ASSERT(entry_is_present(pte));
       entry_set_absent(pte);
-
-      ppages[i] = entry_get_addr(pte);
+      if (!page) page = get_page(entry_get_addr(pte));
     }
   }
 
   free_marked_page_tables(pd);
+
+  return page;
 }
+  
 
 void unmap_pages(void *pd, size_t addr, size_t size, size_t *ppages) {
   TRACE("pd=%p, addr=0x%x, size=0x%x, ppages=%p", pd, addr, size, ppages);
@@ -250,7 +247,7 @@ void unmap_pages(void *pd, size_t addr, size_t size, size_t *ppages) {
   ASSERT(is_page_aligned(addr));
   ASSERT(is_page_aligned(size));
 
-  return __unmap_pages((struct entry_table *) pd, addr, size, ppages);
+  panic("someone delete me");
 }
 
 /**

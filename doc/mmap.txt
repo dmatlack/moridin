@@ -1,0 +1,77 @@
+Attempting to design and implement a virtual memory manager led to constant
+roadblocks. After doing some research I found mmap as the right interface for
+dealing with virtual memory.
+
+mmap() can be used in the kernel for lots of things:
+  1. Since it supports mapping files we can use mmap when loading executables.
+  2. mmap-ing anonymous memory will allow us to map the stack, heap, etc.
+
+Since mmap() should be a supported system call it makes sense to implement 
+a derivative of it now so that adding the system call later will be simple.
+
+================================================================================
+http://man7.org/linux/man-pages/man2/mmap.2.html
+
+void *mmap(void *addr, size_t length, int prot, int flags, int fd, off_t offset)
+
+  addr      The address at which to create the mapping. If NULL, the kernel
+            will choose the address. If addr is not page aligned the kernel
+            will end up mapping at the nearest lower page boundary.
+
+  length    The length of the mapping. If mapping a file this also specifies
+            the number of bytes mapped form the file.
+
+  prot      PROT_EXEC     May be executed
+            PROT_READ     May be read
+            PROT_WRITE    May be written
+            PROT_NONE     May _not_ be accessed
+
+  flags     (there are a bunch, these are the interesting ones)
+
+            MAP_SHARED    Updates to this mapping are visible to other
+                          processes that map this file. Changes made to
+                          memory are carried through to the underlying
+                          file.
+
+            MAP_PRIVATE   Private, copy-on-write mapping. Changes are not
+                          visible to other processes and are not written
+                          through to the underlying file.
+
+            MAP_ANONYMOUS The mapping is not backed by a file. The contents
+                          are initialized to 0. fd and offset are ignored.
+
+            MAP_LOCKED    Lock the pages of the mapped region into memory
+                          like mlock().
+
+            MAP_FIXED     Don't interpret addr as a hint, place the mapping
+                          exactly at that address. If the region overlaps
+                          another region, the overlapping pages will be
+                          discarded.
+
+  fd        The file descriptor to map.
+
+  offset    The offset within the file [descriptor] to start mapping.
+
+
+  Since mmap() maps memory in terms of pages, there is the issue of a file
+  that is not a multiple of the page size. If that is the case, the remaining
+  memory will be initialized to 0.
+
+  RETURNS: (void *) address of the mapping on success, (void *) -1 on error.
+
+int munmap(void *addr, size_t length)
+
+  Delete the mappings for the specified address range. All pages containing
+  a part of the indicated range are unmapped.
+
+  RETURNS: 0 on success, -1 on error
+
+================================================================================
+
+The above is the glibc library function, not the Linux kernel system call. The
+system call actually looks like:
+
+  void *mmap2(void *addr, size_t length, int prot, int flags, int fd, off_t pgoffset)
+
+The only difference is that offset has become a page-offset (i.e. pgoffset=1 <-->
+offset=4096).

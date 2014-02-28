@@ -22,6 +22,6 @@ static inline bool is_elf32(char *header, size_t bytes) {
 
 int elf32_parse(struct exec_file *exec, struct vfs_file *file);
 
-int elf32_load(struct vfs_file *file, struct vm_space *space);
+int elf32_load(struct vfs_file *file);
 
 #endif /* !__KERNEL_ELF_H__ */

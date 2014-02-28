@@ -8,16 +8,24 @@
 
 #include <stddef.h>
 #include <kernel/debug.h>
+#include <kernel/log.h>
+#include <arch/irq.h>
 
-/**
- * @brief Print a message to the screen, disable interrupts, and then
- * loop endlessly.
- */
-int panic(const char *fmt, ...);
+#define panic(_fmt, ...) \
+  do { \
+    log(LOG_LEVEL_ERROR, \
+            "[PANIC][%s:%d %s()] "_fmt"\n", __FILE__, __LINE__, __func__, ##__VA_ARGS__); \
+    kprintf("[PANIC][%s:%d %s()] "_fmt"\n", __FILE__, __LINE__, __func__, ##__VA_ARGS__); \
+    disable_irqs(); \
+    while (1) continue; \
+  } while (0)
 
 #define assert(expression) \
-	((void)((expression) ? 0 : (panic("%s:%u: failed assertion `%s'", \
-					  __FILE__, __LINE__, #expression), 0)))
+  do { \
+    if (!(expression)) { \
+	    panic("failed assertion `%s'", #expression); \
+    } \
+  } while (0)
 
 #define ASSERT(expression) assert(expression)
 

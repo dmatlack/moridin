@@ -17,6 +17,7 @@ struct page {
   int count;
 };
 size_t page_address(struct page *p);
+struct page *get_page(size_t address);
 
 struct page_zone {
   struct page *pages; /* array of all pages in the zone */
@@ -38,9 +39,9 @@ struct page_zone {
 struct page *alloc_pages_at(size_t addr, unsigned long n);
 
 struct page *alloc_pages(unsigned long n);
+#define alloc_page() alloc_pages(1)
 
-
-void free_pages(unsigned n, size_t *pages);
-void NEW_free_pages(struct page *pages, unsigned long n);
+void free_pages(struct page *pages, unsigned long n);
+#define free_page(page) free_pages(page, 1)
 
 #endif /* !__MM_PAGES_H__ */

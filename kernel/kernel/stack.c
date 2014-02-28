@@ -137,33 +137,30 @@ void setup_arg_stack(struct thread *thread, int argc, char **argv) {
  *    0 on success
  */
 int create_user_stack(struct thread *thread, int argc, char **argv) {
-  int ret;
+  unsigned long stack_start, stack_length;
+  unsigned long error;
 
   /*
-   * Map a region for the program arguments
+   * The very top of the stack is pages reserved for the program's
+   * arguments.
    */
   thread->proc->arg_start = CONFIG_USER_VIRTUAL_TOP - PAGE_SIZE;
   thread->proc->arg_size  = PAGE_ALIGN_UP(arg_size(argc, argv));
 
-  ret = vm_map(&thread->proc->space,
-               thread->proc->arg_start, thread->proc->arg_size,
-               VM_U | VM_W);
-  if (ret) {
-    return ret;
-  }
-
   /*
-   * Map a read-write region for the runtime stack
+   * Next is some pages for the runtime stack
    */
   thread->ustack_size  = PAGE_SIZE;
   thread->ustack_start = thread->proc->arg_start - thread->ustack_size;
 
-  ret = vm_map(&thread->proc->space,
-               thread->ustack_start, thread->ustack_size,
-               VM_U | VM_W);
-  if (ret) {
-    vm_unmap(&thread->proc->space, thread->proc->arg_start, thread->proc->arg_size);
-    return ret;
+  stack_start = thread->ustack_start;
+  stack_length = thread->ustack_size + thread->proc->arg_size;
+
+  error = vm_mmap(stack_start, stack_length, PROT_READ | PROT_WRITE,
+                  MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED, NULL, 0);
+
+  if (error % PAGE_SIZE) {
+    return error % PAGE_SIZE;
   }
 
   setup_arg_stack(thread, argc, argv);

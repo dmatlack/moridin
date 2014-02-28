@@ -23,6 +23,7 @@
 
 #include <kernel/config.h>
 #include <mm/vm.h>
+#include <mm/pages.h>
 #include <arch/page.h>
 #include <stdint.h>
 #include <types.h>
@@ -253,6 +254,8 @@ static inline void *swap_address_space(void *new) {
 #define phys(v) 
 
 int map_page(void *pd, size_t virt, struct page *page, int flags);
+
+struct page *unmap_page(void *pd, unsigned long virt);
 
 void unmap_pages(void *pd, size_t addr, size_t size, size_t *ppages);
 

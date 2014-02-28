@@ -81,6 +81,8 @@ int vm_space_init(struct vm_space *space) {
     return ENOMEM;
   }
 
+  list_init(&space->mappings);
+
   /*
    * Map the kernel into the new address space.
    */
@@ -111,77 +113,45 @@ void *__vm_space_switch(void *object) {
   return swap_address_space(object);
 }
 
-int __vm_map(struct vm_space *space, size_t address, struct page *pages, unsigned num_pages, int flags) {
-  struct page *page;
-  int ret;
-  
-  for (page = pages; page < pages + num_pages; page++) {
-    size_t virt = address + (page_address(page) - page_address(pages));
-
-    ret = map_page(space->object, virt, page, flags);
-
-    //FIXME
-    ASSERT_EQUALS(0, ret);
-  }
-
-  return ret;
-}
-
-
-/**
- * @brief Map a range of addresses into the virtual address space.
- *
- * Note that this function is all-or-nothing. Either the entire region
- * gets mapped, or an error occurs and none of the region is mapped.
- *
- * @warning <address> will be aligned down to the nearest page and
- * <size> will be aligned up to the nearest page.
- *
- * @return
- *    0 on success
- *    ENOMEM
- *    other non-0 on architecture-dependent errors
- */
 int vm_map(struct vm_space *space, size_t address, size_t size, int flags) {
-  struct page *pages;
-  int num_pages;
-  int ret = 0;
-
-  TRACE("space=%p, address=0x%x, size=0x%x, flags=0x%x", space, address, size, flags);
-
-  address = PAGE_ALIGN_DOWN(address);
-  size = PAGE_ALIGN_UP(size);
-  num_pages = size / PAGE_SIZE;
-
-  pages = alloc_pages(num_pages);
-  if (!pages) {
-    return ENOMEM;
-  }
-
-  ret = __vm_map(space, address, pages, num_pages, flags);
-  if (ret) {
-    NEW_free_pages(pages, num_pages);
-    return ret;
-  }
-
+  (void) space; (void) address; (void) size; (void) flags;
+  panic("%s: someone kill me", __func__);
   return 0;
 }
 
 void vm_unmap(struct vm_space *space, size_t address, size_t size) {
-  int num_pages;
-  int i;
+  (void) space; (void) address; (void) size;
+  panic("%s: someone kill me", __func__);
+}
 
-  TRACE("space=%p, address=0x%x, size=0x%x", space, address, size);
+int vm_map_page(struct vm_space *space, unsigned long virt, int flags) {
+  struct page *page;
+  int error;
 
-  address = PAGE_ALIGN_DOWN(address);
-  size = PAGE_ALIGN_UP(size);
-  num_pages = size / PAGE_SIZE;
+  page = alloc_page();
+  if (!page) {
+    return ENOMEM;
+  }
 
-  for (i = 0; i < num_pages; i++) {
-    size_t vpage = address + (i * PAGE_SIZE);
-    size_t ppage;
+  error = map_page(space->object, virt, page, flags);
+  if (error) {
+    free_page(page);
+    return ENOMEM;
+  }
 
-    unmap_pages(space->object, vpage, PAGE_SIZE,  &ppage); 
-    free_pages(1, &ppage);
+  /*
+   * Flush the tlb so we can write to this page.
+   */
+  tlb_invalidate(virt, PAGE_SIZE);
+
+  return 0;
+}
+
+void vm_unmap_page(struct vm_space *space, unsigned long virt) {
+  struct page *page;
+
+  page = unmap_page(space->object, virt);
+  if (page) {
+    free_page(page);
   }
 }

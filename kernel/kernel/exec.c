@@ -33,13 +33,12 @@ struct exec_args {
 void finish_run_first_proc(struct exec_args *args) {
   struct vfs_file *file;
   int ret;
-
-  /*
-   * Make sure jump_stacks worked.
-   */
   ASSERT_EQUALS(CURRENT_PROC, &init_proc);
 
+  ret = vm_space_init(&CURRENT_PROC->space);
+  ASSERT_EQUALS(0, ret);
 
+  __vm_space_switch(CURRENT_PROC->space.object);
 
   file = vfs_file_get(args->execpath);
   ASSERT_NOT_NULL(file);
@@ -47,12 +46,7 @@ void finish_run_first_proc(struct exec_args *args) {
   ret = exec_file_init(&CURRENT_PROC->exec, file);
   ASSERT_EQUALS(0, ret);
 
-  ret = vm_space_init(&CURRENT_PROC->space);
-  ASSERT_EQUALS(0, ret);
-
-  __vm_space_switch(CURRENT_PROC->space.object);
-
-  ret = load(&CURRENT_PROC->exec, &CURRENT_PROC->space);
+  ret = load(&CURRENT_PROC->exec);
   ASSERT_EQUALS(0, ret);
 
   ret = create_user_stack(CURRENT_THREAD, args->argc, args->argv);
@@ -80,12 +74,6 @@ void run_first_proc(char *execpath, int argc, char **argv) {
   args.argv = argv;
 
   init_kernel_stack = list_head(&init_proc.threads)->kstack_hi;
-
-  kprintf("init_kernel_stack: 0x%08x\n", init_kernel_stack);
-  kprintf("finish_run_first_proc: %p\n", finish_run_first_proc);
-  kprintf("args: %p\n", &args);
-
-  BOCHS_MAGIC_BREAK;
 
   /*
    * Jump off of this initial boot stack and onto init's kernel

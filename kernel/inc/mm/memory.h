@@ -11,6 +11,7 @@
 #define PAGE_ALIGN_UP(n)    CEIL(PAGE_SIZE, n)
 #define PAGE_ALIGN_DOWN(n)  FLOOR(PAGE_SIZE, n)
 #define IS_PAGE_ALIGNED(n)  (PAGE_ALIGN_DOWN(n) == n)
+#define PAGE_MASK           (~(PAGE_SIZE-1))
 
 extern char kimg_start[];
 extern char kimg_end[];

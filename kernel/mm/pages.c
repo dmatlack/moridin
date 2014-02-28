@@ -237,16 +237,7 @@ void __free_pages(struct page *pages, unsigned long n, struct page_zone *zone) {
 /**
  * @brief Release n contiguous pages.
  */
-void NEW_free_pages(struct page *pages, unsigned long n) {
+void free_pages(struct page *pages, unsigned long n) {
+  TRACE("pages=%p, n=%d", pages, n);
   __free_pages(pages, n, zone_containing(page_address(pages))); 
-}
-
-// TODO: This is the old free_pages interface. Remove this and convert the
-// rest of the kernel to use the new free_pages.
-void free_pages(unsigned n, size_t *pages) {
-  struct page *p;
-  
-  p = get_page(pages[0]);
-
-  NEW_free_pages(p, n);
 }

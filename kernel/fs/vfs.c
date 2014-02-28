@@ -15,6 +15,7 @@
 #include <list.h>
 #include <kernel/debug.h>
 #include <errno.h>
+#include <mm/memory.h>
 
 struct vfs_dirent *__vfs_root_dirent;
 
@@ -222,6 +223,8 @@ ssize_t vfs_read(struct vfs_file *file, char *buf, size_t size) {
 
   TRACE("file=%p, buf=%p, size=0x%x", file, buf, size);
 
+  //TODO lock the file
+
   ASSERT_NOT_NULL(file);
   if (NULL == file->fops->read) {
     VFS_NULL_FOP(read, file);
@@ -253,6 +256,8 @@ ssize_t vfs_seek(struct vfs_file *file, ssize_t offset, int whence) {
   TRACE("file=%p, offset=0x%x, whence=%d", file, offset, whence);
   ASSERT_NOT_NULL(file);
 
+  //TODO lock the file
+
   switch (whence) {
     case SEEK_SET: from = 0;                           break;
     case SEEK_CUR: from = file->offset;                break;
@@ -266,5 +271,24 @@ ssize_t vfs_seek(struct vfs_file *file, ssize_t offset, int whence) {
     file->offset = new_offset;
     return new_offset;
   }
+  // DON'T CHANGE THIS ERROR CODE. vfs_read_page() uses it.
   return -EFAULT;
+}
+
+ssize_t vfs_read_page(struct vfs_file *file, ssize_t offset, char *page) {
+  ssize_t error;
+
+  error = vfs_seek(file, offset, SEEK_SET);
+  if (error < 0) {
+    /*
+     * Tried to seek off the end of the file. THIS IS OK. Return 0 bytes read.
+     */
+    if (-EFAULT == error) return 0;
+    /*
+     * All other error codes are actually errors.
+     */
+    return error;
+  }
+
+  return vfs_read(file, page, PAGE_SIZE);
 }

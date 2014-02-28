@@ -161,4 +161,6 @@ void    vfs_close (struct vfs_file *file);
 ssize_t vfs_read  (struct vfs_file *file, char *buf, size_t size);
 ssize_t vfs_seek  (struct vfs_file *file, ssize_t offset, int whence);
 
+ssize_t vfs_read_page(struct vfs_file *file, ssize_t offset, char *page);
+
 #endif /* !__FS_VFS_H__ */

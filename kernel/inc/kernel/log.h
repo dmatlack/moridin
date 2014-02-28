@@ -34,6 +34,7 @@ int trace(const char *fmt, ...);
 #define INFO(fmt, ...) log(LOG_LEVEL_INFO, "[INFO] "fmt"\n", ##__VA_ARGS__)
 #define WARN(fmt, ...) log(LOG_LEVEL_WARN, "[WARN] "fmt"\n", ##__VA_ARGS__)
 #define ERROR(fmt, ...) log(LOG_LEVEL_ERROR, "[ERROR] "fmt"\n", ##__VA_ARGS__)
+#define PANIC(fmt, ...) log(LOG_LEVEL_ERROR, "[PANIC] "fmt"\n", ##__VA_ARGS__)
 
 #ifdef KDEBUG
   #define DEBUG_DO(...) \

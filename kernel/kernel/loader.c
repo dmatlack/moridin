@@ -25,8 +25,6 @@
  * so the loader knows where to load the file.
  *
  * @param file The file object of the executable to load
- * @param space The virtual address space into which to load the
- * file.
  *
  * @return
  *    0 on success
@@ -34,10 +32,10 @@
  *    EFAULT if the file could not be opened, closed, or read
  *    ENOEXEC if the executable file format was invalid or corrupt
  */
-int load(struct exec_file *exec, struct vm_space *space) {
+int load(struct exec_file *exec) {
   int ret;
 
-  ret = exec->load(exec->file, space);
+  ret = exec->load(exec->file);
 
   return ret;
 }
