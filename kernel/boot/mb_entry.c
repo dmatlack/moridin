@@ -3,7 +3,6 @@
  *
  * @brief The multiboot entry point of the kernel.
  *
- * @author David Matlack
  */
 #include <boot/multiboot.h>
 #include <stddef.h>

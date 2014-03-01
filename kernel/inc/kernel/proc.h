@@ -1,7 +1,6 @@
 /**
  * @file kernel/proc.h
  *
- * @author David Matlack
  */
 #ifndef __KERNEL_PROC_H__
 #define __KERNEL_PROC_H__

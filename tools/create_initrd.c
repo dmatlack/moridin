@@ -3,7 +3,6 @@
  *
  * @brief A utility to create an initial ramdisk
  *
- * @author David Matlack
  */
 
 // BEGIN KERNEL INCLUDES

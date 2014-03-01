@@ -1,7 +1,6 @@
 /**
  * @file x86/cpu.h
  *
- * @author David Matlack
  */
 #ifndef __X86_CPU_H__
 #define __X86_CPU_H__

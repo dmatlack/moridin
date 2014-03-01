@@ -3,7 +3,6 @@
  *
  * @brief Parsing of elf binaries for the kernel.
  *
- * @author David Matlack
  */
 #include <kernel/elf.h>
 #include <kernel/kmalloc.h>

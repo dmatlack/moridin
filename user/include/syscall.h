@@ -5,7 +5,6 @@
  * of newlib:
  *    https://sourceware.org/newlib/libc.html#Syscalls
  *
- * @author David Matlack
  */
 #ifndef SYSCALL_H
 #define SYSCALL_H

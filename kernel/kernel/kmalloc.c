@@ -3,7 +3,6 @@
  *
  * TODO locking
  *
- * @author David Matlack (dmatlack)
  * @bug No known bugs
  */
 #include <kernel/kmalloc.h>

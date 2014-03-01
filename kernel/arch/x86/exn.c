@@ -1,7 +1,6 @@
 /**
  * @file x86/exn.c
  *
- * @author David Matlack
  */
 #include <arch/exn.h>
 #include <arch/idt.h>

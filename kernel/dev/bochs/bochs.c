@@ -3,7 +3,6 @@
  *
  * @brief Debug utility for the bochs machine emulator.
  *
- * @author David Matlack
  */
 #include <dev/bochs.h>
 #include <arch/io.h>

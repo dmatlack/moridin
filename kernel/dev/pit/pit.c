@@ -3,7 +3,6 @@
  *
  * @brief Programmable Interval Timer (PIT)
  * 
- * @author David Matlack
  */
 #include <dev/pit.h>
 

@@ -19,7 +19,6 @@
 # Return
 #   eax: The return value of the system call
 #
-# @author David Matlack
 ###
 
 .extern syscall_table

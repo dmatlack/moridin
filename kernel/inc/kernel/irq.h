@@ -1,7 +1,6 @@
 /**
  * @file kernel/irq.h
  *
- * @author David Matlack
  */
 #ifndef __KERNEL_IRQ_H__
 #define __KERNEL_IRQ_H__

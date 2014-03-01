@@ -3,7 +3,6 @@
  *
  * @brief Process and Thread management.
  *
- * @author David Matlack
  */
 #include <kernel/proc.h>
 #include <kernel/loader.h>

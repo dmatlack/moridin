@@ -6,7 +6,6 @@
 # stack and then calls a common exception handler which will then handle
 # exceptions.
 #
-# @author David Matlack
 ###
 
 #

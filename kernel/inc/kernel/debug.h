@@ -3,7 +3,6 @@
  *
  * @brief Debugging utilities for the kernel.
  *
- * @author David Matlack
  */
 #include <kernel/log.h>
 #include <dev/bochs.h>

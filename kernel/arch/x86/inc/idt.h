@@ -32,7 +32,6 @@
  *
  * reference: http://wiki.osdev.org/IDT
  *
- * @author David Matlack
  */
 #ifndef __IDT_H__
 #define __IDT_H__

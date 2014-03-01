@@ -3,7 +3,6 @@
  *
  * @brief x86 Virtual Memory Implementation
  *
- * @author David Matlack
  */
 #include <arch/vm.h>
 #include <arch/page.h>

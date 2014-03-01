@@ -3,7 +3,6 @@
  *
  * @brief Implementation of the fork system call.
  *
- * @author David Matlack
  */
 #include <kernel/syscall.h>
 #include <kernel/proc.h>

@@ -25,7 +25,6 @@
  *  (most of the documentation on this page was taken from this wiki, for
  *   my own benifit, typing it out to learn it)
  *
- * @author David Matlack
  */
 #ifndef __ARCH_X86_PIC_H__
 #define __ARCH_X86_PIC_H__

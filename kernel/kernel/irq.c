@@ -3,7 +3,6 @@
  *
  * @brief Hardware Interrupts
  *
- * @author David Matlack
  */
 #include <kernel/irq.h>
 #include <kernel/kmalloc.h>

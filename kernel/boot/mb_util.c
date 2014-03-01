@@ -3,7 +3,6 @@
  *
  * @brief Utility functions for the multiboot start up code.
  *
- * @author David Matlack
  */
 #include <boot/multiboot.h>
 #include <stddef.h>

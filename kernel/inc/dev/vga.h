@@ -10,7 +10,6 @@
  *
  * @reference http://www.brokenthorn.com/Resources/OSDev10.html
  *
- * @author David Matlack
  */
 #ifndef __DEV_VGA_H__
 #define __DEV_VGA_H__

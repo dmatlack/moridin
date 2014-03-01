@@ -1,7 +1,6 @@
 /**
  * @file kernel/timer.c
  *
- * @author David Matlack
  */
 #include <kernel/timer.h>
 #include <kernel/irq.h>

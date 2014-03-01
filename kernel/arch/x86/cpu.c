@@ -4,7 +4,6 @@
  * @brief General processor level enable/disable functions, low level
  * tweaking, etc.
  *
- * @author David Matlack
  */
 #include <arch/cpu.h>
 #include <arch/reg.h>

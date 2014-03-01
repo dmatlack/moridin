@@ -3,7 +3,6 @@
  *
  * @brief Utilities for creating the userspace runtime stack.
  *
- * @author David Matlack
  */
 #include <kernel/stack.h>
 #include <kernel/proc.h>

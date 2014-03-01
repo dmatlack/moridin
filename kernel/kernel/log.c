@@ -1,7 +1,6 @@
 /**
  * @file debug/log.c
  *
- * @author David Matlack
  */
 #include <kernel/debug.h>
 

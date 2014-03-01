@@ -17,7 +17,6 @@
  *    of the instruction causing the exception and does not allow the 
  *    program to continue execution after the handler completes.
  *
- * @author David Matlack
  */
 #ifndef __X86_EXN_H__
 #define __X86_EXN_H__

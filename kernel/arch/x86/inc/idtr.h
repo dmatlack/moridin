@@ -13,7 +13,6 @@
  *           0x200 interrupts).
  *    Base:  The 32-bit physical address where the IDT starts (INT 0).
  *
- * @author David Matlack
  */
 #ifndef __IDTR_H__
 #define __IDTR_H__

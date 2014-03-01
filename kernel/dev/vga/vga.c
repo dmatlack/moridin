@@ -3,7 +3,6 @@
  *
  * @brief Device driver for the VGA.
  *
- * @author David Matlack
  */
 #include <dev/vga.h>
 #include <arch/io.h>

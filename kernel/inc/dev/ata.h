@@ -24,7 +24,6 @@
  *
  * 3.1.41 sector: A uniquely addressable set of 256 words (512 bytes).
  *
- * @author David Matlack
  */
 #ifndef __DEV_ATA_H__
 #define __DEV_ATA_H__

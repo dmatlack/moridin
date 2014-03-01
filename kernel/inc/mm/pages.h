@@ -4,7 +4,6 @@
  * The general interface for page management is quite similar to Linux
  * (at least version 2.4.20).
  *
- * @author David Matlack
  */
 #ifndef __MM_PAGES_H__
 #define __MM_PAGES_H__

@@ -6,7 +6,6 @@
  * The initrd is a very simple, flat, read-only, filesystem. It does not
  * support creating or deleting files.
  *
- * @author David Matlack
  */
 #ifndef __FS_INITRD_H__
 #define __FS_INITRD_H__

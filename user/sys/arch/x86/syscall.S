@@ -1,6 +1,5 @@
 ###############################################################################
 # @file user/sys/arch/x86/syscall.S
-# @author David Matlack
 #
 #
 # This is the user space entrance point into the kernel. Since protection is

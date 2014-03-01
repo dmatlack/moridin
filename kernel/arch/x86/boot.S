@@ -9,7 +9,6 @@
 # I mostly just added documentation and organized some of the code into 
 # separate files.
 #
-# @author David Matlack
 ###############################################################################
 #include <boot/multiboot.h>
 #include <arch/seg.h>

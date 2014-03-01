@@ -1,7 +1,6 @@
 /**
  * @file list.h
  *
- * @author David Matlack
  */
 
 #define list_typedef(elem_type)                                               \

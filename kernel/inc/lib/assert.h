@@ -1,7 +1,6 @@
 /**
  * @file assert.h
  *
- * @author David Matlack
  */
 #ifndef _ASSERT_H_
 #define _ASSERT_H_

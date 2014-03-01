@@ -3,7 +3,6 @@
  *
  * @brief Virtual Memory Manager
  *
- * @author David Matlack
  */
 #ifndef __MM_VM_H__
 #define __MM_VM_H__

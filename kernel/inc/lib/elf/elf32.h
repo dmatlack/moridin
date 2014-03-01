@@ -6,7 +6,6 @@
  * References:
  *  http://www.skyfree.org/linux/references/ELF_Format.pdf
  *
- * @author David Matlack
  */
 #ifndef __LIB_ELF_ELF32_H__
 #define __LIB_ELF_ELF32_H__

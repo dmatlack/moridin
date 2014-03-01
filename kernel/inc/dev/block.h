@@ -3,7 +3,6 @@
  *
  * @brief Block Devices.
  *
- * @author David Matlack
  */
 #ifndef __DEV_BLOCK_H__
 #define __DEV_BLOCK_H__

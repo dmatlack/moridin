@@ -1,7 +1,6 @@
 /**
  * @file pic.c
  *
- * @author David Matlack
  */
 #include <arch/pic.h>
 #include <arch/io.h>

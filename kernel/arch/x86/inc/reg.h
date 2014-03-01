@@ -3,7 +3,6 @@
  *
  * @brief Functions and datastructures for manipulating x86 registers.
  *
- * @author David Matlack
  */
 #ifndef __X86_REG_H__
 #define __X86_REG_H__

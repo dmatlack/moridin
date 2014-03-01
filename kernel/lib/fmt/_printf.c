@@ -3,7 +3,6 @@
  *
  * @brief A putchar-agnostic printf. Yeah!
  *
- * @author David Matlack
  */
 #include <stdarg.h>
 #include <fmt/doprnt.h>

@@ -1,7 +1,6 @@
 /**
  * @file x86/irq.h
  *
- * @author David Matlack
  */
 #ifndef __X86_IRQ_H__
 #define __X86_IRQ_H__

@@ -1,7 +1,6 @@
 /**
  * @file pages.c
  *
- * @author David Matlack
  */
 #include <mm/pages.h>
 #include <mm/memory.h>

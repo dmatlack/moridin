@@ -3,7 +3,6 @@
  *
  * @brief A putchar-agnostic printf library.
  *
- * @author David Matlack
  */
 #ifndef ___PRINTF_H__
 #define ___PRINTF_H__

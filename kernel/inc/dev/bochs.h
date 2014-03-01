@@ -3,7 +3,6 @@
  *
  * @brief Debug utility for the bochs machine emulator.
  *
- * @author David Matlack
  */
 #ifndef __BOCHS_H__
 #define __BOCHS_H__

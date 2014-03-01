@@ -8,7 +8,6 @@
  *
  * !!!
  *
- * @author David Matlack
  */
 #include <kernel/exec.h>
 #include <kernel/loader.h>

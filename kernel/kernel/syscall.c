@@ -1,7 +1,6 @@
 /**
  * @brief kernel/syscall.c
  *
- * @author David Matlack
  */
 #include <kernel/syscall.h>
 #include <kernel/kprintf.h>

@@ -3,7 +3,6 @@
  *
  * Welcome. Have a look around.
  *
- * @author David Matlack
  */
 #include <kernel/config.h>
 #include <kernel/debug.h>

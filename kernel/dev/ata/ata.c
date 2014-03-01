@@ -3,7 +3,6 @@
  *
  * @brief Advanced Technology Attachment (ATA)
  *
- * @author David Matlack
  */
 #include <dev/ata.h>
 

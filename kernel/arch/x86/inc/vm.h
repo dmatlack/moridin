@@ -16,7 +16,6 @@
  *      which points to a page directory. This is only used when the physical
  *      address space extension (36-bit pointers) is used.
  *
- * @author David Matlack
  */
 #ifndef __X86_VM_H__
 #define __X86_VM_H__

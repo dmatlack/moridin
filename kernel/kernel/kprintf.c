@@ -4,7 +4,6 @@
  * @brief The kernel printf function. Used for printing to the
  * console.
  *
- * @author David Matlack
  */
 #include <stdarg.h>      // for va_list, va_start, va_end
 #include <fmt/_printf.h> // for _vprintf

@@ -3,7 +3,6 @@
  *
  * @brief Functions for adding entries to the Interrupt Descriptor Table.
  *
- * @author David Matlack (dmatlack)
  **/
 #include <arch/idt.h>
 #include <arch/idtr.h>

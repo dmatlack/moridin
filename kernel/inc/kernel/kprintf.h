@@ -1,7 +1,6 @@
 /**
  * @file kernel/kprintf.h
  *
- * @author David Matlack
  */
 #ifndef __KERNEL_KPRINTF_H__
 #define __KERNEL_KPRINTF_H__

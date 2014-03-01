@@ -3,7 +3,6 @@
  *
  * Programmable Interrupt Timer (PIT), 8253/8254 Chip
  *
- * @author David Matlack
  */
 #ifndef __DEV_PIT_H__
 #define __DEV_PIT_H__

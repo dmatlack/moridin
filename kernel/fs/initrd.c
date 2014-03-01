@@ -1,7 +1,6 @@
 /**
  * @file fs/initrd.h
  *
- * @author David Matlack
  */
 #include <fs/initrd.h>
 #include <fs/vfs.h>
