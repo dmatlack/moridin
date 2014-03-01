@@ -154,4 +154,6 @@ void vm_unmap_page(struct vm_space *space, unsigned long virt) {
   if (page) {
     free_page(page);
   }
+
+  tlb_invalidate(virt, PAGE_SIZE);
 }

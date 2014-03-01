@@ -156,28 +156,25 @@ static struct page *find_contig_pages(unsigned long n, struct page_zone *zone) {
   num_contig = 0;
 
   do {
-    if ((page + n) > (zone->pages + zone->num_pages)) {
+    /*
+     * This page is in use.
+     */
+    if (page->count) {
       num_contig = 0;
-      zone->index = 0;
     }
     else {
-      /*
-       * This page is in use.
-       */
-      if (page->count) {
-        num_contig = 0;
-      }
-      else {
-        num_contig++;
+      num_contig++;
 
-        if (n == num_contig) {
-          return page - (n - 1);
-        }
+      if (num_contig == n) {
+        return page - (n - 1);
       }
-
-      zone->index = (zone->index + 1) % zone->num_pages;
     }
 
+    zone->index++;
+    if (zone->index == zone->num_pages) {
+      zone->index = 0;
+      num_contig = 0;
+    }
     page = zone->pages + zone->index;
   } while (page != start);
   
