@@ -93,11 +93,11 @@ void mb_dump(printf_f p, struct multiboot_info *mb_info) {
   }
 
   IF_FLAGS( MULTIBOOT_INFO_DRIVE_INFO ) {
-    p("  TODO\n");
+    p("  (not implemented)\n");
   }
 
   IF_FLAGS( MULTIBOOT_INFO_CONFIG_TABLE ) {
-    p("  TODO\n");
+    p("  (not implemented)\n");
   }
 
   IF_FLAGS( MULTIBOOT_INFO_BOOT_LOADER_NAME ) {
@@ -105,11 +105,11 @@ void mb_dump(printf_f p, struct multiboot_info *mb_info) {
   }
 
   IF_FLAGS( MULTIBOOT_INFO_APM_TABLE ) {
-    p("  TODO\n");
+    p("  (not implemented)\n");
   }
   
   IF_FLAGS( MULTIBOOT_INFO_VIDEO_INFO ) {
-    p("  TODO\n");
+    p("  (not implemented)\n");
   }
 
 #undef FLAGS

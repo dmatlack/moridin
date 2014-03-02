@@ -10,6 +10,7 @@
  *
  */
 #include <kernel/exec.h>
+#include <kernel/kmalloc.h>
 #include <kernel/loader.h>
 #include <kernel/proc.h>
 #include <kernel/stack.h>
@@ -28,8 +29,6 @@ struct exec_args {
   int    argc;
   char **argv;
 };
-
-extern void test_munmap(void);
 
 void finish_run_first_proc(struct exec_args *args) {
   struct vfs_file *file;
@@ -52,8 +51,6 @@ void finish_run_first_proc(struct exec_args *args) {
 
   ret = create_user_stack(CURRENT_THREAD, args->argc, args->argv);
   ASSERT_EQUALS(0, ret);
-
-  test_munmap();
 
   iret_to_userspace(CURRENT_THREAD->kstack_hi,
                     (size_t) CURRENT_PROC->space.object,

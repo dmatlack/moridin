@@ -95,13 +95,13 @@ phdrs_cleanup:
  * @brief Unload the elf from memory by unmapping the virtual memory and
  * free the physical pages that were backing them.
  */
-void __elf32_unload(struct elf32_ehdr *ehdr,
-                    struct elf32_phdr *phdrs) {
-  int i;
+static void elf32_unmap(struct elf32_ehdr *ehdr, struct elf32_phdr *phdrs) {
+  int i, error;
   for (i = 0; i < ehdr->e_phnum; i++) {
     struct elf32_phdr *p = phdrs + i;
-    (void)p;
-    panic("implement vm_munmap() plz");
+    
+    error = vm_munmap(p->p_vaddr, p->p_memsz);
+    ASSERT_EQUALS(0, error);
   }
 }
 
@@ -157,7 +157,7 @@ int __elf32_load(struct vfs_file *file, struct elf32_ehdr *ehdr, struct elf32_ph
   return 0;
 
 load_fail:
-  panic("TODO: unmap the elf");
+  elf32_unmap(ehdr, phdrs);
   return (int) error;
 }
 

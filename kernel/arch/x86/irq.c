@@ -133,7 +133,7 @@ void interrupt_request(int irq) {
     return;
   }
 
-  //FIXME remove me
+  //TODO remove me
   //  This line reads a character from the keyboard data port so that
   //  we can continue receiving keyboard interrupts.
   if (1 == irq) inb(0x60);

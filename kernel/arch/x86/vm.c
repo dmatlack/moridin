@@ -87,25 +87,27 @@ void share_mappings(struct entry_table *to_pd, struct entry_table *from_pd) {
 void entry_set_flags(entry_t *entry, int flags) {
   if (flags & VM_W) {
     entry_set_readwrite(entry);
-    TRACE("RW");
   }
   else {
     entry_set_readonly(entry);
-    TRACE("RO");
   }
 
   if (flags & VM_S) {
-    TRACE("SUPERVISOR");
     entry_set_supervisor(entry);
   }
   else {
-    TRACE("USER");
     entry_set_user(entry);
   }
 
   if (flags & VM_G) {
-    TRACE("GLOBAL");
     entry_set_global(entry);
+  }
+
+  if (flags & VM_P) {
+    entry_set_present(entry);
+  }
+  else {
+    entry_set_absent(entry);
   }
 }
 
@@ -275,8 +277,7 @@ static int map(struct entry_table *pd, size_t virt, size_t phys, int flags) {
     }
 
     entry_set_addr(pde, (size_t) pt);
-    entry_set_present(pde);
-    entry_set_flags(pde, VM_R | VM_W | VM_U);
+    entry_set_flags(pde, VM_P | VM_R | VM_W | VM_U);
   }
   else {
     pt = (struct entry_table *) entry_get_addr(pde);
@@ -289,7 +290,6 @@ static int map(struct entry_table *pd, size_t virt, size_t phys, int flags) {
    */
   pte = get_pte(pt, virt);
   entry_set_addr(pte, phys);
-  entry_set_present(pte);
   entry_set_flags(pte, flags);
 
   {
@@ -314,14 +314,11 @@ int __map_page(struct entry_table *pd, size_t virt, struct page *page, int flags
     int ret;
    
     ret = map(pd, v, p, flags);
-
-    //FIXME: rollback previous mappings if we fail
-    // e.g.
-    //    if (0 != ret) {
-    //      __unmap(pd, virt, i * X86_PAGE_SIZE);
-    //      return ret;
-    //    }
-    ASSERT_EQUALS(0, ret);
+    
+    if (ret) {
+      unmap_page(pd, virt);
+      return ret;
+    }
   }
 
   return 0;

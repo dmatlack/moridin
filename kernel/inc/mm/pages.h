@@ -41,6 +41,6 @@ struct page *alloc_pages(unsigned long n);
 #define alloc_page() alloc_pages(1)
 
 void free_pages(struct page *pages, unsigned long n);
-#define free_page(page) free_pages(page, 1)
+#define free_page(_p) free_pages(_p, 1)
 
 #endif /* !__MM_PAGES_H__ */

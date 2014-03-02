@@ -47,7 +47,7 @@ void vm_init(void) {
     size_t virt = CONFIG_KERNEL_VIRTUAL_START + phys;
     int ret;
 
-    ret = map_page(kernel_space.object, virt, page, VM_S | VM_G | VM_R | VM_W);
+    ret = map_page(kernel_space.object, virt, page, VM_P | VM_S | VM_G | VM_R | VM_W);
     ASSERT_EQUALS(0, ret);
   }
 
@@ -111,17 +111,6 @@ void vm_space_destroy(struct vm_space *space) {
  */
 void *__vm_space_switch(void *object) {
   return swap_address_space(object);
-}
-
-int vm_map(struct vm_space *space, size_t address, size_t size, int flags) {
-  (void) space; (void) address; (void) size; (void) flags;
-  panic("%s: someone kill me", __func__);
-  return 0;
-}
-
-void vm_unmap(struct vm_space *space, size_t address, size_t size) {
-  (void) space; (void) address; (void) size;
-  panic("%s: someone kill me", __func__);
 }
 
 int vm_map_page(struct vm_space *space, unsigned long virt, int flags) {

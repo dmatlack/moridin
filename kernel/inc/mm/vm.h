@@ -60,8 +60,6 @@ extern struct vm_space boot_vm_space;
 void vm_init(void);
 int  vm_space_init(struct vm_space *space);
 void *__vm_space_switch(void *space_object);
-int  vm_map(struct vm_space *space, size_t address, size_t size, int flags);
-void vm_unmap(struct vm_space *space, size_t address, size_t size);
 
 //TODO move to syscall header when that exists
 #define PROT_EXEC   (1 << 0)

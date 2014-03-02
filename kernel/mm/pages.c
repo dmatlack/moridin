@@ -136,11 +136,6 @@ struct page *alloc_pages_at(size_t addr, unsigned long n) {
   return __alloc_pages_at(addr, n, zone_containing(addr));
 }
 
-// TODO: remove this function and replace references to it with alloc_pages_at
-void alloc_kernel_pages(size_t paddr, size_t size) {
-  ASSERT_NOT_NULL(alloc_pages_at(paddr, size / PAGE_SIZE)); 
-}
-
 /**
  * @brief Find n contiguous (unused) pages in the zone.
  *

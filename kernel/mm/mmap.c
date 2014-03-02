@@ -421,6 +421,7 @@ int vm_munmap(unsigned long addr, unsigned long length) {
     return 0;
 }
 
+#if 0
 void test_munmap(void) {
   int prot = PROT_READ | PROT_WRITE;
   int flags = MAP_PRIVATE | MAP_FIXED | MAP_ANONYMOUS;
@@ -455,3 +456,4 @@ void test_munmap(void) {
 #undef _MAP
 #undef _UNMAP
 }
+#endif
