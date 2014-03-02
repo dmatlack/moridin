@@ -2,16 +2,21 @@
  * @file mm/mmap.c
  */
 #include <mm/vm.h>
-#include <kernel/proc.h>
+
 #include <kernel/config.h>
-#include <errno.h>
-#include <arch/vm.h>
 #include <kernel/debug.h>
 #include <kernel/kmalloc.h>
+#include <kernel/log.h>
+#include <kernel/proc.h>
+
+#include <arch/vm.h>
+
+#include <errno.h>
+#include <math.h>
 
 #if CONFIG_KERNEL_VIRTUAL_START == 0 // f*** you gcc
   #define kernel_address(addr) \
-     (addr <  CONFIG_KERNEL_VIRTUAL_TOP)
+     (addr < CONFIG_KERNEL_VIRTUAL_TOP)
 #else
   #define kernel_address(addr) \
     (addr >= CONFIG_KERNEL_VIRTUAL_START && \
@@ -28,11 +33,27 @@ static struct vm_mapping *find_mapping(struct vm_space *space, unsigned long add
     /*
      * Found an overlapping region
      */
-    if (m->address <= addr && (m->address + m->num_pages * PAGE_SIZE) > addr) {
+    if (m->address <= addr && M_END(m) > addr) {
       return m;
     }
 
     if (m->address > addr) break;
+  }
+
+  return NULL;
+}
+
+/**
+ * @brief Return the first mapping in space that overlaps with [addr, addr + length).
+ */
+static struct vm_mapping *find_first_overlapping(struct vm_space *space, unsigned long addr,
+                                                 unsigned long length) {
+  struct vm_mapping *m;
+
+  list_foreach(m, &space->mappings, link) {
+    if (check_overlap(addr, length, m->address, M_LENGTH(m))) {
+      return m;
+    }
   }
 
   return NULL;
@@ -149,7 +170,7 @@ int vm_page_fault(unsigned long addr, int flags) {
 unsigned long __vm_mmap(unsigned long addr, unsigned long length, int prot, int flags,
                         struct vfs_file *file, unsigned long off) {
   struct vm_space *space = &CURRENT_PROC->space;
-  struct vm_mapping *mapping, *prev = NULL;
+  struct vm_mapping *m, *prev = NULL;
   int error, vmflags = 0;
   bool found = false;
 
@@ -162,30 +183,26 @@ unsigned long __vm_mmap(unsigned long addr, unsigned long length, int prot, int 
 
   // Steps:
   //  1. Find an overlapping mapping to extend or create a new mapping.
-  list_foreach(mapping, &space->mappings, link) {
-    unsigned long start, end;
-
-    start = mapping->address;
-    end = start + mapping->num_pages * PAGE_SIZE;
-
+  list_foreach(m, &space->mappings, link) {
     /*
      * Found an overlapping region
      */
-    if ((start <= addr && end > addr) ||
-        (start <= addr + length && end > addr + length)) {
+    if (check_overlap(addr, length, m->address, M_LENGTH(m))) {
+      DEBUG("OVERLAP?? (0x%08x, 0x%08x) (0x%08x, 0x%08x)",
+            addr, length, m->address, M_LENGTH(m));
       found = true;
       break;
     }
 
-    prev = mapping;
-
     /*
      * Found the first region AFTER the region we're trying to add.
      */
-    if (start > addr) {
-      ASSERT_GREATEREQ(start, addr + length);
+    if (m->address > addr) {
+      ASSERT_GREATEREQ(m->address, addr + length);
       break;
     }
+
+    prev = m;
   }
 
   if (found) {
@@ -194,35 +211,35 @@ unsigned long __vm_mmap(unsigned long addr, unsigned long length, int prot, int 
           "yet...");
   }
   else {
-    mapping = (struct vm_mapping *) kmalloc(sizeof(struct vm_mapping));
-    if (!mapping) {
+    m = (struct vm_mapping *) kmalloc(sizeof(struct vm_mapping));
+    if (!m) {
       return ENOMEM;
     }
 
-    mapping->space = space;
-    mapping->address = addr;
-    mapping->num_pages = length / PAGE_SIZE;
-    mapping->flags = vmflags;
+    m->space = space;
+    m->address = addr;
+    m->num_pages = length / PAGE_SIZE;
+    m->flags = vmflags;
     if (flags & MAP_ANONYMOUS) {
-      mapping->file = NULL;
-      mapping->foff = 0;
+      m->file = NULL;
+      m->foff = 0;
     }
     else {
-      mapping->file = file;
-      mapping->foff = off;
+      m->file = file;
+      m->foff = off;
     }
 
     if (prev) {
-      list_insert_after(&space->mappings, prev, mapping, link);
+      list_insert_after(&space->mappings, prev, m, link);
     }
     else {
-      list_insert_head(&space->mappings, mapping, link);
+      list_insert_head(&space->mappings, m, link);
     }
   }
 
   //TODO: maybe reserve num_pages pages from the physical page allocator
   // so we don't run out of memory during a page fault.
-
+  
   /*
    * OK, eventually this code here will be triggered by the page fault
    * handler upon access. But for now let's just pretend we page faulted
@@ -241,6 +258,10 @@ unsigned long __vm_mmap(unsigned long addr, unsigned long length, int prot, int 
   return addr;
 }
 
+/**
+ * @return The page aligned address of the region that was mapped on success.
+ * On error return an error code < PAGE_SIZE.
+ */
 unsigned long vm_mmap(unsigned long addr, unsigned long length, int prot, int flags,
                       struct vfs_file *file, unsigned long off) {
 
@@ -253,6 +274,11 @@ unsigned long vm_mmap(unsigned long addr, unsigned long length, int prot, int fl
 
   if (flags & MAP_LOCKED) {
     panic("MAP_LOCKED not implemented");
+  }
+
+  // If addr is NULL then we should pick the address to map for the process.
+  if (!addr) {
+    panic("NULL addr not implemented");
   }
 
   if ((flags & MAP_PRIVATE) && (flags & MAP_SHARED)) {
@@ -272,4 +298,160 @@ unsigned long vm_mmap(unsigned long addr, unsigned long length, int prot, int fl
   length = PAGE_ALIGN_UP(length);
 
   return __vm_mmap(addr, length, prot, flags, file, off);
+}
+
+/**
+ * @return 0 on success, non-0 error code otherwise
+ *
+ * It is not an error to unmap a region of memory that contains no mappings.
+ */
+int vm_munmap(unsigned long addr, unsigned long length) {
+  struct vm_mapping *next;
+  struct vm_space *space = &CURRENT_PROC->space;
+  struct vm_mapping *m;
+  unsigned long virt;
+
+  TRACE("addr=0x%08x, length=0x%x", addr, length);
+
+  // hmm... nobody should be unmapping the kernel...
+  if (kernel_address(addr)) {
+    panic("Attempt to unmap kernel virtual address 0x%08x", addr);
+  }
+
+  if (!IS_PAGE_ALIGNED(addr)) {
+    DEBUG("addr not page aligned: 0x%x", addr);
+    return EINVAL;
+  }
+
+  if (addr + length < addr) {
+    DEBUG("Overflow: 0x%08x + 0x%08x = 0x%08x", addr, length, addr + length);
+    return EINVAL;
+  }
+
+  length = PAGE_ALIGN_UP(length);
+
+  m = find_first_overlapping(space, addr, length);
+  if (!m) {
+    return 0;
+  }
+  
+  /*
+   * If we are trying to unmap in the middle of a mapping we will split it
+   * in two.
+   */
+  if (addr > m->address && (addr + length) < M_END(m)) {
+    next = kmalloc(sizeof(struct vm_mapping));
+    if (!next) {
+      return ENOMEM;
+    }
+
+    next->space = space;
+    next->address = addr + length;
+    next->num_pages = (M_END(m) - next->address) / PAGE_SIZE;
+    next->flags = m->flags;
+    next->file = m->file; //TODO: increase file->refs?
+    /*
+     * The file offset has to change because the start address of the mapping
+     * changed.
+     */
+    if (m->file) next->foff = m->foff + (next->address - m->address);
+
+    list_insert_after(&space->mappings, m, next, link);
+
+    m->num_pages = (addr - m->address) / PAGE_SIZE;
+
+    /*
+     * Unmap the pages in the hardware virtual memory management.
+     */
+    for (virt = addr; virt < addr + length; virt += PAGE_SIZE) {
+      vm_unmap_page(space, virt);
+    }
+  }
+  /*
+   * In the normal case we are unmapping some set of mappings.
+   */
+  else {
+    unsigned long unmap_start, unmap_end;
+
+    do {
+      /*
+       * Only unmap the end of this mapping.
+       */
+      if (m->address < addr) {
+        unmap_start = addr;
+        unmap_end = M_END(m);
+
+        m->num_pages -= (unmap_end - unmap_start) / PAGE_SIZE;
+        m = list_next(m, link);
+      }
+      /*
+       * Only unmap the beginning of this mapping.
+       */
+      else if (M_END(m) > addr + length) {
+        unmap_start = m->address;
+        unmap_end = addr + length;
+
+        if (m->file) m->foff += (unmap_end - unmap_start);
+        m->num_pages -= (unmap_end - unmap_start) / PAGE_SIZE;
+        m->address = unmap_end;
+        m = list_next(m, link);
+      }
+      /*
+       * Unmap the entire mapping.
+       */
+      else {
+        unmap_start = m->address;
+        unmap_end = M_END(m);
+
+        next = list_next(m, link);
+        list_remove(&space->mappings, m, link);
+        kfree(m, sizeof(struct vm_mapping)); //TODO: decrease file->refs?
+        m = next;
+      }
+
+      /*
+       * Unmap the pages in the hardware virtual memory management.
+       */
+      for (virt = unmap_start; virt < unmap_end; virt += PAGE_SIZE) {
+        vm_unmap_page(space, virt);
+      }
+    } while (m && check_overlap(addr, length, m->address, M_LENGTH(m)));
+  }
+
+    return 0;
+}
+
+void test_munmap(void) {
+  int prot = PROT_READ | PROT_WRITE;
+  int flags = MAP_PRIVATE | MAP_FIXED | MAP_ANONYMOUS;
+  int error;
+
+  TRACE();
+
+#define _MAP(_addr, _length) \
+  do { \
+    error = vm_mmap(_addr, _length, prot, flags, NULL, 0); \
+    ASSERT(!(error % PAGE_SIZE)); \
+  } while (0)
+
+#define _UNMAP(_start, _end) \
+  do { \
+    error = vm_munmap(_start, (_end) - (_start)); \
+    ASSERT(!error); \
+    vm_dump_maps(__log, &CURRENT_PROC->space); \
+  } while (0)
+
+  _MAP(0x80000000, 3 * PAGE_SIZE);
+  _MAP(0x80010000, 10 * PAGE_SIZE);
+  _MAP(0x90000000, 3 * PAGE_SIZE);
+
+  _UNMAP(0x80000000 + PAGE_SIZE, 0x90000000 + PAGE_SIZE);
+
+  /*
+   * unmap everything
+   */
+  _UNMAP(0x80000000 - PAGE_SIZE, 0xA0000000 - PAGE_SIZE);
+
+#undef _MAP
+#undef _UNMAP
 }

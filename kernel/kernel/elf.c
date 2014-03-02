@@ -106,7 +106,8 @@ void __elf32_unload(struct elf32_ehdr *ehdr,
 }
 
 static void log_phdr(struct elf32_phdr *p) {
-  INFO("  %-4s %-10s %-10s %-10s %-6s %-6s %-4s %-6s\n"
+  INFO("\n"
+       "  %-4s %-10s %-10s %-10s %-6s %-6s %-4s %-6s\n"
        "  %-4d 0x%08x 0x%08x 0x%08x %-6d %-6d 0x%02x 0x%04x",
        "type", "offset", "vaddr", "paddr", "filesz", "memsz", "flg", "align",
        p->p_type, p->p_offset, p->p_vaddr, p->p_paddr, p->p_filesz,

@@ -157,3 +157,25 @@ void vm_unmap_page(struct vm_space *space, unsigned long virt) {
 
   tlb_invalidate(virt, PAGE_SIZE);
 }
+
+void vm_dump_maps(printf_f p, struct vm_space *space) {
+  struct vm_mapping *m;
+
+  TRACE("space=%p", space);
+
+  list_foreach(m, &space->mappings, link) {
+    p("0x%08x - 0x%08x %c%c%c%c%c%c%c",
+      m->address, M_END(m),
+      m->flags & VM_R ? 'r' : '-',
+      m->flags & VM_W ? 'w' : '-',
+      m->flags & VM_X ? 'x' : '-',
+      m->flags & VM_U ? 'u' : '-',
+      m->flags & VM_S ? 's' : '-',
+      m->flags & VM_G ? 'g' : '-',
+      m->flags & VM_P ? 'p' : '-');
+    if (m->file) {
+      p(" %s 0x%x", m->file->dirent->name, m->foff);
+    }
+    p("\n");
+  }
+}

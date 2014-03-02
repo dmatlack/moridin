@@ -42,6 +42,12 @@ struct vm_mapping {
   list_link(struct vm_mapping) link;
 };
 
+#define M_LENGTH(_m) \
+  ((_m)->num_pages * PAGE_SIZE)
+
+#define M_END(_m) \
+  ((_m)->address + M_LENGTH(_m))
+
 list_typedef(struct vm_mapping) vm_mapping_list_t;
 
 struct vm_space {
@@ -76,6 +82,8 @@ unsigned long vm_mmap(unsigned long addr, unsigned long length,
                       int prot, int flags,
                       struct vfs_file *file, unsigned long off);
 
+int vm_munmap(unsigned long addr, unsigned long length);
+
 #define PF_READ       (1 << 0) // page fault was a read
 #define PF_WRITE      (1 << 1) // page fault was a write
 #define PF_USER       (1 << 2) // faulted while in user mode
@@ -84,5 +92,7 @@ int vm_page_fault(unsigned long address, int flags);
 
 int vm_map_page(struct vm_space *space, unsigned long virt, int flags);
 void vm_unmap_page(struct vm_space *space, unsigned long virt);
+
+void vm_dump_maps(printf_f p, struct vm_space *space);
 
 #endif /* !__MM_VM_H__ */

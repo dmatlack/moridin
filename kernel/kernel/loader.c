@@ -21,9 +21,6 @@
 /**
  * @brief Load an executable file.
  *
- * TODO: maybe pass in a process or address space object as well
- * so the loader knows where to load the file.
- *
  * @param file The file object of the executable to load
  *
  * @return
