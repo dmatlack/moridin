@@ -155,7 +155,7 @@ set_cr4:
 
 .global get_esp
 get_esp:
-    movl %esp, %eax
+    leal 4(%esp), %eax    # Get the address of esp from before get_esp was called
     ret
 
 .global enable_irqs
