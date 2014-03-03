@@ -20,7 +20,7 @@
 #include <kernel/debug.h>
 #include <errno.h>
 
-static inline bool is_page_aligned(size_t addr) {
+static inline bool is_page_aligned(unsigned long addr) {
   return FLOOR(X86_PAGE_SIZE, addr) == addr;
 }
 
@@ -120,7 +120,7 @@ void entry_set_flags(entry_t *entry, int flags) {
  * @return TRUE (non-zero) if the address is mapped, FALSE (zero) if the
  * address is not mapped.
  */
-bool __vtop(struct entry_table *pd, size_t v, size_t *pp) {
+bool __vtop(struct entry_table *pd, unsigned long v, unsigned long *pp) {
   struct entry_table *pt;
   entry_t *pde, *pte;
 
@@ -161,12 +161,12 @@ void free_marked_page_tables(struct entry_table *pd) {
      */
     if (entry_is_present(pde) && (*pde & ENTRY_TABLE_UNMAP)) {
       struct entry_table *pt = (struct entry_table *) entry_get_addr(pde);
-      bool is_empty = true;
+      bool page_table_empty = true;
 
       for (j = 0; j < (int) ENTRY_TABLE_SIZE; j++) {
         pte = pt->entries + j;
         if (entry_is_present(pte)) {
-          is_empty = false;
+          page_table_empty = false;
           break;
         }
       }
@@ -175,7 +175,7 @@ void free_marked_page_tables(struct entry_table *pd) {
        * If the page table was empty, mark the page directory entry as
        * absent and free the page table.
        */
-      if (is_empty) {
+      if (page_table_empty) {
         entry_set_absent(pde);
         free_entry_table(pt);
       }
@@ -186,7 +186,7 @@ void free_marked_page_tables(struct entry_table *pd) {
 }
 
 struct page *unmap_page(void *pd, unsigned long virt) {
-  size_t vpage;
+  unsigned long vpage;
   entry_t *pde, *pte;
   int i;
   struct page *page = NULL;
@@ -241,16 +241,6 @@ struct page *unmap_page(void *pd, unsigned long virt) {
   return page;
 }
   
-
-void unmap_pages(void *pd, size_t addr, size_t size, size_t *ppages) {
-  TRACE("pd=%p, addr=0x%x, size=0x%x, ppages=%p", pd, addr, size, ppages);
-
-  ASSERT(is_page_aligned(addr));
-  ASSERT(is_page_aligned(size));
-
-  panic("someone delete me");
-}
-
 /**
  * @brief Maps virt to phys with the given flags.
  *
@@ -261,27 +251,27 @@ void unmap_pages(void *pd, size_t addr, size_t size, size_t *ppages) {
  *      table data structure and the system has run out of available
  *      memory.
  */
-static int map(struct entry_table *pd, size_t virt, size_t phys, int flags) {
+static int map(struct entry_table *pd, unsigned long virt, unsigned long phys, int flags) {
   struct entry_table *pt;
   entry_t *pde, *pte;
 
+  pde = get_pde(pd, virt);
+
   /*
-   * Create a page directory if there is not one already present for the
+   * Create a page table if there is not one already present for the
    * 4MB chunk containing this page.
    */
-  pde = get_pde(pd, virt);
   if (!entry_is_present(pde)) {
     pt = new_entry_table();
     if (!pt) {
       return ENOMEM;
     }
 
-    entry_set_addr(pde, (size_t) pt);
+    entry_set_addr(pde, (unsigned long) pt);
     entry_set_flags(pde, VM_P | VM_R | VM_W | VM_U);
   }
-  else {
-    pt = (struct entry_table *) entry_get_addr(pde);
-  }
+  
+  pt = (struct entry_table *) entry_get_addr(pde);
   ASSERT(entry_is_present(pde));
 
   /*
@@ -293,7 +283,7 @@ static int map(struct entry_table *pd, size_t virt, size_t phys, int flags) {
   entry_set_flags(pte, flags);
 
   {
-    size_t _phys;
+    unsigned long _phys;
     ASSERT(__vtop(pd, virt, &_phys));
     ASSERT_EQUALS(phys, _phys);
   }
@@ -301,7 +291,7 @@ static int map(struct entry_table *pd, size_t virt, size_t phys, int flags) {
   return 0;
 }
 
-int __map_page(struct entry_table *pd, size_t virt, struct page *page, int flags) {
+int __map_page(struct entry_table *pd, unsigned long virt, struct page *page, int flags) {
   unsigned i;
 
   /*
@@ -309,8 +299,8 @@ int __map_page(struct entry_table *pd, size_t virt, struct page *page, int flags
    * page size on x86 (X86_PAGE_SIZE).
    */
   for (i = 0; i < PAGE_SIZE / X86_PAGE_SIZE; i++) {
-    size_t v = virt + (i * X86_PAGE_SIZE);
-    size_t p = page_address(page) + (i * X86_PAGE_SIZE);
+    unsigned long v = virt + (i * X86_PAGE_SIZE);
+    unsigned long p = page_address(page) + (i * X86_PAGE_SIZE);
     int ret;
    
     ret = map(pd, v, p, flags);
@@ -334,7 +324,7 @@ int __map_page(struct entry_table *pd, size_t virt, struct page *page, int flags
  *
  * @return 0 on success, non-0 on error
  */
-int map_page(void *pd, size_t virt, struct page *page, int flags) {
+int map_page(void *pd, unsigned long virt, struct page *page, int flags) {
   TRACE("pd=%p, virt=0x%x, page=0x%x, flags=%p", pd, virt, page_address(page), flags);
 
   ASSERT(is_page_aligned(virt));
@@ -364,7 +354,7 @@ void tlb_flush(void) {
  * after vm_map if you want to write to or read from the pages you just
  * mapped.
  */
-void tlb_invalidate(size_t addr, size_t size) {
+void tlb_invalidate(unsigned long addr, size_t size) {
   (void) addr; (void) size;
 
   // TODO implement this with invlpg

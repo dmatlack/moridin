@@ -185,13 +185,13 @@ static inline int entry_is_global(entry_t *entry) {
  *   bits 12-31
  */
 #define ENTRY_ADDR_MASK (~MASK(11))
-static inline void entry_set_addr(entry_t *entry_ptr, size_t addr) {
-  ASSERT_EQUALS(FLOOR(X86_PAGE_SIZE, (size_t) (addr)), ((size_t)(addr)));
+static inline void entry_set_addr(entry_t *entry_ptr, unsigned long addr) {
+  ASSERT_EQUALS(FLOOR(X86_PAGE_SIZE, addr), addr);
   *(entry_ptr) &= ~ENTRY_ADDR_MASK;
   *(entry_ptr) |= addr;
 }
-static inline size_t entry_get_addr(entry_t *entry) {
-  return (size_t) ((*entry) & ENTRY_ADDR_MASK);
+static inline unsigned long entry_get_addr(entry_t *entry) {
+  return (unsigned long) ((*entry) & ENTRY_ADDR_MASK);
 }
 
 /*
@@ -233,11 +233,11 @@ void entry_table_free(struct entry_table *ptr);
 #define PT_OFFSET(la)  (((la) >> 12) & MASK(10))
 #define PHYS_OFFSET(la) ((la) & MASK(12))
 
-static inline entry_t* get_pde(struct entry_table *pd, size_t vaddr) {
+static inline entry_t* get_pde(struct entry_table *pd, unsigned long vaddr) {
   return &(pd->entries[PD_OFFSET(vaddr)]);
 }
 
-static inline entry_t* get_pte(struct entry_table *pt, size_t vaddr) {
+static inline entry_t* get_pte(struct entry_table *pt, unsigned long vaddr) {
   return &(pt->entries[PT_OFFSET(vaddr)]);
 }
 
@@ -252,15 +252,13 @@ static inline void *swap_address_space(void *new) {
 #define vtop(v, pp) __vtop((struct entry_table *) get_cr3(), v, pp)
 #define phys(v) 
 
-int map_page(void *pd, size_t virt, struct page *page, int flags);
+int map_page(void *pd, unsigned long virt, struct page *page, int flags);
 
 struct page *unmap_page(void *pd, unsigned long virt);
-
-void unmap_pages(void *pd, size_t addr, size_t size, size_t *ppages);
 
 void share_mappings(struct entry_table *to_pd, struct entry_table *from_pd);
 
 void tlb_flush(void);
-void tlb_invalidate(size_t addr, size_t size);
+void tlb_invalidate(unsigned long addr, size_t size);
 
 #endif /* !__X86_VM_H__ */
