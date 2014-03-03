@@ -46,8 +46,12 @@ void pic_irq_init(void);
 
 void generate_irq(int irq);
 
+void disable_irqs(void);
 void enable_irqs(void);
 
-void disable_irqs(void);
+int  save_irqs(void);
+void restore_irqs(int);
+
+
 
 #endif /* !__X86_IRQ_H__ */

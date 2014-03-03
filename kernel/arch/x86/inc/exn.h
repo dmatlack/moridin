@@ -78,47 +78,6 @@ EXN_HANDLER_PROTOTYPE(17);
 EXN_HANDLER_PROTOTYPE(18);
 EXN_HANDLER_PROTOTYPE(19);
 
-struct __attribute__((__packed__)) x86_exn_args {
-  /* exception vector */
-  uint32_t vector;
-  /* control registers */
-  uint32_t cr0;
-  uint32_t cr2;
-  uint32_t cr3;
-  uint32_t cr4;
-  /* segment selectors */
-  uint32_t ds;
-  uint32_t es;
-  uint32_t fs;
-  uint32_t gs;
-  /* pusha registers */
-  struct x86_pusha_stack pusha;
-  /* error code for exception  */
-  uint32_t error_code;
-  /* machine generated state information */
-  struct x86_iret_stack iret;
-};
-
-void x86_exn_panic(struct x86_exn_args *args);
-
-void x86_exn_set_handler(void (*handler)(struct x86_exn_args *));
-
-/**
- * @brief The handler for all exceptions. This is NOT the handler installed
- * in the IDT for exceptions. Instead, all of those handlers call into this
- * handler, passing in state such as the pusha stack, and the exception vector.
- *
- * DO NOT CALL THIS. This is called by x86/exn_wrappers.S.
- */
-void x86_exn_handle_all(struct x86_exn_args args);
-
-/**
- * @brief Print basic exception information.
- *
- * @param vector The exception vector
- * @param p The printf function to use to print
- */
-void x86_exn_type_dump(printf_f p, int vector);
-void x86_exn_dump(printf_f p, struct x86_exn_args *exn);
+void x86_exn_panic(int vector, int error, struct registers *regs);
 
 #endif /* __X86_EXN_H__ */

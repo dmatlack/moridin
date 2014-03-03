@@ -52,6 +52,8 @@ void finish_run_first_proc(struct exec_args *args) {
   ret = create_user_stack(CURRENT_THREAD, args->argc, args->argv);
   ASSERT_EQUALS(0, ret);
 
+  *((int *) 0x80000000) = 10; // page fault
+
   iret_to_userspace(CURRENT_THREAD->kstack_hi,
                     (size_t) CURRENT_PROC->space.object,
                     CURRENT_PROC->exec.entry,

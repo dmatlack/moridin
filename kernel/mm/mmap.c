@@ -237,9 +237,6 @@ unsigned long __vm_mmap(unsigned long addr, unsigned long length, int prot, int 
     }
   }
 
-  //TODO: maybe reserve num_pages pages from the physical page allocator
-  // so we don't run out of memory during a page fault.
-  
   /*
    * OK, eventually this code here will be triggered by the page fault
    * handler upon access. But for now let's just pretend we page faulted

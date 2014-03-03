@@ -64,12 +64,7 @@ void register_irq(int irq, struct irq_handler *new_handler) {
   ASSERT_LESS(irq, MAX_NUM_IRQS);
 
   list_elem_init(new_handler, link);
-
-  //TODO disable_interrupts spinlock
-
   list_insert_tail(&irq_states[irq].handlers, new_handler, link);
-
-  //TODO restore_interrupts spinlock
 }
 
 /**

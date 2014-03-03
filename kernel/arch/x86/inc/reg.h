@@ -9,7 +9,26 @@
 
 #include <stdint.h>
 
-struct __attribute__((__packed__)) x86_pusha_stack {
+/*
+ *
+ * WARNING
+ *    If you change this struct in any way you must also fix:
+ *    - restore_registers (asm.S)
+ *    - exn_* (exn_wrappers.S)
+ *
+ */
+struct __attribute__((__packed__)) registers {
+  /*
+   * control registers
+   */
+  uint32_t cr4;
+  uint32_t cr3;
+  uint32_t cr2;
+  uint32_t cr0;
+
+  /*
+   * general purpose registers (pusha order)
+   */
   uint32_t edi;
   uint32_t esi;
   uint32_t ebp;
@@ -18,9 +37,18 @@ struct __attribute__((__packed__)) x86_pusha_stack {
   uint32_t edx;
   uint32_t ecx;
   uint32_t eax;
-};
 
-struct __attribute__((__packed__)) x86_iret_stack {
+  /*
+   * data segment registers
+   */
+  uint32_t gs;
+  uint32_t fs;
+  uint32_t es;
+  uint32_t ds;
+
+  /*
+   * program registers (iret order)
+   */
   uint32_t eip;
   uint32_t cs;
   uint32_t eflags;
@@ -28,45 +56,7 @@ struct __attribute__((__packed__)) x86_iret_stack {
   uint32_t ss;
 };
 
-
-void restore_registers(
-  /*
-   * control registers
-   */
-  uint32_t cr4,
-  uint32_t cr3,
-  uint32_t cr2,
-  uint32_t cr0,
-
-  /*
-   * pusha
-   */
-  uint32_t edi,
-  uint32_t esi,
-  uint32_t ebp,
-  uint32_t ignore,
-  uint32_t ebx,
-  uint32_t edx,
-  uint32_t ecx,
-  uint32_t eax,
-
-  /*
-   * data segments
-   */
-  uint32_t gs,
-  uint32_t fs,
-  uint32_t es,
-  uint32_t ds,
-
-  /*
-   * iret
-   */
-  uint32_t eip,
-  uint32_t cs,
-  uint32_t eflags,
-  uint32_t esp,
-  uint32_t ss
-);
+void restore_registers(struct registers *regs);
 
 uint32_t get_esp();
 

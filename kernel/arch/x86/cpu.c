@@ -59,40 +59,40 @@ void enable_write_protect(void) {
 /**
  * @brief Jump to user space with default register values.
  *
- * @param kstack The location of the top of the kernel stack to use on
- *    interrupts
+ * @param kstack The location of the top of the kernel stack to use on interrupts
  * @param page_dir The page directory to use.
  * @param entry The address of the first instruction to execute
  * @param ustack The location of the top of the user runtime stack to use.
  */
 void iret_to_userspace(uint32_t kstack, uint32_t page_dir,
                        uint32_t entry, uint32_t ustack) {
+  struct registers regs;
+
   set_esp0(kstack);
 
-  restore_registers(
-      get_cr4(),                    // cr4
-      page_dir,                     // cr3
-      0,                            // cr2
-      get_cr0(),                    // cr0
+  regs.cr4 = get_cr4();
+  regs.cr3 = page_dir;
+  regs.cr2 = 0;
+  regs.cr0 = get_cr0();
 
-      0,                            // edi
-      0,                            // esi
-      0,                            // ebp
-      0,                            // ignore
-      0,                            // ebx
-      0,                            // edx
-      0,                            // ecx
-      0,                            // eax
+  regs.edi = 0;
+  regs.esi = 0;
+  regs.ebp = 0;
+  regs.ebx = 0;
+  regs.edx = 0;
+  regs.ecx = 0;
+  regs.eax = 0;
+  
+  regs.gs = SEGSEL_USER_DS;
+  regs.fs = SEGSEL_USER_DS;
+  regs.es = SEGSEL_USER_DS;
+  regs.ds = SEGSEL_USER_DS;
+ 
+  regs.eip    = entry;
+  regs.cs     = SEGSEL_USER_CS;
+  regs.eflags = get_eflags();
+  regs.esp    = ustack;
+  regs.ss     = SEGSEL_USER_DS;
 
-      SEGSEL_USER_DS,               // gs
-      SEGSEL_USER_DS,               // fs
-      SEGSEL_USER_DS,               // es
-      SEGSEL_USER_DS,               // ds
-
-      entry,                        // eip
-      SEGSEL_USER_CS,               // cs
-      get_eflags(),                 // eflags
-      ustack,                       // esp
-      SEGSEL_USER_DS                // ss
-);
+  restore_registers(&regs);
 }

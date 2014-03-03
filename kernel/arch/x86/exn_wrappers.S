@@ -9,13 +9,24 @@
 ###
 
 #
+# Function used to return from an exception
+#
+.extern restore_registers
+
+#
+# Exception handling jump table
+#
+.extern exn_table
+
+#
 # @brief This macro generates a function for a given exception
 #
 # @param vector The exception vector (e.g 13 for GPF)
 # @param has_error_code non-zero if the exception pushes an error code
 # onto the stack, 0 otherwise.
+# @param handler The handler to call after the stack has been set up
 #
-.macro exn_handler_macro vector, has_error_code 
+.macro exn_handler_macro vector, has_error_code, handler
 
 # WARNING
 #   If you change the name of the generated functions, you must also change
@@ -23,59 +34,76 @@
 .global exn_\vector
 exn_\vector: 
   #
-  # Note that we don't generate the iret stack even though it is passed
-  # to the global handler. This is because the iret stack is provided 
+  # Note that we don't generate the iret stack even though it is part
+  # of the registers struct. This is because the iret stack is provided 
   # already by the machine when the exception occurs.
   #
 
-  .if \has_error_code   # put an error code onto the stack for exceptions
-    nop                 # that don't already provide an error code. this
-  .else                 # way we can have a common exception handler for
-    pushl $0            # all exceptions
-  .endif
+  #
+  # There is an error code on the stack. We are trying to build up the
+  # registers struct here so we need to move the error code somewhere else.
+  # At this point, above (esp) is the iret stack. Below (esp) we will begin
+  # pushing the rest of the registers stack. The amount we will be pushing
+  # below is 64 bytes. We will then push the address of the registers
+  # struct, so the total pushed is actually 68.
+  #
+  push %eax               # we need to use a register to move data around so save the old value of eax on the stack
+  addl $4, %esp           # move esp back up to the error code on the stack
+.if \has_error_code
+  movl (%esp), %eax       # save the error code in eax
+.else
+  movl $0, %eax           # if there is no error code, use 0
+.endif
+  movl %eax, -68(%esp)    # save the error code 64 + 4 bytes after esp
+  subl $4, %esp           # restore esp so it points to the old value of eax
+  popl %eax               # restore eax
+.if \has_error_code
+  addl $4, %esp           # finally move esp up again so the next push overwrites the error code
+.endif
 
-  pusha                 # push all general purpose registers
-
-  pushl %gs             # push all data segment registers
-  pushl %fs
-  pushl %es
   pushl %ds
+  pushl %es
+  pushl %fs
+  pushl %gs
 
-  movl %cr4, %eax       # push the control registers onto the stack
-  pushl %eax  
-  movl %cr3, %eax
+  pusha
+
+  movl %cr0, %eax
   pushl %eax
   movl %cr2, %eax
   pushl %eax
-  movl %cr0, %eax
+  movl %cr3, %eax
   pushl %eax
+  movl %cr4, %eax
+  pushl %eax  
+
+  movl %esp, %eax       # push the adddress of the registers struct on the stack
+  pushl %eax
+
+  subl $4, %esp         # jump over the error code on the stack
 
   pushl $\vector        # push the exception vector onto the stack
 
-  call x86_exn_handle_all
+  #
+  # The handler responsible for this exception is calculated using a jump table
+  #
+  movl $\vector, %eax
+  movl $exn_table, %ecx
+  movl (%ecx, %eax, 0x4), %ecx
+  call *%ecx
 
-  addl $4, %esp         # pop the vector off the stack
-  
-  addl $4, %esp         # pop the contol registers off the stack
-  addl $4, %esp
-  addl $4, %esp
-  addl $4, %esp
-  
-  popl %ds              # pop the data segment registers off the stack
-  popl %es
-  popl %fs
-  popl %gs
+  popl %eax             # pop off the vector
+  popl %eax             # pop off the error code
 
-  popa                  # popa the pusha
+  #
+  # esp now points to the address of the registers struct
+  #
+  call restore_registers
 
-  addl $4, %esp         # pop off the error code
-  
-  iret                  # and return to user land!
 .endm
 
 #
-# Now generate all the exception handlers. Yes this is bad. I should be
-# punished.
+# Now generate all the exception handlers.
 #
 exn_handler_macro  0, 0
 exn_handler_macro  1, 0

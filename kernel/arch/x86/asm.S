@@ -168,6 +168,33 @@ disable_irqs:
   cli
   ret
 
+.global save_irqs
+save_irqs:
+  pushf                   # push EFLAGS onto the stack
+  popl %eax               # save EFLAGS into eax
+  andl $0x200, %eax       # zero out all but bit 9 (IF) of EFLAGS
+  cli                     # disable interrupts (clear IF)
+  ret
+
+.global restore_irqs
+restore_irqs:
+  push %ebp
+  movl %esp, %ebp
+
+  movl 0x8(%esp), %eax    # grab the old irq state (IF) off the stack
+  pushf                   # push EFLAGS onto the stack
+  popl %ebx               # put EFLAGS in ebx
+
+  orl %eax, %ebx          # OR the old interrupt state with EFLAGS (this will
+                          # set IF it was set in the old interrupt state and
+                          # do nothing otherwise)
+  
+  pushl %ebx              # push the new EFLAGS onto the stack
+  popf                    # pop the new EFLAGS into the EFLAGS register
+  
+  leave
+  ret
+
 .extern kernel_tss
 .global set_esp0
 set_esp0:
@@ -179,8 +206,12 @@ set_esp0:
 
 .global restore_registers
 restore_registers:
-
-  popl %eax         # pop off the return address, we don't return from this
+  #
+  # The only parameter to restore_registers is the address of the registers
+  # struct. We will use the registers struct as a stack to pop off the saved
+  # registers.
+  #
+  movl 0x4(%esp), %esp
 
   #
   # control registers
