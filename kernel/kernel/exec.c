@@ -52,6 +52,8 @@ void finish_run_first_proc(struct exec_args *args) {
   ret = create_user_stack(CURRENT_THREAD, args->argc, args->argv);
   ASSERT_EQUALS(0, ret);
 
+  vm_dump_maps(__log, &CURRENT_PROC->space);
+
   iret_to_userspace(CURRENT_THREAD->kstack_hi,
                     (size_t) CURRENT_PROC->space.object,
                     CURRENT_PROC->exec.entry,

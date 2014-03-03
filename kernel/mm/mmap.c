@@ -134,8 +134,8 @@ int vm_page_fault(unsigned long addr, int flags) {
      * Kernel faulted on kernel address... kernel bug probably
      */
     if (kernel_address(addr) && (flags & PF_SUPERVISOR)) {
-      panic("Kernel faulted trying to %s to address 0x%08x!",
-            flags & PF_READ ? "read" : "write", addr);
+      panic("Kernel faulted trying to %s kernel address 0x%08x!",
+            flags & PF_READ ? "read" : "write to", addr);
     }
   }
 
@@ -171,7 +171,7 @@ unsigned long __vm_mmap(unsigned long addr, unsigned long length, int prot, int 
                         struct vfs_file *file, unsigned long off) {
   struct vm_space *space = &CURRENT_PROC->space;
   struct vm_mapping *m, *prev = NULL;
-  int error, vmflags = 0;
+  int vmflags = 0;
   bool found = false;
 
   if (prot & PROT_EXEC)     vmflags |= VM_X;
@@ -234,21 +234,6 @@ unsigned long __vm_mmap(unsigned long addr, unsigned long length, int prot, int 
     }
     else {
       list_insert_head(&space->mappings, m, link);
-    }
-  }
-
-  /*
-   * OK, eventually this code here will be triggered by the page fault
-   * handler upon access. But for now let's just pretend we page faulted
-   * and map the pages.
-   */
-  {
-    unsigned fault_addr;
-
-    for (fault_addr = addr; fault_addr < addr + length; fault_addr += PAGE_SIZE) {
-      // simulate a user read page fault
-      error = vm_page_fault(fault_addr, PF_USER | PF_READ);
-      ASSERT_EQUALS(0, error);
     }
   }
 

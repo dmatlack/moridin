@@ -258,7 +258,29 @@ struct page *unmap_page(void *pd, unsigned long virt);
 
 void share_mappings(struct entry_table *to_pd, struct entry_table *from_pd);
 
-void tlb_flush(void);
-void tlb_invalidate(unsigned long addr, size_t size);
+/**
+ * @brief Flush the contents of the TLB, invalidating all cached virtual
+ * address lookups.
+ */
+static inline void tlb_flush(void) {
+  set_cr3(get_cr3());
+}
+
+void __invlpg(unsigned long);
+
+/**
+ * @brief Invalidate a set of pages in the TLB. This should be called
+ * after vm_map if you want to write to or read from the pages you just
+ * mapped.
+ */
+static inline void tlb_invalidate(unsigned long addr, size_t size) {
+  unsigned long v;
+
+  for (v = FLOOR(X86_PAGE_SIZE, addr); v < CEIL(X86_PAGE_SIZE, addr + size); v += X86_PAGE_SIZE) {
+    __invlpg(v);
+  }
+}
+
+void page_fault(int vector, int error, struct registers *regs);
 
 #endif /* !__X86_VM_H__ */

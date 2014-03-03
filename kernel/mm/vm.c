@@ -128,9 +128,6 @@ int vm_map_page(struct vm_space *space, unsigned long virt, int flags) {
     return ENOMEM;
   }
 
-  /*
-   * Flush the tlb so we can write to this page.
-   */
   tlb_invalidate(virt, PAGE_SIZE);
 
   return 0;

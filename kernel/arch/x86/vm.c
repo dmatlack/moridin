@@ -332,37 +332,37 @@ int map_page(void *pd, unsigned long virt, struct page *page, int flags) {
   return __map_page((struct entry_table *) pd, virt, page, flags);
 }
 
-
-void x86_set_pagedir(struct entry_table *pd) {
-  set_cr3((int32_t) pd);
-}
-
-struct entry_table *x86_get_pagedir(void) {
-  return (struct entry_table *) get_cr3();
-}
-
 /**
- * @brief Flush the contents of the TLB, invalidating all cached virtual
- * address lookups.
+ * @brief This is the main page fault handling routine for arch/x86. It's job
+ * is to parse the architecture generated exception and pass it up to the kernel
+ * virtual memory manager to be handled.
  */
-void tlb_flush(void) {
-  set_cr3(get_cr3());
-}
+void page_fault(int vector, int error, struct registers *regs) {
+  int flags = 0;
+  int ret;
 
-/**
- * @brief Invalidate a set of pages in the TLB. This should be called
- * after vm_map if you want to write to or read from the pages you just
- * mapped.
- */
-void tlb_invalidate(unsigned long addr, size_t size) {
-  (void) addr; (void) size;
+  TRACE("vector=%d, error=%d, regs=%p", vector, error, regs);
 
-  // TODO implement this with invlpg
-  // e.g.
-  //
-  // addr = PAGE_ALIGN_DOWN( addr )
-  // size = PAGE_ALIGN_UP( size )
-  // for (p = addr; p < addr + size; p += page_size) x86_invlpg(p)
-  //
-  tlb_flush();
+  if (error & 2) flags |= PF_WRITE;
+  else           flags |= PF_READ;
+  if (error & 4) flags |= PF_USER;
+  else           flags |= PF_SUPERVISOR;
+
+  if (error & 1) {
+    //TODO: kill the process
+    panic("Page fault caused by page-level protection violation: %s %s at 0x%08x",
+          flags & PF_USER ? "user" : "kernel",
+          flags & PF_READ ? "read" : "write",
+          regs->cr2);
+  }
+
+  /*
+   * Pass the address of the page fault up to the virtual memory manager.
+   */
+  ret = vm_page_fault(regs->cr2, flags);
+
+  if (ret) {
+    //TODO: kill the process
+    exn_panic(vector, error, regs);
+  }
 }

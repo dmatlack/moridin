@@ -78,6 +78,6 @@ EXN_HANDLER_PROTOTYPE(17);
 EXN_HANDLER_PROTOTYPE(18);
 EXN_HANDLER_PROTOTYPE(19);
 
-void x86_exn_panic(int vector, int error, struct registers *regs);
+void exn_panic(int vector, int error, struct registers *regs);
 
 #endif /* __X86_EXN_H__ */

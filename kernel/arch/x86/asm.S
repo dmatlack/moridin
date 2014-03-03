@@ -271,3 +271,9 @@ jump_stacks:
   leal -0x8(%eax), %esp        # point esp to the new stack
 
   jmp *(%ecx)                  # jmp to <func>
+
+.global __invlpg
+__invlpg:
+  movl 4(%esp), %eax
+  invlpg (%eax)
+  ret
