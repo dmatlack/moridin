@@ -1,20 +1,20 @@
-/** @file lib/types.h
- *  @brief Defines some C standard types as well as
- *         wrapper types for some of the imported FLUX library code.
- *  @author matthewj S2008
+/**
+ * @file lib/types.h
  */
 
 #ifndef LIB_TYPES_H
 #define LIB_TYPES_H
 
+// POSIX sys/types.h
+// http://pubs.opengroup.org/onlinepubs/9699919799/basedefs/sys_types.h.html
+
 typedef unsigned int size_t;
-typedef int ssize_t;
-typedef unsigned long ptrdiff_t;
+typedef int          ssize_t;
+typedef int          pid_t;
 
-/* WRAPPERS */
 
-typedef unsigned long vm_offset_t;
-typedef unsigned long vm_size_t;
+typedef unsigned long vm_offset_t; // needed by lmm
+typedef unsigned long vm_size_t;   // needed by lmm
 
 typedef char bool;
 #define true  1

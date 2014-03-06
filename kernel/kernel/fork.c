@@ -8,23 +8,19 @@
 #include <kernel/proc.h>
 #include <kernel/kmalloc.h>
 
+#include <types.h>
 #include <errno.h>
 
-int sys_fork(void) {
-  struct process *child;
-  int ret;
+pid_t sys_fork(void) {
 
-  child = kmalloc(sizeof(struct process));
-  if (NULL == child) {
-    return ENOMEM;
+  if (num_threads(CURRENT_PROC) > 1) {
+    /*
+     * For POSIX specification on multithreaded fork see:
+     * http://pubs.opengroup.org/onlinepubs/000095399/functions/fork.html
+     */
+    DEBUG("Multithreaded fork() not supported at the moment.");
+    return -1;
   }
 
-  ret = proc_fork(CURRENT_PROC, child);
-  if (ret) {
-    goto free_child_and_ret;
-  }
-
-free_child_and_ret:
-  kfree(child, sizeof(struct process));
-  return ret;
+  panic("unimplemented");
 }

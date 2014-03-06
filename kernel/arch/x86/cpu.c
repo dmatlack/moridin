@@ -8,9 +8,13 @@
 #include <arch/cpu.h>
 #include <arch/reg.h>
 #include <arch/seg.h>
+#include <arch/vm.h>
+
 #include <stdint.h>
 #include <stddef.h>
 #include <kernel/debug.h>
+
+#include <kernel/proc.h>
 
 #define GENERATE_CRX_SET_BIT_FN(_CRX_) \
   void cr##_CRX_##_set_bit(int index, int bit) { \
@@ -56,43 +60,16 @@ void enable_write_protect(void) {
   cr0_set_bit(CR0_WP, 1);
 }
 
-/**
- * @brief Jump to user space with default register values.
- *
- * @param kstack The location of the top of the kernel stack to use on interrupts
- * @param page_dir The page directory to use.
- * @param entry The address of the first instruction to execute
- * @param ustack The location of the top of the user runtime stack to use.
- */
-void iret_to_userspace(uint32_t kstack, uint32_t page_dir,
-                       uint32_t entry, uint32_t ustack) {
-  struct registers regs;
+void jump_to_userspace(void) {
+  struct registers *regs = &CURRENT_THREAD->regs;
 
-  set_esp0(kstack);
+  set_esp0(KSTACK_TOP);
 
-  regs.cr4 = get_cr4();
-  regs.cr3 = page_dir;
-  regs.cr2 = 0;
-  regs.cr0 = get_cr0();
+  regs->cr4 = get_cr4();
+  regs->cr3 = (uint32_t) CURRENT_PAGE_DIR;
+  regs->cr2 = 0;
+  regs->cr0 = get_cr0();
+  regs->eflags = get_eflags();
 
-  regs.edi = 0;
-  regs.esi = 0;
-  regs.ebp = 0;
-  regs.ebx = 0;
-  regs.edx = 0;
-  regs.ecx = 0;
-  regs.eax = 0;
-  
-  regs.gs = SEGSEL_USER_DS;
-  regs.fs = SEGSEL_USER_DS;
-  regs.es = SEGSEL_USER_DS;
-  regs.ds = SEGSEL_USER_DS;
- 
-  regs.eip    = entry;
-  regs.cs     = SEGSEL_USER_CS;
-  regs.eflags = get_eflags();
-  regs.esp    = ustack;
-  regs.ss     = SEGSEL_USER_DS;
-
-  restore_registers(&regs);
+  restore_registers(regs);
 }

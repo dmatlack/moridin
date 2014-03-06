@@ -17,7 +17,7 @@
     elem_type *next;                                                          \
   }
 
-#define DECLARE_LIST_LINK                                                     \
+#define INITIALIZED_LIST_LINK                                                 \
   {                                                                           \
     .prev = NULL,                                                             \
     .next = NULL                                                              \
@@ -31,7 +31,14 @@
     (list_ptr)->size = 0;                                                     \
   } while (0)
 
-#define DECLARE_LIST                                                          \
+#define INITIALIZED_LIST(elem_ptr)                                            \
+  {                                                                           \
+    .head = elem_ptr,                                                         \
+    .tail = elem_ptr,                                                         \
+    .size = 1                                                                 \
+  }
+
+#define INITIALIZED_EMPTY_LIST                                                \
   {                                                                           \
     .head = NULL,                                                             \
     .tail = NULL,                                                             \

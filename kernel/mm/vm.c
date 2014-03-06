@@ -57,7 +57,7 @@ void vm_init(void) {
    * Finally switch off the boot virtual address space and into our new,
    * virtual address space.
    */
-  __vm_space_switch(kernel_space.object);
+  swap_address_space(kernel_space.object);
 
   /*
    * Resize the kernel heap to match to new kernel address space.
@@ -94,23 +94,6 @@ int vm_space_init(struct vm_space *space) {
 void vm_space_destroy(struct vm_space *space) {
   (void)space;
   panic("Implement me: %s", __func__);
-}
-
-/**
- * @brief Switch address spaces.
- *
- * @warning This function does not allow you to get the vm_space struct of
- * old object. So this function is not safe to use if you care about locking
- * the vm_space that is currently in use and have no other way of accessing
- * it.
- *
- * @param object This should be a (struct vm_space *)->object, or the object
- * returned by a previous invocation to this function.
- *
- * @return The old object.
- */
-void *__vm_space_switch(void *object) {
-  return swap_address_space(object);
 }
 
 int vm_map_page(struct vm_space *space, unsigned long virt, int flags) {

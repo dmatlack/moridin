@@ -6,7 +6,6 @@
 
 #include <kernel/proc.h>
 
-void setup_runtime_stack(struct thread *thread, int argc, char **argv);
-int create_user_stack(struct thread *thread, int argc, char **argv);
+int create_process_stack(int argc, char **argv);
 
 #endif /* !__KERNEL_STACK_H__ */

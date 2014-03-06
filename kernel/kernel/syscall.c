@@ -5,7 +5,6 @@
 #include <kernel/syscall.h>
 #include <kernel/kprintf.h>
 #include <kernel/proc.h>
-#include <kernel/fork.h>
 
 #include <kernel/debug.h>
 

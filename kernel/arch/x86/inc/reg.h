@@ -7,6 +7,7 @@
 #ifndef __X86_REG_H__
 #define __X86_REG_H__
 
+#include <arch/seg.h>
 #include <stdint.h>
 
 /*
@@ -56,9 +57,30 @@ struct __attribute__((__packed__)) registers {
   uint32_t ss;
 };
 
+#define INIT_REGS \
+{ \
+  .gs = SEGSEL_USER_DS, \
+  .fs = SEGSEL_USER_DS, \
+  .es = SEGSEL_USER_DS, \
+  .ds = SEGSEL_USER_DS, \
+  .ss = SEGSEL_USER_DS, \
+  .cs = SEGSEL_USER_CS, \
+}
+
 void restore_registers(struct registers *regs);
 
+#define set_pc(_program_counter) \
+  do { \
+    CURRENT_THREAD->regs.eip = (_program_counter); \
+  } while (0)
+
+#define set_sp(_stack_pointer) \
+  do { \
+    CURRENT_THREAD->regs.esp = (_stack_pointer); \
+  } while (0)
+
 uint32_t get_esp();
+#define get_sp get_esp
 
 /*
  *

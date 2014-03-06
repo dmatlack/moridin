@@ -16,26 +16,30 @@ struct process;
 list_typedef(struct thread) thread_list_t;
 list_typedef(struct process) proc_list_t;
 
-//FIXME: get_esp() should probably be called something else
-#ifdef ARCH_X86
 #include <arch/reg.h>
-#endif
 
 #define CURRENT_THREAD \
-  ((struct thread *) PAGE_ALIGN_DOWN(get_esp()))
+  ((struct thread *) PAGE_ALIGN_DOWN(get_sp()))
 
 #define CURRENT_PROC \
   ((CURRENT_THREAD)->proc)
 
+#define KSTACK_SIZE 2048
+
+#define _KSTACK_START(_thread)    ((unsigned long) (_thread)->kstack)
+#define _KSTACK_END(_thread)      (_KSTACK_START(_thread) + KSTACK_SIZE)
+#define _KSTACK_TOP(_thread)      (_KSTACK_END(_thread) - sizeof(void*))
+
+#define KSTACK_START              _KSTACK_START(CURRENT_THREAD)
+#define KSTACK_END                _KSTACK_END(CURRENT_THREAD)
+#define KSTACK_TOP                _KSTACK_TOP(CURRENT_THREAD)
+
 #define THREAD_STRUCT_ALIGN PAGE_SIZE
-#define THREAD_KSTACK_SIZE 2048
 struct thread {
   /*
    * the kernel stack used by this thread. MUST BE PAGE-ALIGNED.
    */
-  char  kstack[THREAD_KSTACK_SIZE];
-  size_t kstack_hi;
-  size_t kstack_lo;
+  char  kstack[KSTACK_SIZE];
 
   /*
    * the process this thread is a part of
@@ -47,15 +51,10 @@ struct thread {
    */
   list_link(struct thread) thread_link;
 
-  /*
-   * The location of the user runtime stack.
-   */
-  size_t ustack_start;
-  size_t ustack_size;
-  size_t ustack_entry;
+  struct registers regs;
 
   int tid;
-};
+} __attribute__((aligned (THREAD_STRUCT_ALIGN)));
 
 struct process {
   /*
@@ -76,27 +75,12 @@ struct process {
    */
   struct vm_space space;
 
-  /*
-   * The file this process is executing
-   */
-  struct exec_file exec;
-
-  /*
-   * The region of memory where process arguments are stored. This is usually
-   * some number of pages at the top of the stack.
-   */
-  size_t arg_start;
-  size_t arg_size;
-
-  /*
-   * The location of each argument on the user runtime stack.
-   */
-  size_t argc_addr;
-  size_t argv_addr;
-
   int next_tid;
   int pid;
 };
+
+#define num_threads(_proc) (list_size(&(_proc)->threads))
+#define main_thread(_proc) (list_head(&(_proc)->threads))
 
 int proc_fork(struct process *parent, struct process *child);
 

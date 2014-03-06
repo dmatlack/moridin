@@ -1,7 +1,7 @@
 #ifndef _STDDEF_H_
 #define _STDDEF_H_
 
-#include <types.h> /* for size_t, ptrdiff_t */
+#include <types.h> /* for size_t */
 
 #ifndef NULL
 #define NULL ((void *)0)

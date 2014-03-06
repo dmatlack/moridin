@@ -249,6 +249,10 @@ static inline void *swap_address_space(void *new) {
   return old;
 }
 
+#include <kernel/proc.h>
+
+#define CURRENT_PAGE_DIR (CURRENT_PROC)->space.object
+
 #define vtop(v, pp) __vtop((struct entry_table *) get_cr3(), v, pp)
 #define phys(v) 
 

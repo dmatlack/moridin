@@ -191,6 +191,11 @@ int elf32_load(struct vfs_file *file) {
   }
 
   /*
+   * Set the program counter to be the entrypoint of the elf.
+   */
+  set_pc(ehdr->e_entry);
+
+  /*
    * Sanity check the executable
    */
   if (ET_EXEC != ehdr->e_type) {
@@ -235,22 +240,4 @@ free_ehdr_ret:
 close_elf_ret:
   vfs_close(file);
   return ret;
-}
-
-/**
- * @brief Parse the ELF file referenced by <file> and build the exec_file
- * struct based on the contents.
- */
-int elf32_parse(struct exec_file *exec, struct vfs_file *file) {
-  struct elf32_ehdr *ehdr;
-
-  ehdr = elf32_get_ehdr(file);
-  if (NULL == ehdr) {
-    return ENOMEM;
-  }
-
-  exec->entry = ehdr->e_entry;
-
-  kfree(ehdr, sizeof(struct elf32_ehdr));
-  return 0;
 }

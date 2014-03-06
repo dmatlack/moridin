@@ -87,6 +87,8 @@ struct vfs_file {
   unsigned refs; // reference counter
 };
 
+#define F_NAME(_file_ptr) ((_file_ptr)->dirent->name)
+
 /*
  * The operations that can be performed on a file.
  */

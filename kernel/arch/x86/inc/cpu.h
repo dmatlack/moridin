@@ -24,7 +24,7 @@ void enable_write_protect(void);
 void set_esp0(uint32_t);
 
 // FIXME: move this somewhere else?
-void iret_to_userspace(uint32_t kstack, uint32_t page_dir, uint32_t entry, uint32_t ustack);
+void jump_to_userspace(void);
 // FIXME: move this somewhere else?
 void jump_stacks(uint32_t stack, void (*func)(void *), void *arg);
 

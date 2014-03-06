@@ -59,7 +59,6 @@ extern struct vm_space boot_vm_space;
 
 void vm_init(void);
 int  vm_space_init(struct vm_space *space);
-void *__vm_space_switch(void *space_object);
 
 //TODO move to syscall header when that exists
 #define PROT_EXEC   (1 << 0)
