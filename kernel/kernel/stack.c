@@ -141,7 +141,7 @@ int create_process_stack(int argc, char **argv) {
   sp -= sizeof(void *);
   *((void **) sp) = NULL;
 
-  set_sp(sp);
+  set_sp_reg(sp);
   return 0;
 }
 

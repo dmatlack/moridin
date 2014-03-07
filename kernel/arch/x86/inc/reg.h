@@ -67,18 +67,34 @@ struct __attribute__((__packed__)) registers {
   .cs = SEGSEL_USER_CS, \
 }
 
+/**
+ * @brief Set all the hardware registers to that values in the registers
+ * struct.
+ */
 void restore_registers(struct registers *regs);
 
-#define set_pc(_program_counter) \
+/**
+ * @brief Set the program counter (instruction pointer) in the current
+ * thread's registers (for the next call to restore_registers())
+ */
+#define set_pc_reg(_program_counter) \
   do { \
     CURRENT_THREAD->regs.eip = (_program_counter); \
   } while (0)
 
-#define set_sp(_stack_pointer) \
+/**
+ * @brief Set the stack pointer in the current thread's registers (for
+ * the next call to restore_registers()).
+ */
+#define set_sp_reg(_stack_pointer) \
   do { \
     CURRENT_THREAD->regs.esp = (_stack_pointer); \
   } while (0)
 
+/**
+ * @brief Get the current value of the stack pointer. This reads directly from
+ * the hardware register.
+ */
 uint32_t get_esp();
 #define get_sp get_esp
 

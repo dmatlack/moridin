@@ -3,7 +3,7 @@
  *
  * @brief Bootstrap user space by setting up and running init.
  */
-#include <kernel/exec.h>
+#include <kernel/init.h>
 #include <kernel/kmalloc.h>
 #include <kernel/loader.h>
 #include <kernel/proc.h>
@@ -20,9 +20,6 @@
 #include <assert.h>
 #include <list.h>
 #include <errno.h>
-
-extern struct thread  init_thread;
-extern struct process init_proc;
 
 #define INIT_THREAD                                                  \
 {                                                                    \
@@ -82,8 +79,10 @@ static void load_init_binary(char *path) {
   }
 }
 
-void __run_first_proc(void) {
+void __run_init(void *ignore) {
   int error;
+
+  (void) ignore;
 
   ASSERT_EQUALS(CURRENT_PROC, &init_proc);
 
@@ -102,7 +101,7 @@ void __run_first_proc(void) {
 /**
  * @brief Load and initialize the first process that will run.
  */
-void run_first_proc(char *execpath, int argc, char **argv) {
+void run_init(char *execpath, int argc, char **argv) {
 
   init_args.execpath = execpath;
   init_args.argc = argc;
@@ -113,5 +112,5 @@ void run_first_proc(char *execpath, int argc, char **argv) {
    * stack. This will allow the startup routines to the "get the
    * current process" by using the esp trick.
    */
-  jump_stacks(_KSTACK_TOP(&init_thread), (void(*)(void*)) __run_first_proc, NULL);
+  jump_stacks(_KSTACK_TOP(&init_thread), __run_init, NULL);
 }

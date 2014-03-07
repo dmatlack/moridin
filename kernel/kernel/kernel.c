@@ -6,7 +6,7 @@
  */
 #include <kernel/config.h>
 #include <kernel/debug.h>
-#include <kernel/exec.h>
+#include <kernel/init.h>
 #include <kernel/irq.h>
 #include <kernel/kmalloc.h>
 #include <kernel/loader.h>
@@ -65,6 +65,6 @@ void kernel_main() {
 
     // TODO: pass in the name of the init binary as a parameter via the
     // bootloader rather than hardcopying it.
-    run_first_proc((char *) "/init", argc, argv );
+    run_init((char *) "/init", argc, argv );
   }
 }
