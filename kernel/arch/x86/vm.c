@@ -20,6 +20,8 @@
 #include <kernel/debug.h>
 #include <errno.h>
 
+#define DEFAULT_PDE_FLAGS (VM_P | VM_R | VM_W | VM_U)
+
 static inline bool is_page_aligned(unsigned long addr) {
   return FLOOR(X86_PAGE_SIZE, addr) == addr;
 }
@@ -72,12 +74,100 @@ void *new_address_space(void) {
 }
 
 /**
- * @brief share_mappings() is expected to make a high level copy of the from_pd
- * address space to to_pd. This means that after this function is called, to_pd
- * should have the exact same mappings as from_pd.
+ * @brief This function is responsible for making to_pd map the same address
+ * space as from_pd.
+ *
+ * If this function succeeds, the following will be true:
+ *    1. Any virtual address that has a present mapping in from_pd will also
+ *       have a mapping in to_pd.
+ *    2. All kernel virtual addresses in from_pd will be mapped into to_pd by
+ *       only copying the page directory entries.
+ *    3. All user virtual addresses in from_pd will be mapped into to_pd by 
+ *       allocating a new page table for to_pd.
+ *    4. For each mapping (from_virt:from_phys) and (to_virt:to_phys), if
+ *       from_virt == to_virt then from_phys == to_phys.
+ *    5. All userspace mappings in to_pd and from_pd will be read-only.
+ *
+ * @return 0 on success, non-0 on error
  */
-void share_mappings(struct entry_table *to_pd, struct entry_table *from_pd) {
-  memcpy(to_pd, from_pd, sizeof(struct entry_table));
+int fork_address_space(struct entry_table *to_pd, struct entry_table *from_pd) {
+  unsigned i;
+
+  TRACE("to_pd=0x%08x, from_pd=0x%08x", to_pd, from_pd);
+
+  for (i = 0; i < ENTRY_TABLE_SIZE; i++) {
+    unsigned long virt = i * (PAGE_SIZE * ENTRY_TABLE_SIZE);
+    entry_t *from_pde = from_pd->entries + i;
+    entry_t *to_pde = to_pd->entries + i;
+
+    /*
+     * All processes share the same page tables to map the kernel. So
+     * the only thing we need to copy for a kernel mapping is to copy
+     * the page directory entries.
+     */
+    if (kernel_address(virt)) {
+      *to_pde = *from_pde;
+    }
+    /*
+     * If it's a user address, and the page directory entry is present, we
+     * assume that it's pointing to a page table and we make a copy of that
+     * page table instead.
+     *
+     * WARNING: using 4MB pages (PSE) will break this code.
+     */
+    else if (entry_is_present(from_pde)) {
+      struct entry_table *to_pt;
+      struct entry_table *from_pt;
+      unsigned j;
+
+      from_pt = (struct entry_table *) entry_get_addr(from_pde);
+
+      to_pt = new_entry_table();
+      if (!to_pt) {
+        panic("TODO: unmap all pages.");
+      }
+
+      /*
+       * Copy the page directory entry.
+       */
+      *to_pde = *from_pde;
+
+      /*
+       * But use the address of the newly created page table.
+       */
+      entry_set_addr(to_pde, (unsigned long) to_pt);
+
+      for (j = 0; j < ENTRY_TABLE_SIZE; j++) {
+        entry_t *from_pte = from_pt->entries + j;
+        entry_t *to_pte = to_pt->entries + j;
+
+        /*
+         * Copy the page table entry.
+         */
+        *to_pte = *from_pte;
+
+        /*
+         * If the entry is mapped to a physical page, increase the reference
+         * count on that page by 1 as it is being used in the new address
+         * space.
+         */
+        if (entry_is_present(from_pte)) {
+          unsigned long phys = (unsigned long) entry_get_addr(from_pte);
+
+          page_get(page_struct(phys));
+
+          /*
+           * Mark the page readonly in both page tables so both processes will 
+           * page fault on a write and we can copy the page.
+           */
+          entry_set_readonly(from_pte);
+          entry_set_readonly(to_pte);
+        }
+      }
+    }
+  }
+
+  return 0;
 }
 
 /**
@@ -232,7 +322,7 @@ struct page *unmap_page(void *pd, unsigned long virt) {
        * the page.
        */
       entry_set_absent(pte);
-      if (!page) page = get_page(entry_get_addr(pte));
+      if (!page) page = page_struct(entry_get_addr(pte));
     }
   }
 
@@ -268,7 +358,7 @@ static int map(struct entry_table *pd, unsigned long virt, unsigned long phys, i
     }
 
     entry_set_addr(pde, (unsigned long) pt);
-    entry_set_flags(pde, VM_P | VM_R | VM_W | VM_U);
+    entry_set_flags(pde, DEFAULT_PDE_FLAGS);
   }
   
   pt = (struct entry_table *) entry_get_addr(pde);

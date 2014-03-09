@@ -46,7 +46,7 @@ void exn_panic(int vector, int error, struct registers *regs) {
   "gs: 0x%08x\n"
   "\n"
   "error: %d\n"
-  "-------------------------------------------------------------------\n",
+  "-------------------------------------------------------------------",
     exn->vector, exn->mnemonic, exn->description, exn->cause,
     regs->eip,
     regs->ebp,
@@ -63,7 +63,6 @@ void exn_panic(int vector, int error, struct registers *regs) {
     regs->gs,
     error
   );
-
   panic("Exception %d during boot. Aborting.", exn->vector);
 }
 

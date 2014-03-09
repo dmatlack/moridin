@@ -41,10 +41,10 @@ void print_int(int i) {
 
 int main(int argc, char **argv) {
   int pid;
+  int child_pid;
   int i;
 
   pid = getpid();
-
   print_int(pid);
   print(": Hello from userspace! :)\n");
 
@@ -57,6 +57,14 @@ int main(int argc, char **argv) {
   if (argv[argc] != (char *) 0) {
     print("INIT ERROR: argv[argc] != NULL!\n");
   }
+
+  child_pid = fork();
+  pid = getpid();
+
+  print_int(pid);
+  print(": fork() returned ");
+  print_int(child_pid);
+
 
   return 0;
 }

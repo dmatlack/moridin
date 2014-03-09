@@ -8,7 +8,7 @@
 #include <assert.h>
 
 static inline void __lock(struct spinlock *s, bool irq) {
-  unsigned long my_ticket;
+  int my_ticket;
 
   /*
    * Disable interrupts _first_. We don't want to get our ticket, then
@@ -20,6 +20,7 @@ static inline void __lock(struct spinlock *s, bool irq) {
     s->irq = save_irqs();
   }
 
+  // FIXME: spinlock rely on overflow to correctly work
   my_ticket = atomic_add(&s->ticket, 1);
 
   /*
@@ -35,7 +36,7 @@ static inline void __lock(struct spinlock *s, bool irq) {
 }
 
 static inline void __unlock(struct spinlock *s, bool irq) {
-  atomic_add(&s->serving, 1);
+  s->serving++;
 
   /*
    * We _must_ renable interrupts _after_ incrementing the ticket being

@@ -58,20 +58,6 @@ void pages_init(void) {
 }
 
 /**
- * @brief Given a struct page, return the physical address of the page.
- */
-size_t page_address(struct page *p) {
-  return (((size_t) p - (size_t) phys_pages) / sizeof(struct page)) * PAGE_SIZE;
-}
-
-/**
- * @brief Given the physical address of a page, return the struct page.
- */
-struct page *get_page(size_t address) {
-  return phys_pages + (address / PAGE_SIZE);
-}
-
-/**
  * @brief Return true the the given zone contains the given address.
  */
 bool zone_contains(struct page_zone *zone, size_t addr) {
@@ -102,15 +88,15 @@ static struct page *__alloc_pages_at(size_t addr, unsigned long n, struct page_z
 
   // zone lock
 
-  end = get_page(addr + (n * PAGE_SIZE));
+  end = page_struct(addr + (n * PAGE_SIZE));
 
-  for (page = get_page(addr); page < end; page++) {
+  for (page = page_struct(addr); page < end; page++) {
     if (page->count) {
       return NULL;
     }
   }
   
-  for (page = get_page(addr); page < end; page++) {
+  for (page = page_struct(addr); page < end; page++) {
     page->count++;
   }
 
@@ -118,7 +104,7 @@ static struct page *__alloc_pages_at(size_t addr, unsigned long n, struct page_z
 
   // zone unlock
 
-  return get_page(addr);
+  return page_struct(addr);
 }
 
 /**

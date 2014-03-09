@@ -5,9 +5,9 @@
 #define __KERNEL_SPINLOCK_H__
 
 struct spinlock {
-  volatile unsigned long ticket;     /* the next ticket to hand out */
-  volatile unsigned long serving;    /* the ticket of the customer currently being served */
-  int irq; /* interrupt state */
+  int ticket;              /* the next ticket to hand out */
+  volatile int serving;    /* the ticket of the customer currently being served */
+  int irq;                 /* interrupt state */
 };
 
 #define SPINLOCK_INIT(_s) \

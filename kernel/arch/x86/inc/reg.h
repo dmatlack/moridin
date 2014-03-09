@@ -92,6 +92,14 @@ void restore_registers(struct registers *regs);
   } while (0)
 
 /**
+ * @brief Set the register used to return values from system calls.
+ */
+#define __set_syscall_return_reg(_regs, _value) \
+  do { \
+    (_regs)->eax = (_value); \
+  } while (0)
+
+/**
  * @brief Get the current value of the stack pointer. This reads directly from
  * the hardware register.
  */

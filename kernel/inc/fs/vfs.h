@@ -72,7 +72,7 @@ struct vfs_dirent {
   vfs_dirent_list_t children; // NULL if vfs_file, list of children if directory
   list_link(struct vfs_dirent) sibling_link; // other vfs_files in the same directory
   list_link(struct vfs_dirent) hardlink_link; // hardlink brethren
-  unsigned refs; // reference counter
+  int refs; // reference counter
 };
 
 /*
@@ -84,7 +84,7 @@ struct vfs_file {
   struct vfs_dirent *dirent;
   size_t offset; // read/write offset into the file
   struct vfs_file_ops *fops;
-  unsigned refs; // reference counter
+  int refs; // reference counter
 };
 
 #define F_NAME(_file_ptr) ((_file_ptr)->dirent->name)

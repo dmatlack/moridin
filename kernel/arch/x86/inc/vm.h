@@ -241,8 +241,6 @@ static inline entry_t* get_pte(struct entry_table *pt, unsigned long vaddr) {
   return &(pt->entries[PT_OFFSET(vaddr)]);
 }
 
-void *new_address_space(void);
-
 static inline void *swap_address_space(void *new) {
   void *old = (void *) get_cr3();
   set_cr3((uint32_t) new);
@@ -260,7 +258,8 @@ int map_page(void *pd, unsigned long virt, struct page *page, int flags);
 
 struct page *unmap_page(void *pd, unsigned long virt);
 
-void share_mappings(struct entry_table *to_pd, struct entry_table *from_pd);
+void *new_address_space(void);
+int  fork_address_space(struct entry_table *to_pd, struct entry_table *from_pd);
 
 /**
  * @brief Flush the contents of the TLB, invalidating all cached virtual

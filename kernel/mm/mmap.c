@@ -14,15 +14,6 @@
 #include <errno.h>
 #include <math.h>
 
-#if CONFIG_KERNEL_VIRTUAL_START == 0 // f*** you gcc
-  #define kernel_address(addr) \
-     (addr < CONFIG_KERNEL_VIRTUAL_TOP)
-#else
-  #define kernel_address(addr) \
-    (addr >= CONFIG_KERNEL_VIRTUAL_START && \
-     addr <  CONFIG_KERNEL_VIRTUAL_TOP)
-#endif
-
 /**
  * @return The mapping that contains <addr> or NULL if none exists.
  */

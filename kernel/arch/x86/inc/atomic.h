@@ -12,7 +12,7 @@
  * @return the old value of *(ptr)
  */
 int __xadd(int *ptr, int add);
-#define atomic_add(ptr, add) __xadd((int*)(ptr), (add))
+#define atomic_add(ptr, add) __xadd((ptr), (add))
 
 /**
  * @brief Atomically perform: *(ptr) = value
@@ -20,7 +20,7 @@ int __xadd(int *ptr, int add);
  * @return the old value of *(ptr)
  */
 int __xchg(int *ptr, int new);
-#define atomic_xchg(ptr, new) __xchg((int*)(ptr), (new))
+#define atomic_xchg(ptr, new) __xchg((ptr), (new))
 
 /**
  * @brief Atomically perform: if (*(ptr) == (cmp)) { *(ptr) = new; }
@@ -28,6 +28,6 @@ int __xchg(int *ptr, int new);
  * @return the old value of *(ptr)
  */
 int __cmpxchg(int *ptr, int old, int new);
-#define atomic_testandset(ptr, old, new) __cmpxchg((int*)(ptr), (old), (new))
+#define atomic_testandset(ptr, old, new) __cmpxchg((ptr), (old), (new))
 
 #endif /* !__ARCH_X86_ATOMIC_H__ */

@@ -11,6 +11,15 @@
 #include <stddef.h>
 #include <list.h>
 
+#if CONFIG_KERNEL_VIRTUAL_START == 0 // f*** you gcc
+  #define kernel_address(addr) \
+     (addr < CONFIG_KERNEL_VIRTUAL_TOP)
+#else
+  #define kernel_address(addr) \
+    (addr >= CONFIG_KERNEL_VIRTUAL_START && \
+     addr <  CONFIG_KERNEL_VIRTUAL_TOP)
+#endif
+
 struct vm_mapping {
   struct vm_space *space;
 
@@ -58,7 +67,10 @@ struct vm_space {
 extern struct vm_space boot_vm_space;
 
 void vm_init(void);
+
 int  vm_space_init(struct vm_space *space);
+void vm_space_destroy(struct vm_space *space);
+int  vm_space_fork(struct vm_space *to, struct vm_space *from);
 
 //TODO move to syscall header when that exists
 #define PROT_EXEC   (1 << 0)

@@ -5,7 +5,8 @@
 #ifndef __KERNEL_PROC_H__
 #define __KERNEL_PROC_H__
 
-#include <kernel/loader.h>
+#include <kernel/kmalloc.h>
+#include <arch/atomic.h>
 #include <mm/memory.h>
 #include <mm/vm.h>
 #include <list.h>
@@ -36,52 +37,80 @@ list_typedef(struct process) proc_list_t;
 
 #define THREAD_STRUCT_ALIGN PAGE_SIZE
 struct thread {
-  /*
-   * the kernel stack used by this thread. MUST BE PAGE-ALIGNED.
-   */
-  char  kstack[KSTACK_SIZE];
+  char               kstack[KSTACK_SIZE];
+  struct process    *proc;
+  struct registers   regs;
+  int                tid;
 
-  /*
-   * the process this thread is a part of
-   */
-  struct process *proc;
-
-  /*
-   * each thread is part of a linked list of siblings
-   */
   list_link(struct thread) thread_link;
+  list_link(struct thread) sched_link;
 
-  struct registers regs;
-
-  int tid;
 } __attribute__((aligned (THREAD_STRUCT_ALIGN)));
 
+
+
 struct process {
-  /*
-   * the process family hierarchy: a pointer to your parent, and a list
-   * of your children.
-   */
-  struct process *parent; 
-  proc_list_t children;
+  struct process    *parent; 
+  proc_list_t        children;
+  thread_list_t      threads;
+  struct vm_space    space;
+  int                next_tid;
+  int                pid;
+
   list_link(struct process) sibling_link;
 
-  /*
-   * All the threads in this process
-   */
-  thread_list_t threads;
-
-  /*
-   * The virtual address space shared by all threads running in the process.
-   */
-  struct vm_space space;
-
-  int next_tid;
-  int pid;
 };
 
 #define num_threads(_proc) (list_size(&(_proc)->threads))
 #define main_thread(_proc) (list_head(&(_proc)->threads))
 
-int proc_fork(struct process *parent, struct process *child);
+/**
+ * @brief Allocate an initialize a new thread struct.
+ */
+static inline struct thread *new_thread_struct() {
+  struct thread *t;
+  
+  t = kmemalign(THREAD_STRUCT_ALIGN, sizeof(struct thread));
+  if (t) {
+    memset(t, 0, sizeof(struct thread));
+  }
+  return t;
+}
+
+static inline void free_thread_struct(struct thread *t) {
+  kfree(t, sizeof(struct thread));
+}
+
+/**
+ * @brief Allocate and initialize a new process struct.
+ */
+static inline struct process *new_process_struct() {
+  struct process *p;
+
+  p = kmalloc(sizeof(struct process));
+  if (p) {
+    list_init(&p->children);
+    list_init(&p->threads);
+    list_elem_init(p, sibling_link);
+    p->pid = 0; //TODO
+    p->next_tid = 0;
+  }
+  return p;
+}
+
+static inline void free_process_struct(struct process *p) {
+  kfree(p, sizeof(struct process));
+}
+
+static inline void add_thread(struct process *p, struct thread *t) {
+  list_insert_tail(&p->threads, t, thread_link);
+  t->proc = p;
+  t->tid = atomic_add(&p->next_tid, 1);
+}
+
+static inline void add_child_process(struct process *parent, struct process *child) {
+  child->parent = parent;
+  list_insert_tail(&parent->children, child, sibling_link);
+}
 
 #endif /* !_KERNEL_PROC_H__ */

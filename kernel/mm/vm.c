@@ -24,6 +24,8 @@ void vm_init(void) {
 
   TRACE();
 
+  list_init(&kernel_space.mappings);
+
   /*
    * Reserve the first 1/4 of physical memory for the kernel.
    */
@@ -65,35 +67,62 @@ void vm_init(void) {
   kmalloc_late_init(CONFIG_KERNEL_VIRTUAL_START + (num_kernel_pages * PAGE_SIZE));
 }
 
-/**
- * @brief Initialize a virtual address space.
- *
- * This function does not enable paging or change the current virtual address
- * space.
- *
- * @return
- *    0 on success
- *    non-0 on error (architecture-dependent)
- */
 int vm_space_init(struct vm_space *space) {
-  space->object = new_address_space();
-  if (!space->object) {
+  /*
+   * Initializing a new address space is the same as forking the address space
+   * that only maps the kernel.
+   */
+  return vm_space_fork(space, &kernel_space);
+}
+
+int vm_space_fork(struct vm_space *to, struct vm_space *from) {
+  struct vm_mapping *m;
+  int error;
+
+  to->object = new_address_space();
+  if (!to->object) {
     return ENOMEM;
   }
 
-  list_init(&space->mappings);
+  /*
+   * Prepare the virtual memory management data structures for the fork.
+   * This function is responsible for copying all the mappings between
+   * from and to, and marking all pages read-only for copy-on-write.
+   */
+  error = fork_address_space(to->object, from->object);
+  if (error) {
+    goto vm_fork_fail;
+  }
 
   /*
-   * Map the kernel into the new address space.
+   * Copy the vm_mappings between each.
    */
-  share_mappings(space->object, kernel_space.object);
+  error = ENOMEM;
+  list_init(&to->mappings);
+  list_foreach(m, &from->mappings, link) {
+    struct vm_mapping *new_m;
+
+    new_m = kmalloc(sizeof(struct vm_mapping));
+    if (!new_m) {
+      goto vm_fork_fail;
+    }
+
+    memcpy(new_m, m, sizeof(struct vm_mapping));
+    new_m->space = to;
+    atomic_add(&new_m->file->refs, 1);
+
+    list_insert_tail(&to->mappings, new_m, link);
+  }
 
   return 0;
+
+vm_fork_fail:
+  vm_space_destroy(to);
+  return error;
 }
 
 void vm_space_destroy(struct vm_space *space) {
-  (void)space;
-  panic("Implement me: %s", __func__);
+  (void)space; panic("implement me");
 }
 
 int vm_map_page(struct vm_space *space, unsigned long virt, int flags) {
@@ -122,9 +151,8 @@ void vm_unmap_page(struct vm_space *space, unsigned long virt) {
   page = unmap_page(space->object, virt);
   if (page) {
     free_page(page);
+    tlb_invalidate(virt, PAGE_SIZE);
   }
-
-  tlb_invalidate(virt, PAGE_SIZE);
 }
 
 void vm_dump_maps(printf_f p, struct vm_space *space) {
