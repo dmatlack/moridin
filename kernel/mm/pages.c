@@ -97,7 +97,7 @@ static struct page *__alloc_pages_at(size_t addr, unsigned long n, struct page_z
   }
   
   for (page = page_struct(addr); page < end; page++) {
-    page->count++;
+    page_get(page);
   }
 
   zone->num_free -= n;
@@ -174,7 +174,7 @@ struct page *__alloc_pages(unsigned long n, struct page_zone *zone) {
   }
 
   for (p = pages; p < pages + n; p++) {
-    p->count++;
+    page_get(p);
   }
 
   zone->num_free -= n;
@@ -203,7 +203,7 @@ void __free_pages(struct page *pages, unsigned long n, struct page_zone *zone) {
   // zone lock
   
   for (p = pages; p < pages + n; p++) {
-    p->count--;
+    page_put(p);
   }
 
   zone->num_free += n;

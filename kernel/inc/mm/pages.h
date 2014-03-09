@@ -30,10 +30,10 @@ extern struct page *phys_pages;
 #define page_put(_page) (atomic_add(&((_page)->count), -1))
 
 struct page_zone {
-  struct page *pages; /* array of all pages in the zone */
-  unsigned long num_pages; /* total number of pages in the zone */
-  unsigned long num_free; /* number of free pages in the zone */
-  unsigned long index; /* allows searches to pick up where the last left off */
+  struct page *pages;       /* array of all pages in the zone */
+  unsigned long num_pages;  /* total number of pages in the zone */
+  unsigned long num_free;   /* number of free pages in the zone */
+  unsigned long index;      /* allows searches to pick up where the last left off */
 
   // lock struct thingy
 };
