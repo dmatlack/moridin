@@ -95,6 +95,8 @@ void __run_init(void *ignore) {
     panic("Couldn't initialize the runtime stack for init: %s", strerr(error));
   }
 
+  vm_dump_maps(__log, &CURRENT_PROC->space);
+
   jump_to_userspace();
 }
 

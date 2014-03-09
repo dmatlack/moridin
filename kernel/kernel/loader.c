@@ -19,21 +19,8 @@
 #include <mm/vm.h>
 
 static inline ssize_t read_header(struct vfs_file *file, char *buf, unsigned bufsz) {
-  ssize_t bytes;
-  int ret;
-
   memset(buf, 0, bufsz);
-
-  ret = vfs_open(file);
-  if (ret) {
-    return 0;
-  }
-
-  bytes = vfs_read(file, buf, bufsz);
-
-  vfs_close(file);
-
-  return bytes;
+  return vfs_read(file, buf, bufsz);
 }
 
 int load_binary(struct vfs_file *file) {

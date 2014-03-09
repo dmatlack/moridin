@@ -176,18 +176,12 @@ int elf32_load(struct vfs_file *file) {
 
   TRACE("file=%p", file);
 
-  ret = vfs_open(file);
-  if (ret) {
-    return ret;
-  }
-
   /*
    * Read the ELF header
    */
   ehdr = elf32_get_ehdr(file);
   if (NULL == ehdr) {
-    ret = ENOMEM;
-    goto close_elf_ret;
+    return ENOMEM;
   }
 
   /*
@@ -237,7 +231,5 @@ int elf32_load(struct vfs_file *file) {
   kfree(phdrs, sizeof(struct elf32_phdr) * ehdr->e_phnum);
 free_ehdr_ret:
   kfree(ehdr, sizeof(struct elf32_ehdr));
-close_elf_ret:
-  vfs_close(file);
   return ret;
 }
