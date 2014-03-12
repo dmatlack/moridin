@@ -227,13 +227,13 @@ restore_registers:
   #
   # general purpose registers
   #
-  popl %edi;
-  popl %esi;
-  popl %ebp;
-  popl %ebx;
-  popl %edx;
-  popl %ecx;
-  popl %eax;
+  popl %edi
+  popl %esi
+  popl %ebp
+  popl %ebx
+  popl %edx
+  popl %ecx
+  popl %eax
   
   #
   # USE OF GENERAL PURPOSE REGISTERS IS NOT ALLOWED AFTER THIS POINT!
