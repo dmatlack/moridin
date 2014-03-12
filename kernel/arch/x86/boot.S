@@ -1,15 +1,20 @@
 ###############################################################################
-# @file arch/boot.S
+#
+# @file arch/x86/boot.S
+#
+# This is the real entrypoint to the kernel. The bootloader (GRUB) is expected
+# to load the kernel and then pass off control to _start according to the
+# multiboot specification.
+#
 #
 # The Bare Bones tutorial on osdev served as a starting point for this
-# file: http://wiki.osdev.org/Bare_Bones
-#
-# Much of the source code and layout of this file was taken from the CMU 
-# Operating Systems course (15-410) starter code (410kern/boot/head.S).
-# I mostly just added documentation and organized some of the code into 
-# separate files.
+# file: http://wiki.osdev.org/Bare_Bones. The starter code from the CMU
+# Operating Systems course (410kern/boot/head.S) also served as a
+# reference for this file. Specifically the implementation of lgdt() and
+# lidt() were taken from that file. I just added some documentation.
 #
 ###############################################################################
+
 #include <boot/multiboot.h>
 #include <arch/seg.h>
 
@@ -111,8 +116,10 @@ kernel_tss:
 
 .section .text
 
+#
 # The linker script specifies _start is the entry point of the kernel. The
 # bootloader (e.g. grub) will drop us here.
+#
 _start:
   cli                         # disable all interrupts 
   movl $boot_stack_top, %esp  # set esp so that we can run on a stack
@@ -151,10 +158,10 @@ _start:
 .Lhang:                       # create a local label rather than a real symbol
   jmp .Lhang                  # loop endlessly
 
-###
+#
 # boot_paging_init -- Set up the boot_page_dir to direct map the first
 # 16 MB of memory.
-###
+#
 .global boot_paging_init
 boot_paging_init:
   #
@@ -189,11 +196,11 @@ boot_paging_init:
 
   ret
 
-###
+#
 # lgdt -- Load the Global Descriptor Table
 #
 # This function taken from the 15-410 starter code. I only added comments.
-###
+#
 lgdt:
   movl 4(%esp), %eax      # 4(%esp) = address of the gdt
   movl 8(%esp), %ecx      # 8(%esp) = gdt limit (the size of the gdt)
@@ -215,11 +222,11 @@ lgdt_reload:
   addl $6, %esp
   ret
 
-###
+#
 # lidt -- Load the Interrupt Descriptor Table
 #
 # This function taken from the 15-410 starter code. I only added comments.
-###
+#
 lidt:
   movl 4(%esp), %eax    # 4(%esp) is the idt base address
   movl 8(%esp), %ecx    # 8(%esp) is the idt limit/size
