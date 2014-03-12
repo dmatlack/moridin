@@ -33,7 +33,6 @@ struct __attribute__((__packed__)) registers {
   uint32_t edi;
   uint32_t esi;
   uint32_t ebp;
-  uint32_t ignore;
   uint32_t ebx;
   uint32_t edx;
   uint32_t ecx;

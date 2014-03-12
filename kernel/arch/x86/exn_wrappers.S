@@ -44,8 +44,8 @@ exn_\vector:
   # registers struct here so we need to move the error code somewhere else.
   # At this point, above (esp) is the iret stack. Below (esp) we will begin
   # pushing the rest of the registers stack. The amount we will be pushing
-  # below is 64 bytes. We will then push the address of the registers
-  # struct, so the total pushed is actually 68.
+  # below is 60 bytes. We will then push the address of the registers
+  # struct, so the total pushed is actually 64.
   #
   push %eax               # we need to use a register to move data around so save the old value of eax on the stack
   addl $4, %esp           # move esp back up to the error code on the stack
@@ -54,7 +54,7 @@ exn_\vector:
 .else
   movl $0, %eax           # if there is no error code, use 0
 .endif
-  movl %eax, -68(%esp)    # save the error code 64 + 4 bytes after esp
+  movl %eax, -64(%esp)    # save the error code 60 + 4 = 64 bytes after esp
   subl $4, %esp           # restore esp so it points to the old value of eax
   popl %eax               # restore eax
 .if \has_error_code
@@ -66,7 +66,13 @@ exn_\vector:
   pushl %fs
   pushl %gs
 
-  pusha
+  pushl %eax;
+  pushl %ecx;
+  pushl %edx;
+  pushl %ebx;
+  pushl %ebp;
+  pushl %esi;
+  pushl %edi;
 
   movl %cr0, %eax
   pushl %eax
