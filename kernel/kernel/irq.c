@@ -5,7 +5,7 @@
  *
  */
 #include <kernel/irq.h>
-#include <kernel/kmalloc.h>
+#include <mm/kmalloc.h>
 
 #include <arch/atomic.h>
 

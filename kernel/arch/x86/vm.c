@@ -9,7 +9,7 @@
 #include <arch/reg.h>
 #include <arch/cpu.h>
 
-#include <kernel/kmalloc.h>
+#include <mm/kmalloc.h>
 
 #include <mm/memory.h>
 #include <mm/vm.h>

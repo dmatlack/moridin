@@ -7,7 +7,7 @@
  */
 #include <fs/vfs.h>
 
-#include <kernel/kmalloc.h>
+#include <mm/kmalloc.h>
 #include <arch/atomic.h>
 #include <stdint.h>
 #include <types.h>

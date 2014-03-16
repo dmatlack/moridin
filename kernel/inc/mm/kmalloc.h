@@ -1,8 +1,11 @@
+/**
+ * @file mm/kmalloc.h
+ */
+#ifndef __MM_KMALLOC_H__
+#define __MM_KMALLOC_H__
+
 #include <stdlib.h>
 #include <types.h>
-
-#ifndef _MALLOC_WRAPPERS_H_
-#define _MALLOC_WRAPPERS_H_
 
 void kmalloc_early_init(size_t start, size_t size);
 void kmalloc_late_init(size_t new_end);
@@ -14,4 +17,4 @@ void *kmalloc(size_t size);
 void *kmemalign(size_t alignment, size_t size);
 void  kfree(void *buf, size_t size);
 
-#endif /* _MALLOC_WRAPPERS_H_ */
+#endif /* !__MM_KMALLOC_H__ */

@@ -22,7 +22,7 @@
 
 #include <stdint.h>
 #include <list.h>
-#include <kernel/kmalloc.h>
+#include <mm/kmalloc.h>
 
 /*
  * Write to this address to configure/select a device

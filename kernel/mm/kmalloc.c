@@ -5,7 +5,7 @@
  *
  * @bug No known bugs
  */
-#include <kernel/kmalloc.h>
+#include <mm/kmalloc.h>
 #include <kernel/debug.h>
 
 #include <stddef.h>

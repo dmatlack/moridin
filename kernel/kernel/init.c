@@ -4,7 +4,7 @@
  * @brief Bootstrap user space by setting up and running init.
  */
 #include <kernel/init.h>
-#include <kernel/kmalloc.h>
+#include <mm/kmalloc.h>
 #include <kernel/loader.h>
 #include <kernel/proc.h>
 #include <kernel/stack.h>

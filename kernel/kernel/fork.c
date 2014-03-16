@@ -6,7 +6,7 @@
  */
 #include <kernel/syscall.h>
 #include <kernel/proc.h>
-#include <kernel/kmalloc.h>
+#include <mm/kmalloc.h>
 #include <kernel/sched.h>
 
 #include <mm/vm.h>

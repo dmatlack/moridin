@@ -7,7 +7,7 @@
 #include <mm/pages.h>
 
 #include <kernel/config.h>
-#include <kernel/kmalloc.h>
+#include <mm/kmalloc.h>
 
 #include <assert.h>
 #include <kernel/debug.h>

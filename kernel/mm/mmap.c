@@ -5,7 +5,7 @@
 
 #include <kernel/config.h>
 #include <kernel/debug.h>
-#include <kernel/kmalloc.h>
+#include <mm/kmalloc.h>
 #include <kernel/log.h>
 #include <kernel/proc.h>
 

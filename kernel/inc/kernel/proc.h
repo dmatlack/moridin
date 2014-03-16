@@ -5,7 +5,7 @@
 #ifndef __KERNEL_PROC_H__
 #define __KERNEL_PROC_H__
 
-#include <kernel/kmalloc.h>
+#include <mm/kmalloc.h>
 #include <arch/atomic.h>
 #include <mm/memory.h>
 #include <mm/vm.h>

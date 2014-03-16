@@ -5,7 +5,7 @@
  *
  */
 #include <kernel/elf.h>
-#include <kernel/kmalloc.h>
+#include <mm/kmalloc.h>
 
 #include <fs/vfs.h>
 

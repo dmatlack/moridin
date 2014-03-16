@@ -4,7 +4,7 @@
  * @brief Loading executables into memory.
  */
 #include <kernel/loader.h>
-#include <kernel/kmalloc.h>
+#include <mm/kmalloc.h>
 #include <kernel/kprintf.h>
 #include <kernel/elf.h>
 

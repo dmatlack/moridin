@@ -5,7 +5,7 @@
 #include <mm/pages.h>
 #include <mm/memory.h>
 
-#include <kernel/kmalloc.h>
+#include <mm/kmalloc.h>
 #include <kernel/kprintf.h> //remove me
 #include <kernel/debug.h>
 
