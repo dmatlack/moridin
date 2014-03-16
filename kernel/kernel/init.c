@@ -104,6 +104,7 @@ void __run_init(void *ignore) {
  * @brief Load and initialize the first process that will run.
  */
 void run_init(char *execpath, int argc, char **argv) {
+  TRACE("execpath=%s, argc=%d, argv=%p", execpath, argc, argv);
 
   init_args.execpath = execpath;
   init_args.argc = argc;

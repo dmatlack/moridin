@@ -35,6 +35,8 @@
  * point.
  */
 void kernel_main() {
+  debug_init();
+
   /*
    * Set up kmalloc to only allocate dynamic memory in the first 16 MB of
    * memory. This will allow us to use kmalloc during early startup.
@@ -44,8 +46,6 @@ void kernel_main() {
    */
   kmalloc_early_init((size_t) kheap_start,
                     ((size_t) kheap_end - (size_t) kheap_start));
-  debug_init();
-
   pages_init();
   vm_init();
   irq_init();

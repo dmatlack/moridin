@@ -167,7 +167,7 @@ void initrd_init(void) {
 
   kprintf("initrd: 0x%08x\n", initrd);
 
-  initrd_inodes_size = sizeof(struct vfs_inode) * initrd->nfiles + 1;
+  initrd_inodes_size = sizeof(struct vfs_inode) * (initrd->nfiles + 1);
   initrd_inodes = kmalloc(initrd_inodes_size);
   ASSERT_NOT_NULL(initrd_inodes);
 
