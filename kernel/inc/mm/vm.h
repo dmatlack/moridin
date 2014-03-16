@@ -13,11 +13,11 @@
 
 #if CONFIG_KERNEL_VIRTUAL_START == 0 // f*** you gcc
   #define kernel_address(addr) \
-     (addr < CONFIG_KERNEL_VIRTUAL_TOP)
+     (addr < CONFIG_KERNEL_VIRTUAL_END)
 #else
   #define kernel_address(addr) \
     (addr >= CONFIG_KERNEL_VIRTUAL_START && \
-     addr <  CONFIG_KERNEL_VIRTUAL_TOP)
+     addr <  CONFIG_KERNEL_VIRTUAL_END)
 #endif
 
 struct vm_mapping {

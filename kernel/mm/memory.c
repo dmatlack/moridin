@@ -1,16 +1,18 @@
 /**
  * @file mm/memory.c
  */
+#include <kernel/config.h>
 #include <mm/memory.h>
 #include <boot/multiboot.h>
 #include <stddef.h>
 #include <assert.h>
+#include <math.h>
 
 size_t phys_mem_bytes; /* size of physical memory in bytes */
 size_t phys_mem_pages; /* size of physical memory in pages */
 
-char *kheap_start; /* The start address of the kernel heap */
-char *kheap_end; /* The end address of the kernel heap */
+char *kdirect_start;
+char *kdirect_end;
 
 /**
  * @brief Initialize basic memory contructs from the multiboot environment
@@ -26,6 +28,8 @@ void mem_mb_init(struct multiboot_info *mb_info) {
   phys_mem_pages = phys_mem_bytes / PAGE_SIZE;
 
   kprintf("RAM: %d MB\n", phys_mem_bytes / MB(1));
+
+  kdirect_start = CONFIG_KERNEL_VIRTUAL_START;
 
   /*
    * The kernel heap starts after the kernel image in memory
@@ -47,8 +51,24 @@ void mem_mb_init(struct multiboot_info *mb_info) {
     }
   }
 
-  kheap_end = (char *) MB(16);
+  /*
+   * The kernel heap marks the end of the direct mapped pages of kernel
+   * memory. We statically allocate some fraction of physical memory to
+   * the kernel here. The rest goes to the user.
+   */
+  kdirect_end = (char *)
+    umin(CONFIG_KHEAP_MAX_END, 
+         CONFIG_KERNEL_VIRTUAL_START + PAGE_ALIGN_DOWN(phys_mem_bytes / 4));
 
-  kprintf("kernel image:  0x%08x, 0x%08x\n", (size_t) kimg_start, (size_t) kimg_end);
-  kprintf("kernel heap:   0x%08x, 0x%08x\n", kheap_start, kheap_end);
+  kheap_end = kdirect_end;
+
+  /*
+   * The kmap region lives at the top of the kernel's virtual address space.
+   */
+  kmap_start = kdirect_end;
+  kmap_end = (char *) CONFIG_KERNEL_VIRTUAL_END;
+
+  kprintf("kimg:    0x%08x - 0x%08x\n", kimg_start, kimg_end);
+  kprintf("kheap:   0x%08x - 0x%08x\n", kheap_start, kheap_end);
+  kprintf("kmap:    0x%08x - 0x%08x\n", kmap_start, kmap_end);
 }

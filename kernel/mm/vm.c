@@ -15,38 +15,34 @@
 
 #include <arch/vm.h>
 
-struct vm_space kernel_space; /* an address space with only the kernel mapped */
-struct page *   kernel_pages; /* all the physical pages in the kernel's address space */
-unsigned long   num_kernel_pages; /* the number of pages in kernel_pages */
+struct vm_space kernel_space;       /* an address space with only the kernel mapped */
+struct page *   kdirect_pages;      /* all the physical pages in the kernel's address space */
+unsigned long   kdirect_num_pages;  /* the number of pages in the kdirect region */
 
 void vm_init(void) {
   struct page *page;
 
   TRACE();
 
-  list_init(&kernel_space.mappings);
-
   /*
-   * Reserve the first 1/4 of physical memory for the kernel.
-   */
-  num_kernel_pages = PAGE_ALIGN_DOWN(phys_mem_bytes / 4 * 1) / PAGE_SIZE;
-  kernel_pages = alloc_pages_at(0x0, num_kernel_pages);
-
-  ASSERT_GREATEREQ(num_kernel_pages * PAGE_SIZE, MB(16));
-  ASSERT_NOT_NULL(kernel_pages);
-
-  /*
-   * Create a virtual address space that only maps the kernel's address
+   * Create a virtual address space that only maps the kernel's virtual address
    * space.
    */
   kernel_space.object = new_address_space();
   ASSERT_NOT_NULL(kernel_space.object);
+  list_init(&kernel_space.mappings);
 
   TRACE_OFF;
 
-  for (page = kernel_pages; page < kernel_pages + num_kernel_pages; page++) {
-    size_t phys = page_address(page);
-    size_t virt = CONFIG_KERNEL_VIRTUAL_START + phys;
+  /*
+   * Direct map the kdirect region of virtual memory.
+   */
+  kdirect_num_pages = ((size_t) kdirect_end - (size_t) kdirect_start) / PAGE_SIZE;
+  kdirect_pages = alloc_pages_at(0x0, kdirect_num_pages);
+  ASSERT_NOT_NULL(kdirect_pages);
+
+  for (page = kdirect_pages; page < kdirect_pages + kdirect_num_pages; page++) {
+    size_t virt = (size_t) kdirect_start + page_address(page);
     int ret;
 
     ret = map_page(kernel_space.object, virt, page, VM_P | VM_S | VM_G | VM_R | VM_W);
@@ -64,7 +60,7 @@ void vm_init(void) {
   /*
    * Resize the kernel heap to match to new kernel address space.
    */
-  kmalloc_late_init(CONFIG_KERNEL_VIRTUAL_START + (num_kernel_pages * PAGE_SIZE));
+  kmalloc_late_init();
 }
 
 int vm_space_init(struct vm_space *space) {

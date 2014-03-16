@@ -68,7 +68,7 @@ int create_process_stack(int argc, char **argv) {
    * arguments.
    */
   arg_length = PAGE_ALIGN_UP(arg_size(argc, argv));
-  arg_start = CONFIG_USER_VIRTUAL_TOP - arg_length;
+  arg_start = CONFIG_USER_VIRTUAL_END - arg_length;
 
   /*
    * After the program arguments, there's the runtime stack.

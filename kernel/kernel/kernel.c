@@ -44,8 +44,8 @@ void kernel_main() {
    * NOTE: if we use a higher half kernel we'll have to offset these
    * values
    */
-  kmalloc_early_init((size_t) kheap_start,
-                    ((size_t) kheap_end - (size_t) kheap_start));
+  kmalloc_early_init();
+
   pages_init();
   vm_init();
   irq_init();

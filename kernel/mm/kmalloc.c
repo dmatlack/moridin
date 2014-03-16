@@ -1,9 +1,10 @@
 /**
  * @file kmalloc.c
  *
- * TODO locking
+ * @brief kmalloc is the dynamic memory allocator in charge of the kernel
+ * heap (kheap).
  *
- * @bug No known bugs
+ * TODO locking
  */
 #include <mm/kmalloc.h>
 #include <kernel/debug.h>
@@ -17,63 +18,76 @@
 #include <mm/lmm_types.h>
 #include <mm/memory.h>
 
-static lmm_t        kernel_lmm; // = LMM_INITIALIZER;
+/*
+ * The lmm datastructures used to support the kernel heap.
+ */
+static lmm_t kheap_lmm;
 static lmm_region_t global_region;
-static size_t       __kmalloc_total;
 
-/**
- * @brief Initialize kmalloc and set up the kernel heap to extend
- * from <start> to <start>+<size>.
- *
- * This function is used to allocate a small heap for system startup.
- */
-void kmalloc_early_init(size_t start, size_t size) {
-  TRACE("start=0x%0x, size=0x%x", start, size);
+char *kheap_start;         /* The start address of the kernel heap */
+char *kheap_end;           /* The end address of the kernel heap */
 
-  __kmalloc_total = 0;
+char *kheap_early_start;   /* The start address of the kernel heap before vm_init() */
+size_t kheap_early_size;   /* The size of the kernel's early heap */
 
-  lmm_init(&kernel_lmm);
-  lmm_add_region(&kernel_lmm, &global_region, (size_t) 0, (size_t) -1, 0, 0);
-  lmm_add_free(&kernel_lmm, (void *) start, size);
+static size_t kheap_used;  /* The number of bytes in use (allocated) */
+
+
+void kmalloc_early_init(void) {
+  TRACE();
+
+  lmm_init(&kheap_lmm);
+  lmm_add_region(&kheap_lmm, &global_region, (size_t) 0, (size_t) -1, 0, 0);
+
+  /*
+   * Set up an initial heap starting at kheap_start.
+   */
+  kheap_early_start = kheap_start;
+
+  /*
+   * The early heap size is limited by the amount of memory statically
+   * mapped during boot.
+   */
+  kheap_early_size = BOOT_PAGING_SIZE - (size_t) kheap_early_start;
+
+  lmm_add_free(&kheap_lmm, kheap_early_start, kheap_early_size);
+  ASSERT_LESSEQ(kmalloc_bytes_free(), kheap_early_size);
+
+  kheap_used = 0;
 }
 
-/**
- * @brief Grow the kernel heap to address <new_end>.
- *
- * This function is called after the kernel has bootstrapped it's virtual
- * memory management.
- */
-void kmalloc_late_init(size_t new_end) {
-  size_t start;
+void kmalloc_late_init(void) {
+  char *start;
+  size_t size;
 
-  TRACE("new_end=0x%x", new_end);
+  TRACE();
 
-  start = (size_t) kheap_end;
+  /*
+   * We want to grow the kernel heap to kheap_end. Thus we add a new lmm_region
+   * that starts at the end of the early heap, and extends to kheap_end.
+   */
+  start = kheap_early_start + kheap_early_size;
+  size = (size_t) kheap_end - (size_t) start;
 
-  lmm_add_free(&kernel_lmm, (void *) start, new_end - start);
-
-  kheap_end = (char *) new_end;
-}
-
-void kmalloc_dump(void) {
-  lmm_dump(&kernel_lmm);
+  lmm_add_free(&kheap_lmm, start, size);
+  ASSERT_LESSEQ(kmalloc_bytes_free(), (size_t) kheap_end - (size_t) kheap_start);
 }
 
 size_t kmalloc_bytes_free(void) {
-  return lmm_avail(&kernel_lmm, 0);
+  return lmm_avail(&kheap_lmm, 0);
 }
 
 size_t kmalloc_bytes_used(void) {
-  return __kmalloc_total;
+  return kheap_used;
 }
 
 static void *__kmalloc(size_t size) {
 	void *chunk;
 
-	if (!(chunk = lmm_alloc(&kernel_lmm, size, 0)))
+	if (!(chunk = lmm_alloc(&kheap_lmm, size, 0)))
         return NULL;
 
-  __kmalloc_total += size;
+  kheap_used += size;
 	return chunk;
 }
 
@@ -118,11 +132,11 @@ void *kmemalign(size_t alignment, size_t size) {
 	 * Allocate a chunk of LMM memory with the specified alignment shift
 	 * and an offset such that the memory block we return will be aligned.
 	 */
-	if (!(chunk = lmm_alloc_aligned(&kernel_lmm, size, 0, shift, 0)))
+	if (!(chunk = lmm_alloc_aligned(&kheap_lmm, size, 0, shift, 0)))
 		return NULL;
 #pragma GCC diagnostic pop
 
-  __kmalloc_total += size;
+  kheap_used += size;
 	return chunk;
 }
 
@@ -133,6 +147,6 @@ void *kmemalign(size_t alignment, size_t size) {
  * @param size The size of the memory to free
  */
 void kfree(void *buf, size_t size) {
-  __kmalloc_total -= size;
-	lmm_free(&kernel_lmm, buf, size);
+  kheap_used -= size;
+	lmm_free(&kheap_lmm, buf, size);
 }

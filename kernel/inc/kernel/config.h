@@ -6,10 +6,22 @@
 #ifndef __KERNEL_CONFIG_H__
 #define __KERNEL_CONFIG_H__
 
-#define CONFIG_KERNEL_VIRTUAL_START   0x00000000
-#define CONFIG_KERNEL_VIRTUAL_TOP     0x40000000
-#define CONFIG_USER_VIRTUAL_START     0x40000000
-#define CONFIG_USER_VIRTUAL_TOP       0xFFFFF000
+/*
+ * The kernel's virtual address space.
+ */
+#define CONFIG_KERNEL_VIRTUAL_START           0x00000000
+#define CONFIG_KERNEL_VIRTUAL_END             0x40000000
+#define CONFIG_KERNEL_VIRTUAL_SIZE            (CONFIG_KERNEL_VIRTUAL_END - CONFIG_KERNEL_VIRTUAL_START)
+
+#define CONFIG_KMAP_MIN_SIZE                  MB(128)
+#define CONFIG_KHEAP_MAX_END                  (CONFIG_KERNEL_VIRTUAL_END - CONFIG_KMAP_MIN_SIZE)
+
+/*
+ * The user's virtual address space.
+ */
+#define CONFIG_USER_VIRTUAL_START             0x40000000
+#define CONFIG_USER_VIRTUAL_END               0xFFFFF000
+#define CONFIG_USER_VIRTUAL_SIZE              (CONFIG_USER_VIRTUAL_END - CONFIG_USER_VIRTUAL_START)
 
 /*
  * The default frequency (times per second) to receive hardware interrupts

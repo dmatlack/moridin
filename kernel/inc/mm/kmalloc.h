@@ -7,9 +7,11 @@
 #include <stdlib.h>
 #include <types.h>
 
-void kmalloc_early_init(size_t start, size_t size);
-void kmalloc_late_init(size_t new_end);
+void kmalloc_early_init(void);
+void kmalloc_late_init(void);
+
 void kmalloc_dump(void);
+
 size_t kmalloc_bytes_free(void);
 size_t kmalloc_bytes_used(void);
 
