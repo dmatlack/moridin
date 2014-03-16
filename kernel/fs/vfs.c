@@ -17,7 +17,7 @@
 #include <errno.h>
 #include <mm/memory.h>
 
-struct vfs_dirent *__vfs_root_dirent;
+struct vfs_dirent *__vfs_root_dirent = NULL;
 
 /**
  * @brief Set the root of the filesystem. This is like "mounting" a filesystem
@@ -96,8 +96,12 @@ struct vfs_dirent *vfs_get_dirent(char *path) {
    *
    */
   cur = next = path + 1;
+  if (!__vfs_root_dirent) {
+    DEBUG("VFS has no root.");
+    return NULL;
+  }
+
   d = __vfs_root_dirent;
-  ASSERT(dirent_isdir(d));
   while (*next) {
     char tmp;
     while (*next && *next != VFS_PATH_DELIM) next++;
