@@ -8,15 +8,16 @@
 #include <kernel/debug.h>
 #include <kernel/init.h>
 #include <kernel/irq.h>
-#include <mm/kmalloc.h>
 #include <kernel/loader.h>
 #include <kernel/proc.h>
 #include <kernel/stack.h>
 #include <kernel/timer.h>
 
+#include <mm/kmalloc.h>
 #include <mm/memory.h>
 #include <mm/pages.h>
 #include <mm/vm.h>
+#include <mm/kmap.h>
 
 #include <dev/vga.h>
 #include <dev/serial.h>
@@ -48,6 +49,7 @@ void kernel_main() {
 
   pages_init();
   vm_init();
+  kmap_init();
   irq_init();
   timer_init();
   initrd_init();
