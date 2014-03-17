@@ -155,3 +155,28 @@ void kunmap(void *virt) {
   tlb_invalidate((unsigned long) virt, PAGE_SIZE);
   kmap_free_page(virt);
 }
+
+#include <kernel/test.h>
+BEGIN_TEST(kmap_test)
+{
+#define TEST_STRING "All that is gold does not glitter," \
+                    "Not all those who wander are lost;"
+  void *virtual;
+  char *mem = kmemalign(PAGE_SIZE, PAGE_SIZE);
+
+  if (!mem) panic("Couldn't allocate a page for the test!");
+
+  /*
+   * Copy the string to the kernel virtual memory.
+   */
+  memset(mem, 0, PAGE_SIZE);
+  memcpy(mem, TEST_STRING, sizeof(TEST_STRING));
+
+  virtual = kmap(page_struct((unsigned long) mem));
+
+  ASSERT_EQUALS(0, memcmp(mem, virtual, PAGE_SIZE));
+
+  kunmap(virtual);
+  kfree(mem, PAGE_SIZE);
+}
+END_TEST

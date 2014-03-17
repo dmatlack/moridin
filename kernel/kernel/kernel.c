@@ -12,6 +12,7 @@
 #include <kernel/proc.h>
 #include <kernel/stack.h>
 #include <kernel/timer.h>
+#include <kernel/test.h>
 
 #include <mm/kmalloc.h>
 #include <mm/memory.h>
@@ -57,6 +58,8 @@ void kernel_main() {
   enable_irqs();
 
   pci_init();
+
+  _TEST_KERNEL_();
 
   /////////////////////////////////////////////////////////////////////////////
   // Temporary hack to get to userspace with some test argv/arc

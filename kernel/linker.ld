@@ -20,6 +20,9 @@ SECTIONS
         *(.multiboot)
         *(.intel)
         *(.text)
+        PROVIDE(ktest_start = .);
+        *(.test)
+        PROVIDE(ktest_end = .);
     }
 
     ktext_end = .;
