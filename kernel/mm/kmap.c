@@ -2,6 +2,7 @@
  * @file mm/kmap.c
  */
 #include <mm/pages.h>
+#include <mm/pages.h>
 #include <arch/vm.h>
 #include <kernel/debug.h>
 #include <assert.h>
@@ -20,7 +21,6 @@ void kmap_init(void) {
   TRACE();
 
   kmap_bitmap_size = ((size_t) kmap_end - (size_t) kmap_start) / PAGE_SIZE / 8;
-  kprintf("0x%08x\n", kmap_bitmap_size);
   kmap_bitmap = kmalloc(kmap_bitmap_size);
   if (!kmap_bitmap) {
     panic("Failed to allocate the kmap_bitmap.");
@@ -29,6 +29,9 @@ void kmap_init(void) {
   memset(kmap_bitmap, 0, kmap_bitmap_size);
 }
 
+/**
+ * @brief Convert a bit in the bitmap to the virtual address it represents.
+ */
 static inline void *kmap_address(char *block, int bit) {
   unsigned long pgnum;
 
@@ -37,6 +40,9 @@ static inline void *kmap_address(char *block, int bit) {
   return (void *) ((unsigned long) kmap_start + (pgnum + bit)*PAGE_SIZE);
 }
 
+/**
+ * @brief Allocate a page of virtual address space in the kmap region.
+ */
 void *kmap_alloc_page(void) {
   char *block;
 
@@ -57,6 +63,9 @@ void *kmap_alloc_page(void) {
   return NULL;
 }
 
+/**
+ * @brief Map a page into the kernel's virtual address space.
+ */
 int kmap_map_page(void *virt, struct page *page) {
   int error;
 
@@ -69,6 +78,10 @@ int kmap_map_page(void *virt, struct page *page) {
   return 0;
 }
 
+/**
+ * @brief Convert a virtual address into the bitmap block the contains
+ * it.
+ */
 static inline char *kmap_block(void *virt) {
   unsigned long v = (unsigned long) virt;
   
@@ -79,6 +92,10 @@ static inline char *kmap_block(void *virt) {
   return kmap_bitmap + v;
 }
 
+/**
+ * @brief Convert a virtual address into the bit offset into the bitmap
+ * block that contains the address.
+ */
 static inline int kmap_bit(void *virt) {
   unsigned long v = (unsigned long) virt;
 
@@ -88,6 +105,9 @@ static inline int kmap_bit(void *virt) {
   return v % 8;
 }
 
+/**
+ * @brief Release a page of virtual address space.
+ */
 void kmap_free_page(void *virt) {
   char *block = kmap_block(virt);
   int bit = kmap_bit(virt);
@@ -128,6 +148,8 @@ void *kmap(struct page *page) {
  */
 void kunmap(void *virt) {
   TRACE("virt=%p", virt);
+
+  virt = (void *) PAGE_ALIGN_DOWN(virt);
 
   unmap_page(kernel_space.object, (unsigned long) virt);
   tlb_invalidate((unsigned long) virt, PAGE_SIZE);
