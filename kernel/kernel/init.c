@@ -8,6 +8,7 @@
 #include <kernel/loader.h>
 #include <kernel/proc.h>
 #include <kernel/stack.h>
+#include <kernel/test.h>
 
 #include <arch/reg.h>
 #include <arch/cpu.h>
@@ -96,6 +97,8 @@ void __run_init(void *ignore) {
   }
 
   vm_dump_maps(__log, &CURRENT_PROC->space);
+
+  _TEST_KERNEL_();
 
   jump_to_userspace();
 }

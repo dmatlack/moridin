@@ -34,14 +34,11 @@ static inline void _TEST_KERNEL_(void) {
   test_f *functions, *f;
 
   TRACE();
-  DEBUG("BEGIN KERNEL TESTS");
 
   functions = (test_f *) (ktest_start + 1);
   for (f = functions; f < (test_f *) ktest_end; f++) {
     (*f)();
   }
-
-  DEBUG("ALL TESTS PASS");
 }
 
 #endif /* !__KERNEL_TEST_H__ */

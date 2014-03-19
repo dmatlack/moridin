@@ -394,13 +394,12 @@ int vm_munmap(unsigned long addr, unsigned long length) {
     return 0;
 }
 
-#if 0
-void test_munmap(void) {
+#include <kernel/test.h>
+BEGIN_TEST(mmap_test)
+{
   int prot = PROT_READ | PROT_WRITE;
   int flags = MAP_PRIVATE | MAP_FIXED | MAP_ANONYMOUS;
   int error;
-
-  TRACE();
 
 #define _MAP(_addr, _length) \
   do { \
@@ -416,8 +415,18 @@ void test_munmap(void) {
   } while (0)
 
   _MAP(0x80000000, 3 * PAGE_SIZE);
+
+  *((int *) 0x80000000) = 42;
+
   _MAP(0x80010000, 10 * PAGE_SIZE);
+
+  *((int *) 0x80010000) = 42;
+
   _MAP(0x90000000, 3 * PAGE_SIZE);
+
+  *((int *) 0x90000000) = 42;
+  *((int *) 0x90001000) = 42;
+  *((int *) 0x90002000) = 42;
 
   _UNMAP(0x80000000 + PAGE_SIZE, 0x90000000 + PAGE_SIZE);
 
@@ -429,4 +438,4 @@ void test_munmap(void) {
 #undef _MAP
 #undef _UNMAP
 }
-#endif
+END_TEST
