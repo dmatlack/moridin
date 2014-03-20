@@ -204,6 +204,46 @@ set_esp0:
   movw $SEGSEL_KERNEL_DS, 8(%ecx) # set ss0
   ret 
 
+.macro POP_REGISTERS
+  popl %ebx
+  movl %ebx, %cr3
+  popl %ebx
+  movl %ebx, %cr2
+
+  popl %edi
+  popl %esi
+  popl %ebp
+  popl %ebx
+  popl %edx
+  popl %ecx
+  popl %eax
+
+  popl %gs
+  popl %fs
+  popl %es
+  popl %ds
+.endm # POP_REGISTERS
+
+.macro PUSH_REGISTERS
+  pushl %ds
+  pushl %es
+  pushl %fs
+  pushl %gs
+
+  pushl %eax
+  pushl %ecx
+  pushl %edx
+  pushl %ebx
+  pushl %ebp
+  pushl %esi
+  pushl %edi
+
+  movl %cr2, %ebx
+  pushl %ebx
+  movl %cr3, %ebx
+  pushl %ebx
+.endm # PUSH_REGISTERS
+
 .global restore_registers
 restore_registers:
   #
@@ -213,37 +253,7 @@ restore_registers:
   #
   movl 0x4(%esp), %esp
 
-  #
-  # control registers
-  #
-  popl %eax         # cr3
-  movl %eax, %cr3
-  popl %eax         # cr2
-  movl %eax, %cr2
-
-
-  #
-  # general purpose registers
-  #
-  popl %edi
-  popl %esi
-  popl %ebp
-  popl %ebx
-  popl %edx
-  popl %ecx
-  popl %eax
-  
-  #
-  # USE OF GENERAL PURPOSE REGISTERS IS NOT ALLOWED AFTER THIS POINT!
-  #
-
-  #
-  # data segment registers
-  #
-  popl %gs
-  popl %fs
-  popl %es
-  popl %ds
+  POP_REGISTERS
 
   #
   # All that's left is the iret stack, so we'll iret to it
