@@ -20,12 +20,12 @@
  */
 struct __attribute__((__packed__)) registers {
   /*
-   * control registers
+   * control registers (cr0 and cr4 are system-level registers)
    */
-  uint32_t cr4;
   uint32_t cr3;
   uint32_t cr2;
-  uint32_t cr0;
+
+  /* 0x8 */
 
   /*
    * general purpose registers (pusha order)
@@ -38,6 +38,8 @@ struct __attribute__((__packed__)) registers {
   uint32_t ecx;
   uint32_t eax;
 
+  /* 0x24 */
+
   /*
    * data segment registers
    */
@@ -45,6 +47,8 @@ struct __attribute__((__packed__)) registers {
   uint32_t fs;
   uint32_t es;
   uint32_t ds;
+
+  /* 0x34 */
 
   /*
    * program registers (iret order)
@@ -54,6 +58,8 @@ struct __attribute__((__packed__)) registers {
   uint32_t eflags;
   uint32_t esp;
   uint32_t ss;
+
+  /* 0x48 */
 };
 
 #define INIT_REGS \

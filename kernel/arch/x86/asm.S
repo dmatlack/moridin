@@ -216,12 +216,10 @@ restore_registers:
   #
   # control registers
   #
-  popl %eax         # cr4
   popl %eax         # cr3
   movl %eax, %cr3
   popl %eax         # cr2
   movl %eax, %cr2
-  popl %eax         # cr0
 
 
   #

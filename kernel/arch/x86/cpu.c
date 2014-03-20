@@ -65,10 +65,8 @@ void jump_to_userspace(void) {
 
   set_esp0(KSTACK_TOP);
 
-  regs->cr4 = get_cr4();
   regs->cr3 = (uint32_t) CURRENT_PAGE_DIR;
   regs->cr2 = 0;
-  regs->cr0 = get_cr0();
   regs->eflags = get_eflags();
 
   restore_registers(regs);
