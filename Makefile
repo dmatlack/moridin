@@ -20,33 +20,33 @@ iso: kernel user initrd boot/grub.cfg
 	grub-mkrescue -o OS.iso iso
 
 #
+# Create the initial ramdisk needed to use the operating system
+#
+initrd: kernel user tools
+	tools/create_initrd initrd.img user/bin/* boot/initrd/*
+
+#
 # Build the kernel sources into an object file
 #
 kernel:
-	make -C kernel/
+	+make -C kernel/
 
 #
 # Build the user progams into executables compatable with kernel
 #
 user:
-	make -C user/
-
-#
-# Create the initial ramdisk needed to use the operating system
-#
-initrd: tools
-	tools/create_initrd initrd.img user/bin/* boot/initrd/* 
+	+make -C user/
 
 #
 # Build the tools used to build the kernel and os
 #
 tools:
-	make -C tools/
+	+make -C tools/
 
 clean:
-	make -C kernel/ clean
-	make -C user/ clean
-	make -C tools/ clean
+	+make -C kernel/ clean
+	+make -C user/ clean
+	+make -C tools/ clean
 	rm  -f initrd.img
 	rm -rf iso
 	rm -rf OS.iso
