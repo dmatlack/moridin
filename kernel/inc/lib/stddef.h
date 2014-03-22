@@ -8,7 +8,13 @@
 #endif
 
 #define arraylen(array) (sizeof(array)/sizeof(array[0]))
-#define offsetof(stype,field)	((size_t)(&((stype*)NULL)->field))
+
+#define offset_of(struct_type,field)	\
+  ((size_t) (&((struct_type *) 0)->field))
+
+#define container_of(ptr, struct_type, struct_member)                     \
+  ({ const __typeof__(((struct_type *) 0)->struct_member) *__ptr = (ptr); \
+     (struct_type *) ((char *) __ptr - offset_of(struct_type, struct_member)); })
 
 /**
  * @brief return the largest value <= x that is a multiple of N.

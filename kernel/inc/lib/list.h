@@ -155,6 +155,19 @@
     list_prev(elem_ptr, link_name) = NULL;                                    \
   } while (0)
 
+#define list_enqueue(list_ptr, elem_ptr, link_name)                           \
+  list_insert_head(list_ptr, elem_ptr, link_name)
+
+#define elem_type(list_ptr)                                                   \
+  __typeof__(*list_head(list_ptr))
+
+#define list_dequeue(list_ptr, link_name)                                     \
+  ({                                                                          \
+    elem_type(list_ptr) *__elem_ptr = list_tail(list_ptr);                    \
+    list_remove(list_ptr, __elem_ptr, link_name);                             \
+    __elem_ptr;                                                               \
+  })
+
 
 #define list_foreach(elem_ptr, list_ptr, link_name)                           \
   for (elem_ptr = list_head(list_ptr);                                        \
