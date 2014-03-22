@@ -37,7 +37,7 @@
   .sibling_link = INITIALIZED_LIST_LINK,                             \
   .threads      = INITIALIZED_LIST(&init_thread),                    \
   .next_tid     = 1,                                                 \
-  .pid          = 0,                                                 \
+  .pid          = 1,                                                 \
 }
 
 struct process init_proc    = INIT_PROCESS;

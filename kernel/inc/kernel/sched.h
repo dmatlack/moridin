@@ -6,6 +6,7 @@
 
 #include <kernel/proc.h>
 
-void schedule(struct thread *);
+void sched_make_runnable(struct thread *);
+void sched_switch(void);
 
 #endif /* !__KERNEL_SCHED_H__ */

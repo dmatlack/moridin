@@ -9,6 +9,8 @@ void print(const char *s) {
 }
 
 void print_int(int i) {
+  // Longest int string: -2147483648 (aka -2^31)
+  //    = 12 characters ([-]{1}[0-9]{10} + NULL terminator)
   char string[12];
   char *s = string + 11;
   int negative;
@@ -59,12 +61,24 @@ int main(int argc, char **argv) {
   }
 
   child_pid = fork();
-  pid = getpid();
 
-  print_int(pid);
-  print(": fork() returned ");
-  print_int(child_pid);
-
+  if (child_pid < 0) {
+    print("fork() failed: ");
+    print_int(child_pid);
+    print("\n");
+  }
+  else if (child_pid == 0) {
+    print("CHILD: ");
+    print_int(getpid());
+    print("\n");
+  }
+  else {
+    print("PARENT: ");
+    print_int(child_pid);
+    print(" (my pid = ");
+    print_int(getpid());
+    print(")\n");
+  }
 
   return 0;
 }

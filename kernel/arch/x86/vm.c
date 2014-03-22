@@ -160,8 +160,8 @@ int fork_address_space(struct entry_table *to_pd, struct entry_table *from_pd) {
            * Mark the page readonly in both page tables so both processes will 
            * page fault on a write and we can copy the page.
            */
-          entry_set_readonly(from_pte);
-          entry_set_readonly(to_pte);
+          //entry_set_readonly(from_pte);
+          //entry_set_readonly(to_pte);
         }
       }
     }
@@ -433,22 +433,15 @@ void page_fault(int vector, int error, struct registers *regs) {
 
   TRACE("vector=%d, error=%d, regs=%p", vector, error, regs);
 
+  // (error & 1): 0 if page fault caused by non-present page or 1 if access
+  //              writes violation (e.g. writing to a read-only page). We
+  //              don't pass this bit up to the generic page fault handler,
+  //              but it exists.
   if (error & 2) flags |= PF_WRITE;
   else           flags |= PF_READ;
   if (error & 4) flags |= PF_USER;
   else           flags |= PF_SUPERVISOR;
 
-  if (error & 1) {
-    //TODO: kill the process
-    panic("Page fault caused by page-level protection violation: %s %s at 0x%08x",
-          flags & PF_USER ? "user" : "kernel",
-          flags & PF_READ ? "read" : "write",
-          regs->cr2);
-  }
-
-  /*
-   * Pass the address of the page fault up to the virtual memory manager.
-   */
   ret = vm_page_fault(regs->cr2, flags);
 
   if (ret) {

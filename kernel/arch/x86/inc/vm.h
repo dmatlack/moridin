@@ -251,9 +251,6 @@ static inline void *swap_address_space(void *new) {
 
 #define CURRENT_PAGE_DIR (CURRENT_PROC)->space.object
 
-#define vtop(v, pp) __vtop((struct entry_table *) get_cr3(), v, pp)
-#define phys(v) 
-
 int map_page(void *pd, unsigned long virt, struct page *page, int flags);
 
 struct page *unmap_page(void *pd, unsigned long virt);
@@ -285,5 +282,17 @@ static inline void tlb_invalidate(unsigned long addr, size_t size) {
 }
 
 void page_fault(int vector, int error, struct registers *regs);
+
+bool __vtop(struct entry_table *pd, unsigned long v, unsigned long *pp);
+
+static inline struct page *mmu_virt_to_page(struct entry_table *pd, unsigned long v) {
+  unsigned long phys;
+
+  if (!__vtop(pd, v, &phys)) {
+    return NULL;
+  }
+
+  return page_struct(phys);
+}
 
 #endif /* !__X86_VM_H__ */

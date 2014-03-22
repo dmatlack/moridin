@@ -19,11 +19,11 @@ list_typedef(struct process) proc_list_t;
 
 #include <arch/reg.h>
 
-#define CURRENT_THREAD \
-  ((struct thread *) PAGE_ALIGN_DOWN(get_sp()))
+#define _THREAD(stack_addr)        ((struct thread *) PAGE_ALIGN_DOWN(stack_addr))
+#define _PROC(stack_addr)          ((_THREAD(stack_addr))->proc)
 
-#define CURRENT_PROC \
-  ((CURRENT_THREAD)->proc)
+#define CURRENT_THREAD             _THREAD(get_sp())
+#define CURRENT_PROC               _PROC(get_sp())
 
 #define KSTACK_SIZE 2048
 
@@ -40,6 +40,7 @@ struct thread {
   char               kstack[KSTACK_SIZE];
   struct process    *proc;
   struct registers   regs;
+  void              *context;
   int                tid;
 
   list_link(struct thread) thread_link;
@@ -81,6 +82,8 @@ static inline void free_thread_struct(struct thread *t) {
   kfree(t, sizeof(struct thread));
 }
 
+int next_pid(void);
+
 /**
  * @brief Allocate and initialize a new process struct.
  */
@@ -92,7 +95,7 @@ static inline struct process *new_process_struct() {
     list_init(&p->children);
     list_init(&p->threads);
     list_elem_init(p, sibling_link);
-    p->pid = 0; //TODO
+    p->pid = next_pid();
     p->next_tid = 0;
   }
   return p;

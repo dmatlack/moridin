@@ -6,13 +6,25 @@
  */
 #include <kernel/syscall.h>
 #include <kernel/proc.h>
-#include <mm/kmalloc.h>
 #include <kernel/sched.h>
 
 #include <mm/vm.h>
+#include <mm/kmalloc.h>
+
+#include <arch/fork.h>
 
 #include <types.h>
 #include <errno.h>
+
+/*
+ * __next_pid is the next process id to give out. It starts at 2 because
+ * 1 is reserved for init (see kernel/init.c).
+ */
+int __next_pid = 2;
+
+int next_pid(void) {
+  return atomic_add(&__next_pid, 1);
+}
 
 pid_t sys_fork(void) {
   struct thread *new_thread = NULL;
@@ -50,26 +62,21 @@ pid_t sys_fork(void) {
   add_thread(new_process, new_thread);
   add_child_process(CURRENT_PROC, new_process);
 
-  /*
-   * Copy the current thread's registers struct (the registers that will be
-   * restored to this thread when it returns to userland) into the new 
-   * thread's registers struct. This will ensure that when we finally context
-   * switch to the new thread it will return from fork.
-   */
-  memcpy(&new_thread->regs, &CURRENT_THREAD->regs, sizeof(struct registers));
+  fork_context(new_thread);
 
-  /*
-   * We set the register used to pass system call return values to be 0
-   * because the child returns 0 from fork().
-   */
-  __set_syscall_return_reg(&new_thread->regs, 0);
-
-  schedule(new_thread);
-
-  /*
-   * Return to the parent
-   */
-  return new_process->pid;
+  if (CURRENT_THREAD == new_thread) {
+    /*
+     * Child returned 
+     */
+    return 0;
+  }
+  else {
+    /*
+     * Parent returned
+     */
+    sched_make_runnable(new_thread);
+    return new_process->pid;
+  }
 
 sys_fork_fail:
   if (new_thread) free_thread_struct(new_thread);
