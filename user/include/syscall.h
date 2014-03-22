@@ -30,4 +30,9 @@ int write(int fd, char *ptr, int len);
 int getpid(void);
 int fork(void);
 
+/*
+ * System calls not part of newlib:
+ */
+int yield(void);
+
 #endif /* !SYSCALL_H */

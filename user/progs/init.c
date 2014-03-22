@@ -78,6 +78,8 @@ int main(int argc, char **argv) {
     print(" (my pid = ");
     print_int(getpid());
     print(")\n");
+
+    yield();
   }
 
   return 0;

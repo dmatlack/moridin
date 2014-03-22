@@ -8,12 +8,23 @@
 
 static thread_list_t runnable;
 
+static inline struct thread *runnable_dequeue(void) {
+  return list_dequeue(&runnable, sched_link);
+}
+
+static inline void runnable_enqueue(struct thread *thread) {
+  list_enqueue(&runnable, thread, sched_link);
+}
+
 void sched_make_runnable(struct thread *thread) {
   list_enqueue(&runnable, thread, sched_link);
 }
 
 void sched_switch(void) {
-  struct thread *next = list_dequeue(&runnable, sched_link);
+  struct thread *next;
+
+  runnable_enqueue(CURRENT_THREAD);
+  next = runnable_dequeue();
 
   context_switch(next);
 }

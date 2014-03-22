@@ -9,5 +9,6 @@
 int sys_write(int fd, char *ptr, int len);
 int sys_getpid(void);
 pid_t sys_fork(void);
+int sys_yield(void);
 
 #endif /* !__KERNEL_SYSCALL_H__ */

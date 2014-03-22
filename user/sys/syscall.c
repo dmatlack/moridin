@@ -15,3 +15,7 @@ int getpid(void) {
 int fork(void) {
   return SYSCALL0(SYS_FORK);
 }
+
+int yield(void) {
+  return SYSCALL0(SYS_YIELD);
+}
