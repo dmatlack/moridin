@@ -14,6 +14,7 @@
 #include <errno.h>
 
 #include <arch/vm.h>
+#include <arch/fork.h>
 
 struct vm_space kernel_space;       /* an address space with only the kernel mapped */
 struct page *   kdirect_pages;      /* all the physical pages in the kernel's address space */

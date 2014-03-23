@@ -4,10 +4,7 @@
 #ifndef __ARCH_X86_FORK_H__
 #define __ARCH_X86_FORK_H__
 
-#include <kernel/proc.h>
-#include <stddef.h>
-
-extern void __fork_context(void **save_addr, void *restore_addr);
+#include <arch/vm.h>
 
 /**
  * @brief This function returns twice. Once as the new thread (the argument to
@@ -20,22 +17,26 @@ extern void __fork_context(void **save_addr, void *restore_addr);
  * returns. After the new thread is context-switched-to it will return from
  * this function.
  */
-void fork_context(struct thread *new_thread) {
-  TRACE("new_thread=%p", new_thread);
-  __fork_context(&new_thread->context, CURRENT_THREAD->context);
-}
+void fork_context(struct thread *new_thread);
 
-void copy_context(void **addr) {
-  struct thread *new_thread = container_of(addr, struct thread, context);
-
-  TRACE("new_thread=%p", new_thread);
-
-  /*
-   * Copy the entire kernel stack from the current thread to the new thread.
-   */
-  memcpy((void *) _KSTACK_START(new_thread), (void *) _KSTACK_START(CURRENT_THREAD), KSTACK_SIZE);
-
-  new_thread->context = (void *) (((size_t) (*addr)) - (size_t) CURRENT_THREAD + (size_t) new_thread);
-}
+/**
+ * @brief This function is responsible for making to_pd map the same address
+ * space as from_pd.
+ *
+ * If this function succeeds, the following will be true:
+ *    1. Any virtual address that has a present mapping in from_pd will also
+ *       have a mapping in to_pd.
+ *    2. All kernel virtual addresses in from_pd will be mapped into to_pd by
+ *       only copying the page directory entries.
+ *    3. All user virtual addresses in from_pd will be mapped into to_pd by 
+ *       allocating a new page table for to_pd.
+ *    4. All mapped virtual addresses will map to the _same physical page_
+ *       in both address spaces.
+ *    5. All userspace mappings in to_pd and from_pd will be read-only, to
+ *       support copy-on-write.
+ *
+ * @return 0 on success, non-0 on error
+ */
+int fork_address_space(struct entry_table *to_pd, struct entry_table *from_pd);
 
 #endif /* !__ARCH_X86_FORK_H__ */

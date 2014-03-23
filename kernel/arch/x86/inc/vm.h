@@ -219,9 +219,8 @@ struct entry_table {
   entry_t entries[ENTRY_TABLE_SIZE];
 };
 
-int entry_table_init(struct entry_table *tbl);
-struct entry_table *entry_table_alloc(void);
-void entry_table_free(struct entry_table *ptr);
+struct entry_table *new_entry_table(void);
+void free_entry_table(struct entry_table *ptr);
 
 /*
  * Linear Address translation for 4 KB pages
@@ -275,7 +274,6 @@ int map_page(void *pd, unsigned long virt, struct page *page, int flags);
 struct page *unmap_page(void *pd, unsigned long virt);
 
 void *new_address_space(void);
-int  fork_address_space(struct entry_table *to_pd, struct entry_table *from_pd);
 
 /**
  * @brief Flush the contents of the TLB, invalidating all cached virtual
