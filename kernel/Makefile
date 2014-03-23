@@ -32,6 +32,8 @@ default: kernel
 kernel: arch $(OFILES) $(HFILES) linker.ld
 	$(CC) -T linker.ld -o KERNEL.o -ffreestanding -O2 -nostdlib $(OFILES) -lgcc
 	objdump -Dg KERNEL.o > KERNEL.S
+	objcopy --only-keep-debug KERNEL.o KERNEL.bin.sym
+	nm KERNEL.bin.sym | grep -E " [Tt] " | awk '{ print 0x$$1" "$$3 }' > KERNEL.sym
 
 #
 # Create a symbolic link for architecture-specific header files:
@@ -48,6 +50,7 @@ clean:
 	rm -f inc/arch
 	rm -f KERNEL.S
 	rm -f KERNEL.o
+	rm -f KERNEL.sym KERNEL.bin.sym
 	rm -f $(OFILES)
 
 %.o: %.S
