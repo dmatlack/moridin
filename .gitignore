@@ -3,6 +3,7 @@
 *.bin
 *.iso
 *.img
+*.sym
 /DISK*
 
 bochs.out
