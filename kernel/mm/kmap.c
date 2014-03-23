@@ -69,7 +69,7 @@ void *kmap_alloc_page(void) {
 int kmap_map_page(void *virt, struct page *page) {
   int error;
 
-  error = map_page(kernel_space.object, (unsigned long) virt, page, KMAP_VM_FLAGS);
+  error = mmu_map_page(kernel_space.mmu, (unsigned long) virt, page, KMAP_VM_FLAGS);
   if (error) {
     return error;
   }
@@ -151,7 +151,7 @@ void kunmap(void *virt) {
 
   virt = (void *) PAGE_ALIGN_DOWN(virt);
 
-  unmap_page(kernel_space.object, (unsigned long) virt);
+  mmu_unmap_page(kernel_space.mmu, (unsigned long) virt);
   tlb_invalidate((unsigned long) virt, PAGE_SIZE);
   kmap_free_page(virt);
 }

@@ -12,6 +12,8 @@
 #include <kernel/debug.h>
 #include <types.h>
 
+void page_fault(int vector, int error, struct registers *regs);
+
 /*
  * x86 exception handling jump table
  */

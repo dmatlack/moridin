@@ -27,36 +27,6 @@ static inline bool is_page_aligned(unsigned long addr) {
 }
 
 /**
- * @brief Allocate a new entry_table, with the proper memory address alignment.
- *
- * @return NULL if the allocation fails.
- */
-struct entry_table *new_entry_table(void) {
-  struct entry_table *tbl;
-  unsigned i;
-
-  TRACE();
-
-  tbl = kmemalign(X86_PAGE_SIZE, sizeof(struct entry_table));
-
-  for (i = 0; i < ENTRY_TABLE_SIZE; i++) {
-    /*
-     * zero out the entry to be safe but all that matters here is that the
-     * page entry is marked as not present.
-     */
-    tbl->entries[i] = 0;
-    entry_set_absent(tbl->entries + i);
-  }
-
-  return tbl;
-}
-
-void free_entry_table(struct entry_table *ptr) {
-  TRACE("ptr=%p", ptr);
-  kfree(ptr, sizeof(struct entry_table));
-}
-
-/**
  * @brief Allocate a page directory to be used in a new address space.
  *
  * @return NULL if allocating a page of memory failed, the address of the 
@@ -175,7 +145,7 @@ void free_marked_page_tables(struct entry_table *pd) {
   }
 }
 
-struct page *unmap_page(void *pd, unsigned long virt) {
+struct page *mmu_unmap_page(void *pd, unsigned long virt) {
   unsigned long vpage;
   entry_t *pde, *pte;
   int i;
@@ -290,7 +260,7 @@ int __map_page(struct entry_table *pd, unsigned long virt, struct page *page, in
     ret = map(pd, v, p, flags);
     
     if (ret) {
-      unmap_page(pd, virt);
+      mmu_unmap_page(pd, virt);
       return ret;
     }
   }
@@ -308,7 +278,7 @@ int __map_page(struct entry_table *pd, unsigned long virt, struct page *page, in
  *
  * @return 0 on success, non-0 on error
  */
-int map_page(void *pd, unsigned long virt, struct page *page, int flags) {
+int mmu_map_page(void *pd, unsigned long virt, struct page *page, int flags) {
   TRACE("pd=%p, virt=0x%x, page=0x%x, flags=%p", pd, virt, page_address(page), flags);
 
   ASSERT(is_page_aligned(virt));

@@ -62,7 +62,7 @@ static void setup_init_vm(void) {
    * Switch the current address space (in the hardware MMU) to init's
    * address space.
    */
-  swap_address_space(space->object);
+  swap_address_space(space->mmu);
 }
 
 static void load_init_binary(char *path) {

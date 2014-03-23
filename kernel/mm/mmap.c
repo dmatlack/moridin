@@ -110,7 +110,7 @@ static int page_fault_cow(struct vm_mapping *m, unsigned long addr) {
   struct page *old_page = NULL;
   struct page *new_page = NULL;
   void *old_page_addr = NULL;
-  void *virt = NULL;
+  unsigned long virt;
   int error;
 
   /*
@@ -142,18 +142,18 @@ static int page_fault_cow(struct vm_mapping *m, unsigned long addr) {
   /*
    * Re-map the virtual address to the new physical page.
    */
-  virt = (void *) PAGE_ALIGN_DOWN(addr);
-  error = map_page(m->space->object, (unsigned long) virt, new_page, m->flags);
+  virt = PAGE_ALIGN_DOWN(addr);
+  error = mmu_map_page(m->space->mmu, virt, new_page, m->flags);
   if (error) {
     goto cow_fail;
   }
 
-  tlb_invalidate((unsigned long) virt, PAGE_SIZE);
+  tlb_invalidate(virt, PAGE_SIZE);
 
   /*
    * Finally copy the contents of the old page over to the new page.
    */
-  memcpy(virt, old_page_addr, PAGE_SIZE);
+  memcpy((void *) virt, old_page_addr, PAGE_SIZE);
 
   kunmap(old_page_addr);
   page_put(old_page);

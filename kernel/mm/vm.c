@@ -29,8 +29,8 @@ void vm_init(void) {
    * Create a virtual address space that only maps the kernel's virtual address
    * space.
    */
-  kernel_space.object = new_address_space();
-  ASSERT_NOT_NULL(kernel_space.object);
+  kernel_space.mmu = new_address_space();
+  ASSERT_NOT_NULL(kernel_space.mmu);
   list_init(&kernel_space.mappings);
 
   TRACE_OFF;
@@ -46,7 +46,7 @@ void vm_init(void) {
     size_t virt = (size_t) kdirect_start + page_address(page);
     int ret;
 
-    ret = map_page(kernel_space.object, virt, page, VM_P | VM_S | VM_G | VM_R | VM_W);
+    ret = mmu_map_page(kernel_space.mmu, virt, page, VM_P | VM_S | VM_G | VM_R | VM_W);
     ASSERT_EQUALS(0, ret);
   }
 
@@ -56,7 +56,7 @@ void vm_init(void) {
    * Finally switch off the boot virtual address space and into our new,
    * virtual address space.
    */
-  swap_address_space(kernel_space.object);
+  swap_address_space(kernel_space.mmu);
 
   /*
    * Resize the kernel heap to match to new kernel address space.
@@ -76,8 +76,8 @@ int vm_space_fork(struct vm_space *to, struct vm_space *from) {
   struct vm_mapping *m;
   int error;
 
-  to->object = new_address_space();
-  if (!to->object) {
+  to->mmu = new_address_space();
+  if (!to->mmu) {
     return ENOMEM;
   }
 
@@ -86,7 +86,7 @@ int vm_space_fork(struct vm_space *to, struct vm_space *from) {
    * This function is responsible for copying all the mappings between
    * from and to, and marking all pages read-only for copy-on-write.
    */
-  error = fork_address_space(to->object, from->object);
+  error = fork_address_space(to->mmu, from->mmu);
   if (error) {
     goto vm_fork_fail;
   }
@@ -131,7 +131,7 @@ int vm_map_page(struct vm_space *space, unsigned long virt, int flags) {
     return ENOMEM;
   }
 
-  error = map_page(space->object, virt, page, flags);
+  error = mmu_map_page(space->mmu, virt, page, flags);
   if (error) {
     free_page(page);
     return ENOMEM;
@@ -145,7 +145,7 @@ int vm_map_page(struct vm_space *space, unsigned long virt, int flags) {
 void vm_unmap_page(struct vm_space *space, unsigned long virt) {
   struct page *page;
 
-  page = unmap_page(space->object, virt);
+  page = mmu_unmap_page(space->mmu, virt);
   if (page) {
     free_page(page);
     tlb_invalidate(virt, PAGE_SIZE);

@@ -11,7 +11,7 @@
 #include <stddef.h>
 #include <list.h>
 
-#if CONFIG_KERNEL_VIRTUAL_START == 0 // f*** you gcc
+#if CONFIG_KERNEL_VIRTUAL_START == 0 // damn gcc warnings...
   #define kernel_address(addr) \
      (addr < CONFIG_KERNEL_VIRTUAL_END)
 #else
@@ -63,7 +63,15 @@ struct vm_mapping {
 list_typedef(struct vm_mapping) vm_mapping_list_t;
 
 struct vm_space {
-  void *object;
+  /*
+   * Opaque pointer needed by the architecture specific Memory Management
+   * Unit (MMU) to support virtual memory.
+   */
+  void *mmu;
+
+  /*
+   * A list of all memory mapped regions of the address space.
+   */
   vm_mapping_list_t mappings;
 };
 
