@@ -65,7 +65,7 @@ void jump_to_userspace(void) {
 
   set_esp0(KSTACK_TOP);
 
-  regs->cr3 = (uint32_t) CURRENT_PAGE_DIR;
+  regs->cr3 = __phys(CURRENT_PAGE_DIR);
   regs->cr2 = 0;
   regs->eflags = get_eflags();
 

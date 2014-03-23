@@ -116,8 +116,9 @@ static int page_fault_cow(struct vm_mapping *m, unsigned long addr) {
   /*
    * Get the physical page that is currently mapped.
    */
-  old_page = mmu_virt_to_page(m->space->object, addr);
-  ASSERT(old_page);
+  old_page = __page(addr);
+  ASSERT_NOTEQUALS(old_page, -1);
+  
 
   error = ENOMEM;
 

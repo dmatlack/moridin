@@ -178,7 +178,6 @@ static inline int entry_is_global(entry_t *entry) {
 #define ENTRY_AVAIL             9
 #define ENTRY_AVAIL_MASK        MASK(3)
 #define   ENTRY_TABLE_UNMAP     (1 << 9)  // used to mark page directory entries
-#define   ENTRY_COPY_ON_WRITE   (1 << 11)
 
 /*
  * Page Table Base Address (PT) or Physical Page Address (PP)
@@ -192,6 +191,22 @@ static inline void entry_set_addr(entry_t *entry_ptr, unsigned long addr) {
 }
 static inline unsigned long entry_get_addr(entry_t *entry) {
   return (unsigned long) ((*entry) & ENTRY_ADDR_MASK);
+}
+
+/**
+ * @return the virtual address of the page table pointed to by this page
+ * directory entry.
+ */
+static inline struct entry_table *entry_pt(entry_t *pde) {
+  unsigned long phys = entry_get_addr(pde);
+  return (struct entry_table *) (phys + CONFIG_KERNEL_VIRTUAL_START);
+}
+
+/**
+ * @return the physical address pointed to by this page table entry.
+ */
+static inline unsigned long entry_phys(entry_t *pte) {
+  return entry_get_addr(pte);
 }
 
 /*
@@ -241,9 +256,13 @@ static inline entry_t* get_pte(struct entry_table *pt, unsigned long vaddr) {
   return &(pt->entries[PT_OFFSET(vaddr)]);
 }
 
+unsigned long to_phys(struct entry_table *pd, unsigned long virt);
+#define __phys(virt) to_phys((struct entry_table *) get_cr3(), (unsigned long) (virt))
+#define __page(virt) page_struct(__phys(virt))
+
 static inline void *swap_address_space(void *new) {
-  void *old = (void *) get_cr3();
-  set_cr3((uint32_t) new);
+  void *old = (void *) (get_cr3() + CONFIG_KERNEL_VIRTUAL_START);
+  set_cr3((uint32_t) __phys(new));
   return old;
 }
 
@@ -282,17 +301,5 @@ static inline void tlb_invalidate(unsigned long addr, size_t size) {
 }
 
 void page_fault(int vector, int error, struct registers *regs);
-
-bool __vtop(struct entry_table *pd, unsigned long v, unsigned long *pp);
-
-static inline struct page *mmu_virt_to_page(struct entry_table *pd, unsigned long v) {
-  unsigned long phys;
-
-  if (!__vtop(pd, v, &phys)) {
-    return NULL;
-  }
-
-  return page_struct(phys);
-}
 
 #endif /* !__X86_VM_H__ */

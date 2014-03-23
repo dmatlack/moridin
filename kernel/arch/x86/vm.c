@@ -120,7 +120,7 @@ int fork_address_space(struct entry_table *to_pd, struct entry_table *from_pd) {
       struct entry_table *from_pt;
       unsigned j;
 
-      from_pt = (struct entry_table *) entry_get_addr(from_pde);
+      from_pt = entry_pt(from_pde);
 
       to_pt = new_entry_table();
       if (!to_pt) {
@@ -135,7 +135,7 @@ int fork_address_space(struct entry_table *to_pd, struct entry_table *from_pd) {
       /*
        * But use the address of the newly created page table.
        */
-      entry_set_addr(to_pde, (unsigned long) to_pt);
+      entry_set_addr(to_pde, __phys(to_pt));
 
       for (j = 0; j < ENTRY_TABLE_SIZE; j++) {
         entry_t *from_pte = from_pt->entries + j;
@@ -152,8 +152,12 @@ int fork_address_space(struct entry_table *to_pd, struct entry_table *from_pd) {
          * space.
          */
         if (entry_is_present(from_pte)) {
-          unsigned long phys = (unsigned long) entry_get_addr(from_pte);
+          unsigned long phys = entry_phys(from_pte);
 
+          /*
+           * Increase the reference counter on the page since another page table
+           * now points to it.
+           */
           page_get(page_struct(phys));
 
           /*
@@ -202,36 +206,33 @@ void entry_set_flags(entry_t *entry, int flags) {
 }
 
 /**
- * @brief Convert the virtual address into the physical address it is
- * mapped to.
- *
- * @param pp If not NULL, the physical address will be written here.
- *
- * @return TRUE (non-zero) if the address is mapped, FALSE (zero) if the
- * address is not mapped.
+ * @brief Convert a virtual address to the physical address it is mapped
+ * to.
  */
-bool __vtop(struct entry_table *pd, unsigned long v, unsigned long *pp) {
-  struct entry_table *pt;
-  entry_t *pde, *pte;
-
-  pde = get_pde(pd, v);
-
-  if (!entry_is_present(pde)) { 
-    return false;
+unsigned long to_phys(struct entry_table *pd, unsigned long virt) {
+  if (kernel_address(virt)) {
+    return virt - CONFIG_KERNEL_VIRTUAL_START;
   }
-
-  pt = (struct entry_table *) entry_get_addr(pde);
-  pte = get_pte(pt, v);
-
-  if (!entry_is_present(pte)) { 
-    return false;
+  else {
+#define VIRT_NOT_MAPPED ((unsigned long) -1)
+    struct entry_table *pt;
+    entry_t *pde, *pte;
+  
+    pde = get_pde(pd, virt);
+  
+    if (!entry_is_present(pde)) { 
+      return VIRT_NOT_MAPPED;
+    }
+  
+    pt = entry_pt(pde);
+    pte = get_pte(pt, virt);
+  
+    if (!entry_is_present(pte)) { 
+      return VIRT_NOT_MAPPED;
+    }
+  
+    return entry_phys(pte) + PHYS_OFFSET(virt);
   }
-
-  if (pp) {
-    *pp = entry_get_addr(pte) + PHYS_OFFSET(v);
-  }
-
-  return true;
 }
 
 /**
@@ -250,7 +251,7 @@ void free_marked_page_tables(struct entry_table *pd) {
      * if the corresponding page table is empty, and if so free it.
      */
     if (entry_is_present(pde) && (*pde & ENTRY_TABLE_UNMAP)) {
-      struct entry_table *pt = (struct entry_table *) entry_get_addr(pde);
+      struct entry_table *pt = entry_pt(pde);
       bool page_table_empty = true;
 
       for (j = 0; j < (int) ENTRY_TABLE_SIZE; j++) {
@@ -307,7 +308,7 @@ struct page *unmap_page(void *pd, unsigned long virt) {
         panic("Trying to unmap global page: 0x%08x (virtual)", vpage);
       }
 
-      pte = get_pte((struct entry_table *) entry_get_addr(pde), vpage);
+      pte = get_pte(entry_pt(pde), vpage);
 
       /*
        * This page wasn't mapped in the first place. Return NULL to indicate
@@ -322,7 +323,7 @@ struct page *unmap_page(void *pd, unsigned long virt) {
        * the page.
        */
       entry_set_absent(pte);
-      if (!page) page = page_struct(entry_get_addr(pte));
+      if (!page) page = page_struct(entry_phys(pte));
     }
   }
 
@@ -357,7 +358,7 @@ static int map(struct entry_table *pd, unsigned long virt, unsigned long phys, i
       return ENOMEM;
     }
 
-    entry_set_addr(pde, (unsigned long) pt);
+    entry_set_addr(pde, __phys(pt));
     entry_set_flags(pde, DEFAULT_PDE_FLAGS);
   }
   
@@ -371,12 +372,6 @@ static int map(struct entry_table *pd, unsigned long virt, unsigned long phys, i
   pte = get_pte(pt, virt);
   entry_set_addr(pte, phys);
   entry_set_flags(pte, flags);
-
-  {
-    unsigned long _phys;
-    ASSERT(__vtop(pd, virt, &_phys));
-    ASSERT_EQUALS(phys, _phys);
-  }
 
   return 0;
 }
