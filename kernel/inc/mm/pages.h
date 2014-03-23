@@ -52,6 +52,7 @@ struct page *alloc_pages(unsigned long n);
 #define alloc_page() alloc_pages(1)
 
 void free_pages(struct page *pages, unsigned long n);
+//FIXME: this is confusing because it's essentially the same as page_put()
 #define free_page(_p) free_pages(_p, 1)
 
 #endif /* !__MM_PAGES_H__ */

@@ -57,6 +57,9 @@ struct vm_mapping {
 #define M_END(_m) \
   ((_m)->address + M_LENGTH(_m))
 
+#define M_WRITEABLE(_m) \
+  ((_m)->flags & VM_W)
+
 list_typedef(struct vm_mapping) vm_mapping_list_t;
 
 struct vm_space {
@@ -97,6 +100,7 @@ int vm_munmap(unsigned long addr, unsigned long length);
 #define PF_WRITE      (1 << 1) // page fault was a write
 #define PF_USER       (1 << 2) // faulted while in user mode
 #define PF_SUPERVISOR (1 << 3) // faulted while in kernel mode
+#define PF_PRESENT    (1 << 4) // faulted on a present page
 int vm_page_fault(unsigned long address, int flags);
 
 int vm_map_page(struct vm_space *space, unsigned long virt, int flags);

@@ -1,11 +1,12 @@
 /**
  * @file mm/mmap.c
  */
+#include <mm/kmalloc.h>
+#include <mm/kmap.h>
 #include <mm/vm.h>
 
 #include <kernel/config.h>
 #include <kernel/debug.h>
-#include <mm/kmalloc.h>
 #include <kernel/log.h>
 #include <kernel/proc.h>
 
@@ -105,10 +106,67 @@ static int page_fault_anon(struct vm_mapping *m, unsigned long addr) {
   return 0;
 }
 
+static int page_fault_cow(struct vm_mapping *m, unsigned long addr) {
+  struct page *old_page = NULL;
+  struct page *new_page = NULL;
+  void *old_page_addr = NULL;
+  void *virt = NULL;
+  int error;
+
+  /*
+   * Get the physical page that is currently mapped.
+   */
+  old_page = mmu_virt_to_page(m->space->object, addr);
+  ASSERT(old_page);
+
+  error = ENOMEM;
+
+  /*
+   * Create a temporary kernel mapping to that page so we can reference it
+   * later.
+   */
+  old_page_addr = kmap(old_page);
+  if (!old_page_addr) {
+    goto cow_fail;
+  }
+
+  /*
+   * Allocate a new physical page
+   */
+  new_page = alloc_page();
+  if (!new_page) {
+    goto cow_fail;
+  }
+
+  /*
+   * Re-map the virtual address to the new physical page.
+   */
+  virt = (void *) PAGE_ALIGN_DOWN(addr);
+  error = map_page(m->space->object, (unsigned long) virt, new_page, m->flags);
+  if (error) {
+    goto cow_fail;
+  }
+
+  tlb_invalidate((unsigned long) virt, PAGE_SIZE);
+
+  /*
+   * Finally copy the contents of the old page over to the new page.
+   */
+  memcpy(virt, old_page_addr, PAGE_SIZE);
+
+  kunmap(old_page_addr);
+  page_put(old_page);
+  return 0;
+
+cow_fail:
+  if (old_page_addr) kunmap(old_page_addr);
+  if (new_page) free_page(new_page);
+  return error;
+}
+
 int vm_page_fault(unsigned long addr, int flags) {
   struct vm_mapping *mapping;
   struct vm_space *space = &CURRENT_PROC->space;
-  int ret;
 
   TRACE("addr=0x%08x, flags=0x%x", addr, flags);
 
@@ -127,6 +185,7 @@ int vm_page_fault(unsigned long addr, int flags) {
     if (kernel_address(addr) && (flags & PF_SUPERVISOR)) {
       panic("Kernel faulted trying to %s kernel address 0x%08x!",
             flags & PF_READ ? "read" : "write to", addr);
+      return -1; // NORETURN
     }
   }
 
@@ -145,14 +204,38 @@ int vm_page_fault(unsigned long addr, int flags) {
     return EFAULT;
   }
 
-  if (mapping->file) {
-    ret = page_fault_file(mapping, addr);
-  }
-  else {
-    ret = page_fault_anon(mapping, addr);
-  }
+  /*
+   * Faulted on a present (aka mapped) page. Currently the only reason
+   * this can occur is because of copy-on-write.
+   */
+  if (flags & PF_PRESENT) {
+    ASSERT(flags & PF_WRITE);
 
-  return ret;
+    DEBUG("COPY-ON-WRITE: 0x%08x", addr);
+
+    /*
+     * If the mapping is not writable, then this is just a buggy user
+     * process writing where it shouldn't.
+     */
+    if (!M_WRITEABLE(mapping)) {
+      ASSERT(flags & PF_USER);
+      return EFAULT;
+    }
+
+    return page_fault_cow(mapping, addr);
+  }
+  /*
+   * Otherwise we faulted on a non-present page. This is the normal
+   * demand-paging case.
+   */
+  else {
+    if (mapping->file) {
+      return page_fault_file(mapping, addr);
+    }
+    else {
+      return page_fault_anon(mapping, addr);
+    }
+  }
 }
 
 /*

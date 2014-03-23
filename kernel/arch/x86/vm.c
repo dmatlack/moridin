@@ -160,8 +160,8 @@ int fork_address_space(struct entry_table *to_pd, struct entry_table *from_pd) {
            * Mark the page readonly in both page tables so both processes will 
            * page fault on a write and we can copy the page.
            */
-          //entry_set_readonly(from_pte);
-          //entry_set_readonly(to_pte);
+          entry_set_readonly(from_pte);
+          entry_set_readonly(to_pte);
         }
       }
     }
@@ -433,10 +433,7 @@ void page_fault(int vector, int error, struct registers *regs) {
 
   TRACE("vector=%d, error=%d, regs=%p", vector, error, regs);
 
-  // (error & 1): 0 if page fault caused by non-present page or 1 if access
-  //              writes violation (e.g. writing to a read-only page). We
-  //              don't pass this bit up to the generic page fault handler,
-  //              but it exists.
+  if (error & 1) flags |= PF_PRESENT;
   if (error & 2) flags |= PF_WRITE;
   else           flags |= PF_READ;
   if (error & 4) flags |= PF_USER;
