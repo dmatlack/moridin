@@ -39,7 +39,7 @@ list_typedef(struct process) proc_list_t;
 struct thread {
   char               kstack[KSTACK_SIZE];
   struct process    *proc;
-  struct registers   regs;
+  struct registers  *regs;
   void              *context;
   int                tid;
 

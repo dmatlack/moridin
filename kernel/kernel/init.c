@@ -22,13 +22,15 @@
 #include <list.h>
 #include <errno.h>
 
+struct registers init_regs = INIT_REGS;
+
 #define INIT_THREAD                                                  \
 {                                                                    \
   .kstack      = { [0 ... KSTACK_SIZE-1] = (char) 0 },               \
   .proc        = &init_proc,                                         \
   .thread_link = INITIALIZED_LIST_LINK,                              \
   .tid         = 0,                                                  \
-  .regs        = INIT_REGS,                                          \
+  .regs        = &init_regs,                                         \
 }
 #define INIT_PROCESS                                                 \
 {                                                                    \

@@ -187,7 +187,7 @@ int elf32_load(struct vfs_file *file) {
   /*
    * Set the program counter to be the entrypoint of the elf.
    */
-  set_pc_reg(ehdr->e_entry);
+  set_pc_reg(CURRENT_THREAD->regs, ehdr->e_entry);
 
   /*
    * Sanity check the executable

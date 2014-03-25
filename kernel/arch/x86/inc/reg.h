@@ -82,26 +82,18 @@ void restore_registers(struct registers *regs);
  * @brief Set the program counter (instruction pointer) in the current
  * thread's registers (for the next call to restore_registers())
  */
-#define set_pc_reg(_program_counter) \
+#define set_pc_reg(_regs, _program_counter) \
   do { \
-    CURRENT_THREAD->regs.eip = (_program_counter); \
+    (_regs)->eip = (_program_counter); \
   } while (0)
 
 /**
  * @brief Set the stack pointer in the current thread's registers (for
  * the next call to restore_registers()).
  */
-#define set_sp_reg(_stack_pointer) \
+#define set_sp_reg(_regs, _stack_pointer) \
   do { \
-    CURRENT_THREAD->regs.esp = (_stack_pointer); \
-  } while (0)
-
-/**
- * @brief Set the register used to return values from system calls.
- */
-#define __set_syscall_return_reg(_regs, _value) \
-  do { \
-    (_regs)->eax = (_value); \
+    (_regs)->esp = (_stack_pointer); \
   } while (0)
 
 /**

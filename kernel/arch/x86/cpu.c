@@ -61,7 +61,7 @@ void enable_write_protect(void) {
 }
 
 void jump_to_userspace(void) {
-  struct registers *regs = &CURRENT_THREAD->regs;
+  struct registers *regs = CURRENT_THREAD->regs;
 
   set_esp0(KSTACK_TOP);
 
