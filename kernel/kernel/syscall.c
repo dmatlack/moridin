@@ -9,18 +9,7 @@
 
 #include <kernel/debug.h>
 
-#define SYS_WRITE     0
-#define SYS_GETPID    1
-#define SYS_FORK      2
-#define SYS_YIELD     3
-
-void *syscall_table[] =
-{
-  [SYS_WRITE]  = (void *) sys_write,
-  [SYS_GETPID] = (void *) sys_getpid,
-  [SYS_FORK]   = (void *) sys_fork,
-  [SYS_YIELD]  = (void *) sys_yield,
-};
+extern void **syscall_table;
 
 int sys_write(int fd, char *ptr, int len) {
   int i;

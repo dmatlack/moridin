@@ -6,6 +6,11 @@
 
 #include <types.h>
 
+#define SYS_WRITE     0
+#define SYS_GETPID    1
+#define SYS_FORK      2
+#define SYS_YIELD     3
+
 int sys_write(int fd, char *ptr, int len);
 int sys_getpid(void);
 pid_t sys_fork(void);
