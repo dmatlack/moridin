@@ -29,11 +29,13 @@ CFLAGS += -DKDEBUG
 
 default: kernel
 
-kernel: arch $(OFILES) $(HFILES) linker.ld
+kernel: $(OFILES) $(HFILES) linker.ld
 	$(CC) -T linker.ld -o KERNEL.o -ffreestanding -O2 -nostdlib $(OFILES) -lgcc
 	objdump -Dg KERNEL.o > KERNEL.S
 	objcopy --only-keep-debug KERNEL.o KERNEL.bin.sym
 	nm KERNEL.bin.sym | grep -E " [Tt] " | awk '{ print 0x$$1" "$$3 }' > KERNEL.sym
+
+$(OFILES): arch
 
 #
 # Create a symbolic link for architecture-specific header files:

@@ -29,7 +29,7 @@ initrd: kernel user tools
 # Build the kernel sources into an object file
 #
 kernel:
-	+make -C kernel/
+	+make -j8 -C kernel/
 
 #
 # Build the user progams into executables compatable with kernel
