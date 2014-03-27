@@ -102,6 +102,7 @@ void __run_init(void *ignore) {
 
   _TEST_KERNEL_();
 
+  INFO("Jumping to userspace!");
   jump_to_userspace();
 }
 

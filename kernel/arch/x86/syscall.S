@@ -20,11 +20,16 @@
 #   eax: The return value of the system call
 #
 ###
+#include <arch/x86/macros.S>
 
 .extern syscall_table
+.extern set_thread_regs
+.extern return_from_syscall
 
 .global __syscall_entry
 __syscall_entry:
+
+  PUSH_REGISTERS
 
   #
   # push all the possible arguments onto the stack. it doesn't matter if
@@ -36,6 +41,15 @@ __syscall_entry:
   pushl %edx
   pushl %ecx
 
+  pushl %eax              # save the syscall number temporarily
+
+  leal 0x14(%esp), %eax   # load the address of the registers
+  pushl %eax              # push that address on the stack
+  call set_thread_regs    # set regs pointer in the thread struct
+  addl $4, %esp           # restore the stack
+
+  popl %eax               # restore the syscall number
+
   #
   # eax is the system call we want to execute. we lookup the eax'th system
   # call in the syscall_table and call that address.
@@ -46,15 +60,10 @@ __syscall_entry:
   movl (%ecx, %eax, 0x4), %ecx
   call *%ecx
   
-  #
-  # restore the stack to the iret stack
-  #
   popl %ecx
   popl %ecx
   popl %ecx
   popl %ecx
 
-  #
-  # return to userspace
-  #
-  iret
+  pushl %eax
+  call return_from_syscall
