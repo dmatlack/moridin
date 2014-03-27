@@ -4,6 +4,7 @@
 # @brief Assembly routines needed to program the x86 architecture.
 ###
 #include <arch/seg.h>
+#include <arch/x86/macros.S>
 
 .global outb
 outb:
@@ -203,46 +204,6 @@ set_esp0:
   movl %eax, 4(%ecx)              # set esp0
   movw $SEGSEL_KERNEL_DS, 8(%ecx) # set ss0
   ret 
-
-.macro POP_REGISTERS
-  popl %ebx
-  movl %ebx, %cr3
-  popl %ebx
-  movl %ebx, %cr2
-
-  popl %edi
-  popl %esi
-  popl %ebp
-  popl %ebx
-  popl %edx
-  popl %ecx
-  popl %eax
-
-  popl %gs
-  popl %fs
-  popl %es
-  popl %ds
-.endm # POP_REGISTERS
-
-.macro PUSH_REGISTERS
-  pushl %ds
-  pushl %es
-  pushl %fs
-  pushl %gs
-
-  pushl %eax
-  pushl %ecx
-  pushl %edx
-  pushl %ebx
-  pushl %ebp
-  pushl %esi
-  pushl %edi
-
-  movl %cr2, %ebx
-  pushl %ebx
-  movl %cr3, %ebx
-  pushl %ebx
-.endm # PUSH_REGISTERS
 
 .global restore_registers
 restore_registers:
