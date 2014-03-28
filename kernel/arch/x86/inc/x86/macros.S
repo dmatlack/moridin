@@ -4,7 +4,11 @@
 
 .macro POP_REGISTERS
   popl %ebx
+  movl %cr3, %eax
+  cmp  %ebx, %eax
+  je   1f;
   movl %ebx, %cr3
+1:
   popl %ebx
   movl %ebx, %cr2
 

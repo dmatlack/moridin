@@ -114,7 +114,11 @@ int fork_address_space(struct entry_table *to_pd, struct entry_table *from_pd) {
            */
           entry_set_readonly(from_pte);
           entry_set_readonly(to_pte);
+
+          tlb_invalidate(virt, PAGE_SIZE);
         }
+
+        virt += PAGE_SIZE;
       }
     }
   }
