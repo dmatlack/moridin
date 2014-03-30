@@ -68,16 +68,18 @@ int main(int argc, char **argv) {
     print("\n");
   }
   else if (child_pid == 0) {
-    print("CHILD: ");
+    print("CHILD: my pid = ");
     print_int(getpid());
+    print(", parent pid = ");
+    print_int(pid);
     print("\n");
   }
   else {
-    print("PARENT: ");
-    print_int(child_pid);
-    print(" (my pid = ");
+    print("PARENT: my pid = ");
     print_int(getpid());
-    print(")\n");
+    print(", child pid = ");
+    print_int(child_pid);
+    print("\n");
 
     yield();
   }

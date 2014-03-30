@@ -4,38 +4,65 @@
  * @brief x86-specific functions for performing a process fork.
  */
 #include <arch/vm.h>
+#include <arch/syscall.h>
 #include <kernel/proc.h>
 #include <stddef.h>
 
-extern void __fork_context(void **save_addr, void *restore_addr);
-
 void fork_context(struct thread *new_thread) {
-  TRACE("new_thread=%p", new_thread);
-  __fork_context(&new_thread->context, CURRENT_THREAD->context);
-}
-
-/**
- * @brief This function is called half-way through a fake context switch.
- * 
- * @param addr This is the address of the thread struct's "context" pointer. This
- * address is needed so that copy_context can figure out the address of the
- * thread struct itself.
- */
-void copy_context(void **addr) {
-  struct thread *new_thread = container_of(addr, struct thread, context);
-
-  TRACE("new_thread=%p", new_thread);
+  struct registers *cs_regs; /* context switch registers */
+  uint32_t new_cr3 = (uint32_t) new_thread->proc->space.mmu;
+  uint32_t *esp = (uint32_t *) _KSTACK_END(new_thread);
+  uint32_t *ebp;
 
   /*
-   * Copy the entire kernel stack from the current thread to the new thread.
+   * Copy the current (aka parent) thread's syscall registers to the top of
+   * the new thread's kernel stack. These registers will allow the new
+   * thread to call return_from_syscall and get to userspace.
    */
-  memcpy((void *) _KSTACK_START(new_thread), (void *) _KSTACK_START(CURRENT_THREAD), KSTACK_SIZE);
+  esp -= sizeof(struct registers) / sizeof(*esp);
+  new_thread->regs = (struct registers *) esp;
+  memcpy(new_thread->regs, CURRENT_THREAD->regs, sizeof(struct registers));
+
+  new_thread->regs->cr3 = new_cr3;
 
   /*
-   * Set the new thread's context pointer to point to it's own stack instead of
-   * its parent's stack.
+   * Next put the argument for return_from_syscall. The child returns 0 from
+   * fork.
    */
-  new_thread->context = (void *) (((size_t) (*addr)) - (size_t) CURRENT_THREAD + (size_t) new_thread);
+  *(--esp) = 0;
+
+  /*
+   * Next a fake return address for the return_from_syscall stack frame.
+   */
+  *(--esp) = 0xDEADBEEF;
+  
+  /*
+   * Next is the return address of __context_switch: return_from_syscall.
+   */
+  *(--esp) = (uint32_t) &return_from_syscall;
+
+  /*
+   * Next is the old frame pointer for returning from __context_switch.
+   */
+  --esp;
+  *(esp) = (uint32_t) (esp + 1);
+  ebp = esp;
+  
+  /*
+   * Finally put fake registers on the stack for __context_switch.
+   */
+  esp -= sizeof(struct registers) / sizeof(*esp);
+  cs_regs = (struct registers *) esp;
+  memset(cs_regs, 0, sizeof(struct registers));
+
+  cs_regs->cr3 = new_cr3;
+  cs_regs->ebp = (uint32_t) ebp;
+  cs_regs->ds = SEGSEL_KERNEL_DS;
+  cs_regs->es = SEGSEL_KERNEL_DS;
+  cs_regs->fs = SEGSEL_KERNEL_DS;
+  cs_regs->gs = SEGSEL_KERNEL_DS;
+
+  new_thread->context = cs_regs;
 }
 
 int fork_address_space(struct entry_table *to_pd, struct entry_table *from_pd) {

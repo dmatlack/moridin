@@ -221,12 +221,8 @@ restore_registers:
   #
   iret
 
-#
-# The following two macros can be read sequentially. Together they implement
-# a context switch. We need to separate them out into separate macros because
-# the first half of the code is needed for fork.
-#
-.macro CONTEXT_SWITCH_SAVE
+.global __context_switch
+__context_switch:
   push %ebp
   mov %esp, %ebp
 
@@ -236,33 +232,12 @@ restore_registers:
   PUSH_REGISTERS
 
   movl %esp, (%eax)     # save the location of the saved registers
-.endm
-.macro CONTEXT_SWITCH_RESTORE
   movl %ecx, %esp       # jump to the location of the registers to restore
 
   POP_REGISTERS
 
   leave
   ret
-.endm
-
-.global __context_switch
-__context_switch:
-  CONTEXT_SWITCH_SAVE
-  CONTEXT_SWITCH_RESTORE
-
-#
-# DO NOT CALL DIRECTLY. Call fork_context().
-#
-.global __fork_context
-__fork_context:
-  CONTEXT_SWITCH_SAVE       # push the current set of registers onto the stack
-  pushl %eax                # used to find the thread struct of the new thread
-  call copy_context         # call copy_context to copy the context to the new process
-  popl %eax                 # restore esp
-  movl %esp, %ecx           # trick CONTEXT_SWITCH_RESTORE into just restoring the registers we just saved
-  CONTEXT_SWITCH_RESTORE    # restore registers, which should just be a normal return
-
 
 #
 # void jump_stacks(uint32_t stack, void (*func)(void *), void *arg);

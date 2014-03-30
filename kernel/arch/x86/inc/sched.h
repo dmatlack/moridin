@@ -9,7 +9,6 @@
 void __context_switch(void **save_addr, void *restore_addr);
 
 static inline void context_switch(struct thread *to) {
-  BOCHS_MAGIC_BREAK;
   __context_switch(&CURRENT_THREAD->context, to->context);
 }
 

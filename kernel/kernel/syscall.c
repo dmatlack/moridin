@@ -41,6 +41,6 @@ int sys_getpid(void) {
 
 int sys_yield(void) {
   TRACE();
-  //sched_next();
+  sched_switch();
   return 0;
 }

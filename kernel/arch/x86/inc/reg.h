@@ -9,6 +9,7 @@
 
 #include <arch/seg.h>
 #include <stdint.h>
+#include <kernel/debug.h>
 
 /*
  *
@@ -16,6 +17,7 @@
  *    If you change this struct in any way you must also fix:
  *    - restore_registers (asm.S)
  *    - exn_* (exn_wrappers.S)
+ *    - fork_regs (fork.c)
  *
  */
 struct __attribute__((__packed__)) registers {
@@ -102,6 +104,47 @@ void restore_registers(struct registers *regs);
  */
 uint32_t get_esp();
 #define get_sp get_esp
+
+#define DEBUG_REGS(_regs) \
+  DEBUG("struct registers %p\n" \
+  "cr3:    0x%08x\n" \
+  "cr2:    0x%08x\n" \
+  "edi:    0x%08x\n" \
+  "esi:    0x%08x\n" \
+  "ebp:    0x%08x\n" \
+  "ebx:    0x%08x\n" \
+  "edx:    0x%08x\n" \
+  "ecx:    0x%08x\n" \
+  "eax:    0x%08x\n" \
+  "gs:     0x%08x\n" \
+  "fs:     0x%08x\n" \
+  "es:     0x%08x\n" \
+  "ds:     0x%08x\n" \
+  "eip:    0x%08x\n" \
+  "cs:     0x%08x\n" \
+  "eflags: 0x%08x\n" \
+  "esp:    0x%08x\n" \
+  "ss:     0x%08x\n" \
+  ,                  \
+  (_regs),           \
+  (_regs)->cr3,      \
+  (_regs)->cr2,      \
+  (_regs)->edi,      \
+  (_regs)->esi,      \
+  (_regs)->ebp,      \
+  (_regs)->ebx,      \
+  (_regs)->edx,      \
+  (_regs)->ecx,      \
+  (_regs)->eax,      \
+  (_regs)->gs,       \
+  (_regs)->fs,       \
+  (_regs)->es,       \
+  (_regs)->ds,       \
+  (_regs)->eip,      \
+  (_regs)->cs,       \
+  (_regs)->eflags,   \
+  (_regs)->esp,      \
+  (_regs)->ss)
 
 /*
  *
