@@ -1,28 +1,28 @@
-Features (LAST UPDATED: 12/26/2013)
+Features (LAST UPDATED: 03/30/2013)
 -------------------------------------------------------------------------------
 
   kernel: arch/, boot/, kernel/, lib/
-    - multiboot compatibility
-    - exception handling
-    - IRQ handling
-    - timer (configured to 100 HZ)
-    - stub keyboard driver
+    - binary loading (elf32)
+    - system calls:
+      * getpid
+      * fork
+      * yield
 
   memory: arch/, mm/
     - physical memory management (frame allocator)
-    - virtual memory (paging, not to disk yet)
+    - virtual memory (demand paging, mmap, copy-on-write)
     - kernel dynamic memory (kmalloc)
+    - kernel dynamic mapping (kmap)
 
   filesystem: fs/
-    - Virtual filesystem
-    - Initial ramdisk (flat, readonly, filesystem)
+    - virtual filesystem
+    - initial ramdisk (flat, readonly, filesystem)
  
   devices: dev/
-    - VGA (console) driver
-    - PCI device scanning/discovery
-    - PIIX/PIIX3 IDE driver
-    - ATA
-      - IDENTIFY DEVICE
+    - interrupt timer
+    - vga (console) driver
+    - pci device scanning/discovery
+    - serial port
 
 Build
 -------------------------------------------------------------------------------
