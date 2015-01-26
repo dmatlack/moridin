@@ -64,19 +64,8 @@ pid_t sys_fork(void) {
 
   fork_context(new_thread);
 
-  if (CURRENT_THREAD == new_thread) {
-    /*
-     * Child returned 
-     */
-    return 0;
-  }
-  else {
-    /*
-     * Parent returned
-     */
-    sched_make_runnable(new_thread);
-    return new_process->pid;
-  }
+  sched_make_runnable(new_thread);
+  return new_process->pid;
 
 sys_fork_fail:
   if (new_thread) free_thread_struct(new_thread);

@@ -35,7 +35,7 @@ void fork_context(struct thread *new_thread) {
    * Next a fake return address for the return_from_syscall stack frame.
    */
   *(--esp) = 0xDEADBEEF;
-  
+
   /*
    * Next is the return address of __context_switch: return_from_syscall.
    */
@@ -47,7 +47,7 @@ void fork_context(struct thread *new_thread) {
   --esp;
   *(esp) = (uint32_t) (esp + 1);
   ebp = esp;
-  
+
   /*
    * Finally put fake registers on the stack for __context_switch.
    */
