@@ -3,7 +3,7 @@
 # Operating System Makefile
 #
 #
-.PHONY: default kernel user tools iso clean
+.PHONY: default kernel user tools iso clean tags
 
 default: iso
 
@@ -43,6 +43,9 @@ user:
 tools:
 	+make -C tools/
 
+tags:
+	find . -name '*.[cshS]' | xargs ctags
+
 clean:
 	+make -C kernel/ clean
 	+make -C user/ clean
@@ -50,3 +53,4 @@ clean:
 	rm  -f initrd.img
 	rm -rf iso
 	rm -rf OS.iso
+	rm -rf tags
