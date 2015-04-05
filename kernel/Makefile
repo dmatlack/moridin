@@ -16,6 +16,8 @@ SRCDIRS = boot          \
 INCDIRS = inc      \
           inc/lib
 
+LINKER_SCRIPT = arch/$(ARCH)/linker.ld
+
 CFILES = $(shell find $(SRCDIRS) -type f -name "*.c")
 SFILES = $(shell find $(SRCDIRS) -type f -name "*.S")
 OFILES = $(patsubst %.c,%.o,$(CFILES)) $(patsubst %.S,%.o,$(SFILES))
@@ -29,8 +31,8 @@ CFLAGS += -DKDEBUG
 
 default: kernel
 
-kernel: $(OFILES) $(HFILES) linker.ld
-	$(CC) -T linker.ld -o KERNEL.o -ffreestanding -O2 -nostdlib $(OFILES) -lgcc
+kernel: $(OFILES) $(HFILES) $(LINKER_SCRIPT)
+	$(CC) -T $(LINKER_SCRIPT) -o KERNEL.o -ffreestanding -O2 -nostdlib $(OFILES) -lgcc
 	objdump -Dg KERNEL.o > KERNEL.S
 	objcopy --only-keep-debug KERNEL.o KERNEL.bin.sym
 	nm KERNEL.bin.sym | grep -E " [Tt] " | awk '{ print 0x$$1" "$$3 }' > KERNEL.sym
