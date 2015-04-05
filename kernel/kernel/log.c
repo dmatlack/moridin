@@ -28,40 +28,44 @@ int                 __log_magic = 0;
  *
  * @return 0
  */
-void log_init(int (*putchar)(int), int level) {
-  __log_printf_state.putchar = putchar;
-  __log_level = level;
-  __log_trace = 1;
-  __log_magic = LOG_MAGIC;
+void log_init(int (*putchar)(int), int level)
+{
+	__log_printf_state.putchar = putchar;
+	__log_level = level;
+	__log_trace = 1;
+	__log_magic = LOG_MAGIC;
 }
 
 /**
  * @brief Set the putchar method to be used for future logging.
  */
-void log_setputchar(int (*putchar)(int)) {
-  __log_printf_state.putchar = putchar;
+void log_setputchar(int (*putchar)(int))
+{
+	__log_printf_state.putchar = putchar;
 }
 
 /**
  * @brief Set the verbosity level of future logging.
  */
-void log_setlevel(int level) {
-  __log_level = level;
+void log_setlevel(int level)
+{
+	__log_level = level;
 }
 
-int __log(const char *fmt, ...) {
-  va_list args;
-  int err;
+int __log(const char *fmt, ...)
+{
+	va_list args;
+	int err;
 
-  if (__log_magic != LOG_MAGIC) return 0;
+	if (__log_magic != LOG_MAGIC) return 0;
 
-  va_start(args, fmt);
+	va_start(args, fmt);
 
-  err = _vprintf(&__log_printf_state, fmt, args);
+	err = _vprintf(&__log_printf_state, fmt, args);
 
-  va_end(args);
+	va_end(args);
 
-  return err;
+	return err;
 }
 
 /**
@@ -71,39 +75,41 @@ int __log(const char *fmt, ...) {
  * @param fmt       The format string.
  * @param ...       The format arguments.
  */
-int log(int log_level, const char *fmt, ...) {
-  va_list args;
-  int err;
+int log(int log_level, const char *fmt, ...)
+{
+	va_list args;
+	int err;
 
-  if (__log_magic != LOG_MAGIC) return 0;
+	if (__log_magic != LOG_MAGIC) return 0;
 
-  va_start(args, fmt);
+	va_start(args, fmt);
 
-  if (log_level <= __log_level) {
-    err = _vprintf(&__log_printf_state, fmt, args);
-  }
+	if (log_level <= __log_level) {
+		err = _vprintf(&__log_printf_state, fmt, args);
+	}
 
-  va_end(args);
+	va_end(args);
 
-  return err;
+	return err;
 }
 
 /**
  * @brief Print a formatted trace string if tracing is enabled.
  */
-int trace(const char *fmt, ...) {
-  va_list args;
-  int err;
+int trace(const char *fmt, ...)
+{
+	va_list args;
+	int err;
 
-  if (__log_magic != LOG_MAGIC) return 0;
+	if (__log_magic != LOG_MAGIC) return 0;
 
-  va_start(args, fmt);
+	va_start(args, fmt);
 
-  if (__log_trace> 0) {
-    err = _vprintf(&__log_printf_state, fmt, args);
-  }
+	if (__log_trace> 0) {
+		err = _vprintf(&__log_printf_state, fmt, args);
+	}
 
-  va_end(args);
+	va_end(args);
 
-  return err;
+	return err;
 }

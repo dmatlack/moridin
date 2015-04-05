@@ -8,12 +8,12 @@
 #include <dev/ata.h>
 
 struct ide_device {
-  struct ata_bus ata;
-  struct pci_bus_master bm;
+	struct ata_bus ata;
+	struct pci_bus_master bm;
 };
 
 int ide_init(struct ide_device *ide, unsigned bm, int irq,
-             unsigned ata_cmd, unsigned ata_ctl);
+		unsigned ata_cmd, unsigned ata_ctl);
 
 void ide_destroy(struct ide_device *ide);
 

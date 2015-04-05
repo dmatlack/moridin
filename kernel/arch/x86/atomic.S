@@ -6,22 +6,22 @@
 
 .global __xadd
 __xadd:
-  movl 4(%esp), %edx
-  movl 8(%esp), %eax
-  xaddl %eax, (%edx)
-  ret
+	movl 4(%esp), %edx
+	movl 8(%esp), %eax
+	xaddl %eax, (%edx)
+	ret
 
 .global __xchg
 __xchg:
-  movl 4(%esp), %edx
-  movl 8(%esp), %eax
-  xchgl %eax, (%edx)
-  ret
+	movl 4(%esp), %edx
+	movl 8(%esp), %eax
+	xchgl %eax, (%edx)
+	ret
 
 .global __cmpxchg
 __cmpxchg:
-  movl  4(%esp), %edx
-  movl  8(%esp), %eax
-  movl 12(%esp), %ecx
-  cmpxchgl %ecx, (%edx)
-  ret
+	movl  4(%esp), %edx
+	movl  8(%esp), %eax
+	movl 12(%esp), %ecx
+	cmpxchgl %ecx, (%edx)
+	ret

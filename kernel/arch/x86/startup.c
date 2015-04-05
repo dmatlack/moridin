@@ -24,43 +24,44 @@ void invalid_interrupt(void) { panic("INVALID INTERRUPT OCCURRED"); }
 /**
  * @brief This function initializes most parts of the x86 system.
  */
-void arch_startup(void) {
-  int vector;
+void arch_startup(void)
+{
+	int vector;
 
-  ASSERT_EQUALS((size_t) kernel_idt, 0x10000c);
-  ASSERT_EQUALS((size_t) kernel_gdt, 0x10080c);
-  ASSERT_EQUALS((size_t) kernel_tss, 0x10083c);
+	ASSERT_EQUALS((size_t) kernel_idt, 0x10000c);
+	ASSERT_EQUALS((size_t) kernel_gdt, 0x10080c);
+	ASSERT_EQUALS((size_t) kernel_tss, 0x10083c);
 
-  /*
-   * Print out some symbols defined in arch/boot.S
-   */
-  kprintf("boot_stack:    0x%08x, 0x%08x\n", boot_stack_bottom, boot_stack_top);
-  kprintf("boot_page_dir: 0x%08x\n", boot_page_dir);
+	/*
+	 * Print out some symbols defined in arch/boot.S
+	 */
+	kprintf("boot_stack:    0x%08x, 0x%08x\n", boot_stack_bottom, boot_stack_top);
+	kprintf("boot_page_dir: 0x%08x\n", boot_page_dir);
 
-  disable_fpu();
+	disable_fpu();
 
-  /*
-   * Install default handlers for all IDT entries so we panic before 
-   * we triple fault.
-   */
-  for (vector = 0; vector < 256; vector++) {
-    idt_exn_gate(vector, invalid_interrupt);
-  }
+	/*
+	 * Install default handlers for all IDT entries so we panic before 
+	 * we triple fault.
+	 */
+	for (vector = 0; vector < 256; vector++) {
+		idt_exn_gate(vector, invalid_interrupt);
+	}
 
-  /*
-   * Install handlers in the IDT for each exception type.
-   */
-  for (vector = 0; vector < X86_NUM_EXCEPTIONS; vector++) {
-    idt_exn_gate(vector, x86_exceptions[vector].handler);
-  }
+	/*
+	 * Install handlers in the IDT for each exception type.
+	 */
+	for (vector = 0; vector < X86_NUM_EXCEPTIONS; vector++) {
+		idt_exn_gate(vector, x86_exceptions[vector].handler);
+	}
 
-  /*
-   * Install the global system call handler.
-   */
-  idt_syscall_gate(0x80, __syscall_entry);
+	/*
+	 * Install the global system call handler.
+	 */
+	idt_syscall_gate(0x80, __syscall_entry);
 
-  /*
-   * Initialize the interrupt controller and associated handlers.
-   */
-  pic_irq_init();
+	/*
+	 * Initialize the interrupt controller and associated handlers.
+	 */
+	pic_irq_init();
 }

@@ -24,33 +24,34 @@ extern void kernel_main(void);
  * @param mb_magic eax, magic value that confirms we are in multiboot
  * @param mb_info ebx, the multiboot_info struct 
  */
-void mb_entry(unsigned int mb_magic, struct multiboot_info *mb_info) {
-  vga_init();
+void mb_entry(unsigned int mb_magic, struct multiboot_info *mb_info)
+{
+	vga_init();
 
-  ASSERT_EQUALS(mb_magic, MULTIBOOT_BOOTLOADER_MAGIC);
+	ASSERT_EQUALS(mb_magic, MULTIBOOT_BOOTLOADER_MAGIC);
 
-  /*
-   * Use the mb_info struct to learn about the physical memory layout
-   */
-  mem_mb_init(mb_info);
+	/*
+	 * Use the mb_info struct to learn about the physical memory layout
+	 */
+	mem_mb_init(mb_info);
 
-  /*
-   * ASSUMPTION: initrd is the first mod loaded by GRUB.
-   */
-  initrd_location = mb_mod_start(mb_info, 0);
+	/*
+	 * ASSUMPTION: initrd is the first mod loaded by GRUB.
+	 */
+	initrd_location = mb_mod_start(mb_info, 0);
 
-  /*
-   * Do any architecture specific initialization routines before entering
-   * kernel_main.
-   */
-  arch_startup();
+	/*
+	 * Do any architecture specific initialization routines before entering
+	 * kernel_main.
+	 */
+	arch_startup();
 
-  /*
-   * And finally enter the kernel
-   *
-   * TODO: GRUB/multiboot supports passing in a command line to the kernel
-   * (argv, envp). If we want to support that we should parse the cmdline
-   * field of the multiboot info struct and pass it into the kernel.
-   */
-  kernel_main();
+	/*
+	 * And finally enter the kernel
+	 *
+	 * TODO: GRUB/multiboot supports passing in a command line to the kernel
+	 * (argv, envp). If we want to support that we should parse the cmdline
+	 * field of the multiboot info struct and pass it into the kernel.
+	 */
+	kernel_main();
 }

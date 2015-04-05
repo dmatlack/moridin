@@ -35,13 +35,13 @@
 #define X86_IS_ABORT(type)  (type & X86_ABORT)
 
 struct x86_exn {
-  uint8_t vector;
-  char    mnemonic[5];
-  char    description[128];
-  uint8_t type;
-  char    cause[128];
-  bool    has_error_code;
-  void (*handler)(void);
+	uint8_t vector;
+	char    mnemonic[5];
+	char    description[128];
+	uint8_t type;
+	char    cause[128];
+	bool    has_error_code;
+	void (*handler)(void);
 };
 
 #define X86_NUM_EXCEPTIONS 20

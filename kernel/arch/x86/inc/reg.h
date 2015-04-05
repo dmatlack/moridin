@@ -21,57 +21,57 @@
  *
  */
 struct __attribute__((__packed__)) registers {
-  /*
-   * control registers (cr0 and cr4 are system-level registers)
-   */
-  uint32_t cr3;
-  uint32_t cr2;
+	/*
+	 * control registers (cr0 and cr4 are system-level registers)
+	 */
+	uint32_t cr3;
+	uint32_t cr2;
 
-  /* 0x8 */
+	/* 0x8 */
 
-  /*
-   * general purpose registers (pusha order)
-   */
-  uint32_t edi;
-  uint32_t esi;
-  uint32_t ebp;
-  uint32_t ebx;
-  uint32_t edx;
-  uint32_t ecx;
-  uint32_t eax;
+	/*
+	 * general purpose registers (pusha order)
+	 */
+	uint32_t edi;
+	uint32_t esi;
+	uint32_t ebp;
+	uint32_t ebx;
+	uint32_t edx;
+	uint32_t ecx;
+	uint32_t eax;
 
-  /* 0x24 */
+	/* 0x24 */
 
-  /*
-   * data segment registers
-   */
-  uint32_t gs;
-  uint32_t fs;
-  uint32_t es;
-  uint32_t ds;
+	/*
+	 * data segment registers
+	 */
+	uint32_t gs;
+	uint32_t fs;
+	uint32_t es;
+	uint32_t ds;
 
-  /* 0x34 */
+	/* 0x34 */
 
-  /*
-   * program registers (iret order)
-   */
-  uint32_t eip;
-  uint32_t cs;
-  uint32_t eflags;
-  uint32_t esp;
-  uint32_t ss;
+	/*
+	 * program registers (iret order)
+	 */
+	uint32_t eip;
+	uint32_t cs;
+	uint32_t eflags;
+	uint32_t esp;
+	uint32_t ss;
 
-  /* 0x48 */
+	/* 0x48 */
 };
 
 #define INIT_REGS \
 { \
-  .gs = SEGSEL_USER_DS, \
-  .fs = SEGSEL_USER_DS, \
-  .es = SEGSEL_USER_DS, \
-  .ds = SEGSEL_USER_DS, \
-  .ss = SEGSEL_USER_DS, \
-  .cs = SEGSEL_USER_CS, \
+	.gs = SEGSEL_USER_DS, \
+	.fs = SEGSEL_USER_DS, \
+	.es = SEGSEL_USER_DS, \
+	.ds = SEGSEL_USER_DS, \
+	.ss = SEGSEL_USER_DS, \
+	.cs = SEGSEL_USER_CS, \
 }
 
 /**
@@ -85,18 +85,18 @@ void restore_registers(struct registers *regs);
  * thread's registers (for the next call to restore_registers())
  */
 #define set_pc_reg(_regs, _program_counter) \
-  do { \
-    (_regs)->eip = (_program_counter); \
-  } while (0)
+	do { \
+		(_regs)->eip = (_program_counter); \
+	} while (0)
 
 /**
  * @brief Set the stack pointer in the current thread's registers (for
  * the next call to restore_registers()).
  */
 #define set_sp_reg(_regs, _stack_pointer) \
-  do { \
-    (_regs)->esp = (_stack_pointer); \
-  } while (0)
+	do { \
+		(_regs)->esp = (_stack_pointer); \
+	} while (0)
 
 /**
  * @brief Get the current value of the stack pointer. This reads directly from
@@ -106,45 +106,45 @@ uint32_t get_esp();
 #define get_sp get_esp
 
 #define DEBUG_REGS(_regs) \
-  DEBUG("struct registers %p\n" \
-  "cr3:    0x%08x\n" \
-  "cr2:    0x%08x\n" \
-  "edi:    0x%08x\n" \
-  "esi:    0x%08x\n" \
-  "ebp:    0x%08x\n" \
-  "ebx:    0x%08x\n" \
-  "edx:    0x%08x\n" \
-  "ecx:    0x%08x\n" \
-  "eax:    0x%08x\n" \
-  "gs:     0x%08x\n" \
-  "fs:     0x%08x\n" \
-  "es:     0x%08x\n" \
-  "ds:     0x%08x\n" \
-  "eip:    0x%08x\n" \
-  "cs:     0x%08x\n" \
-  "eflags: 0x%08x\n" \
-  "esp:    0x%08x\n" \
-  "ss:     0x%08x\n" \
-  ,                  \
-  (_regs),           \
-  (_regs)->cr3,      \
-  (_regs)->cr2,      \
-  (_regs)->edi,      \
-  (_regs)->esi,      \
-  (_regs)->ebp,      \
-  (_regs)->ebx,      \
-  (_regs)->edx,      \
-  (_regs)->ecx,      \
-  (_regs)->eax,      \
-  (_regs)->gs,       \
-  (_regs)->fs,       \
-  (_regs)->es,       \
-  (_regs)->ds,       \
-  (_regs)->eip,      \
-  (_regs)->cs,       \
-  (_regs)->eflags,   \
-  (_regs)->esp,      \
-  (_regs)->ss)
+	DEBUG("struct registers %p\n" \
+		"cr3:    0x%08x\n" \
+		"cr2:    0x%08x\n" \
+		"edi:    0x%08x\n" \
+		"esi:    0x%08x\n" \
+		"ebp:    0x%08x\n" \
+		"ebx:    0x%08x\n" \
+		"edx:    0x%08x\n" \
+		"ecx:    0x%08x\n" \
+		"eax:    0x%08x\n" \
+		"gs:     0x%08x\n" \
+		"fs:     0x%08x\n" \
+		"es:     0x%08x\n" \
+		"ds:     0x%08x\n" \
+		"eip:    0x%08x\n" \
+		"cs:     0x%08x\n" \
+		"eflags: 0x%08x\n" \
+		"esp:    0x%08x\n" \
+		"ss:     0x%08x\n" \
+		,                  \
+		(_regs),           \
+		(_regs)->cr3,      \
+		(_regs)->cr2,      \
+		(_regs)->edi,      \
+		(_regs)->esi,      \
+		(_regs)->ebp,      \
+		(_regs)->ebx,      \
+		(_regs)->edx,      \
+		(_regs)->ecx,      \
+		(_regs)->eax,      \
+		(_regs)->gs,       \
+		(_regs)->fs,       \
+		(_regs)->es,       \
+		(_regs)->ds,       \
+		(_regs)->eip,      \
+		(_regs)->cs,       \
+		(_regs)->eflags,   \
+		(_regs)->esp,      \
+		(_regs)->ss)
 
 /*
  *

@@ -29,41 +29,41 @@
 .global __syscall_entry
 __syscall_entry:
 
-  PUSH_REGISTERS
+	PUSH_REGISTERS
 
-  #
-  # push all the possible arguments onto the stack. it doesn't matter if
-  # the system call uses < 4 arguments. it will just ignore the bogus
-  # values we've pushed
-  #
-  pushl %edi
-  pushl %esi
-  pushl %edx
-  pushl %ecx
+	#
+	# push all the possible arguments onto the stack. it doesn't matter if
+	# the system call uses < 4 arguments. it will just ignore the bogus
+	# values we've pushed
+	#
+	pushl %edi
+	pushl %esi
+	pushl %edx
+	pushl %ecx
 
-  pushl %eax              # save the syscall number temporarily
+	pushl %eax              # save the syscall number temporarily
 
-  leal 0x14(%esp), %eax   # load the address of the registers
-  pushl %eax              # push that address on the stack
-  call set_thread_regs    # set regs pointer in the thread struct
-  addl $4, %esp           # restore the stack
+	leal 0x14(%esp), %eax   # load the address of the registers
+	pushl %eax              # push that address on the stack
+	call set_thread_regs    # set regs pointer in the thread struct
+	addl $4, %esp           # restore the stack
 
-  popl %eax               # restore the syscall number
+	popl %eax               # restore the syscall number
 
-  #
-  # eax is the system call we want to execute. we lookup the eax'th system
-  # call in the syscall_table and call that address.
-  #
-  # TODO: sanity check eax to make sure not negative or out of bounds
-  #
-  movl $syscall_table, %ecx
-  movl (%ecx, %eax, 0x4), %ecx
-  call *%ecx
-  
-  popl %ecx
-  popl %ecx
-  popl %ecx
-  popl %ecx
+	#
+	# eax is the system call we want to execute. we lookup the eax'th system
+	# call in the syscall_table and call that address.
+	#
+	# TODO: sanity check eax to make sure not negative or out of bounds
+	#
+	movl $syscall_table, %ecx
+	movl (%ecx, %eax, 0x4), %ecx
+	call *%ecx
 
-  pushl %eax
-  call return_from_syscall
+	popl %ecx
+	popl %ecx
+	popl %ecx
+	popl %ecx
+
+	pushl %eax
+	call return_from_syscall

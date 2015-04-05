@@ -41,51 +41,53 @@ void irq_15(void);
 
 int spurious_irqs[MAX_NUM_IRQS];
 
-void pic_irq_init(void) {
-  int i;
-  
-  /*
-   * Install the IRQ handlers
-   */
-  idt_irq_gate(IDT_PIC_MASTER_OFFSET + 0, irq_0);
-  idt_irq_gate(IDT_PIC_MASTER_OFFSET + 1, irq_1);
-  idt_irq_gate(IDT_PIC_MASTER_OFFSET + 2, irq_2);
-  idt_irq_gate(IDT_PIC_MASTER_OFFSET + 3, irq_3);
-  idt_irq_gate(IDT_PIC_MASTER_OFFSET + 4, irq_4);
-  idt_irq_gate(IDT_PIC_MASTER_OFFSET + 5, irq_5);
-  idt_irq_gate(IDT_PIC_MASTER_OFFSET + 6, irq_6);
-  idt_irq_gate(IDT_PIC_MASTER_OFFSET + 7, irq_7);
-  idt_irq_gate(IDT_PIC_SLAVE_OFFSET  + 0, irq_8);
-  idt_irq_gate(IDT_PIC_SLAVE_OFFSET  + 1, irq_9);
-  idt_irq_gate(IDT_PIC_SLAVE_OFFSET  + 2, irq_10);
-  idt_irq_gate(IDT_PIC_SLAVE_OFFSET  + 3, irq_11);
-  idt_irq_gate(IDT_PIC_SLAVE_OFFSET  + 4, irq_12);
-  idt_irq_gate(IDT_PIC_SLAVE_OFFSET  + 5, irq_13);
-  idt_irq_gate(IDT_PIC_SLAVE_OFFSET  + 6, irq_14);
-  idt_irq_gate(IDT_PIC_SLAVE_OFFSET  + 7, irq_15);
+void pic_irq_init(void)
+{
+	int i;
 
-  /*
-   * Remap the master and the slave so they invode the correct service routines
-   * in the IDT.
-   */
-  pic_remap(IDT_PIC_MASTER_OFFSET, IDT_PIC_SLAVE_OFFSET);
+	/*
+	 * Install the IRQ handlers
+	 */
+	idt_irq_gate(IDT_PIC_MASTER_OFFSET + 0, irq_0);
+	idt_irq_gate(IDT_PIC_MASTER_OFFSET + 1, irq_1);
+	idt_irq_gate(IDT_PIC_MASTER_OFFSET + 2, irq_2);
+	idt_irq_gate(IDT_PIC_MASTER_OFFSET + 3, irq_3);
+	idt_irq_gate(IDT_PIC_MASTER_OFFSET + 4, irq_4);
+	idt_irq_gate(IDT_PIC_MASTER_OFFSET + 5, irq_5);
+	idt_irq_gate(IDT_PIC_MASTER_OFFSET + 6, irq_6);
+	idt_irq_gate(IDT_PIC_MASTER_OFFSET + 7, irq_7);
+	idt_irq_gate(IDT_PIC_SLAVE_OFFSET  + 0, irq_8);
+	idt_irq_gate(IDT_PIC_SLAVE_OFFSET  + 1, irq_9);
+	idt_irq_gate(IDT_PIC_SLAVE_OFFSET  + 2, irq_10);
+	idt_irq_gate(IDT_PIC_SLAVE_OFFSET  + 3, irq_11);
+	idt_irq_gate(IDT_PIC_SLAVE_OFFSET  + 4, irq_12);
+	idt_irq_gate(IDT_PIC_SLAVE_OFFSET  + 5, irq_13);
+	idt_irq_gate(IDT_PIC_SLAVE_OFFSET  + 6, irq_14);
+	idt_irq_gate(IDT_PIC_SLAVE_OFFSET  + 7, irq_15);
 
-  for (i = 0; i < MAX_NUM_IRQS; i++) spurious_irqs[i] = 0;
+	/*
+	 * Remap the master and the slave so they invode the correct service routines
+	 * in the IDT.
+	 */
+	pic_remap(IDT_PIC_MASTER_OFFSET, IDT_PIC_SLAVE_OFFSET);
+
+	for (i = 0; i < MAX_NUM_IRQS; i++) spurious_irqs[i] = 0;
 }
 
 /**
  * @brief Generate an interrupt request.
  */
-void generate_irq(int irq) {
-  ASSERT_GREATEREQ(irq, 0);
-  ASSERT_LESS(irq, 16);
+void generate_irq(int irq)
+{
+	ASSERT_GREATEREQ(irq, 0);
+	ASSERT_LESS(irq, 16);
 
-  if (irq < 8) {
-    __int(IDT_PIC_MASTER_OFFSET + irq);
-  }
-  else if (irq < 16) {
-    __int(IDT_PIC_SLAVE_OFFSET + (irq - 8));
-  }
+	if (irq < 8) {
+		__int(IDT_PIC_MASTER_OFFSET + irq);
+	}
+	else if (irq < 16) {
+		__int(IDT_PIC_SLAVE_OFFSET + (irq - 8));
+	}
 }
 
 /**
@@ -97,14 +99,15 @@ void generate_irq(int irq) {
  * @warning This function should only be called from interrupt
  * conext!
  */
-bool is_spurious_irq(int irq) {
-  uint16_t isr;
+bool is_spurious_irq(int irq)
+{
+	uint16_t isr;
 
-  if (0 > irq || irq >= MAX_NUM_IRQS) return false;
+	if (0 > irq || irq >= MAX_NUM_IRQS) return false;
 
-  isr = pic_get_isr();
+	isr = pic_get_isr();
 
-  return !(isr & (1 << irq));
+	return !(isr & (1 << irq));
 }
 
 /**
@@ -113,40 +116,41 @@ bool is_spurious_irq(int irq) {
  * installed in the IDT). The job of this function is to pass 
  * the irq up to the kernel to handle.
  */
-void interrupt_request(int irq) {
+void interrupt_request(int irq)
+{
+	ASSERT_GREATEREQ(irq, 0);
+	ASSERT_LESS(irq, MAX_NUM_IRQS);
 
-  ASSERT_GREATEREQ(irq, 0);
-  ASSERT_LESS(irq, MAX_NUM_IRQS);
+	/*
+	 * Check for spurious IRQs
+	 */
+	if (is_spurious_irq(irq)) {
+		atomic_add(&spurious_irqs[irq], 1);
+		WARN("Spurious IRQ: %d (total %d)", irq, spurious_irqs[irq]);
 
-  /*
-   * Check for spurious IRQs
-   */
-  if (is_spurious_irq(irq)) {
-    atomic_add(&spurious_irqs[irq], 1);
-    WARN("Spurious IRQ: %d (total %d)", irq, spurious_irqs[irq]);
+		/*
+		 * If the spurious IRQ is from the slave PIC, we still need to send an
+		 * EOI to the master.
+		 */
+		if (irq >= 8) outb(PIC_MASTER_CMD, PIC_EOI);
+		return;
+	}
 
-    /*
-     * If the spurious IRQ is from the slave PIC, we still need to send an
-     * EOI to the master.
-     */
-    if (irq >= 8) outb(PIC_MASTER_CMD, PIC_EOI);
-    return;
-  }
+	//TODO remove me
+	//  This line reads a character from the keyboard data port so that
+	//  we can continue receiving keyboard interrupts.
+	if (1 == irq) inb(0x60);
 
-  //TODO remove me
-  //  This line reads a character from the keyboard data port so that
-  //  we can continue receiving keyboard interrupts.
-  if (1 == irq) inb(0x60);
-
-  /*
-   * Pass the interrupt request up to the kernel
-   */
-  kernel_irq_handler(irq);
+	/*
+	 * Pass the interrupt request up to the kernel
+	 */
+	kernel_irq_handler(irq);
 }
 
 /**
  * @brief Acknowledge the irq by sending the correct message to the PIC.
  */
-void x86_acknowledge_irq(int irq) {
-  pic_eoi(irq);
+void x86_acknowledge_irq(int irq)
+{
+	pic_eoi(irq);
 }

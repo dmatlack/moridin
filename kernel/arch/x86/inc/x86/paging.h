@@ -53,14 +53,17 @@ typedef int32_t entry_t;
  *   an attempt is made to access the page, then a page fault (#PF) occurs.
  */
 #define ENTRY_PRESENT 0
-static inline void entry_set_present(entry_t *entry) { 
-  set_bit(entry, ENTRY_PRESENT, 1);
+static inline void entry_set_present(entry_t *entry)
+{
+	set_bit(entry, ENTRY_PRESENT, 1);
 }
-static inline void entry_set_absent(entry_t *entry) {
-  set_bit(entry, ENTRY_PRESENT, 0);
+static inline void entry_set_absent(entry_t *entry)
+{
+	set_bit(entry, ENTRY_PRESENT, 0);
 }
-static inline bool entry_is_present(entry_t *entry) {
-  return get_bit(*entry, ENTRY_PRESENT);
+static inline bool entry_is_present(entry_t *entry)
+{
+	return get_bit(*entry, ENTRY_PRESENT);
 }
 
 /*
@@ -69,14 +72,17 @@ static inline bool entry_is_present(entry_t *entry) {
  *   the page can be read and written into.
  */
 #define ENTRY_READWRITE 1
-static inline void entry_set_readwrite(entry_t *entry) {
-  set_bit(entry, ENTRY_READWRITE, 1);
+static inline void entry_set_readwrite(entry_t *entry)
+{
+	set_bit(entry, ENTRY_READWRITE, 1);
 }
-static inline void entry_set_readonly(entry_t *entry) {
-  set_bit(entry, ENTRY_READWRITE, 0);
+static inline void entry_set_readonly(entry_t *entry)
+{
+	set_bit(entry, ENTRY_READWRITE, 0);
 }
-static inline int entry_is_readwrite(entry_t *entry) {
-  return get_bit(*entry, ENTRY_READWRITE);
+static inline int entry_is_readwrite(entry_t *entry)
+{
+	return get_bit(*entry, ENTRY_READWRITE);
 }
 
 /*
@@ -87,14 +93,17 @@ static inline int entry_is_readwrite(entry_t *entry) {
  *   user priveledge level.
  */
 #define ENTRY_USER 2
-static inline void entry_set_supervisor(entry_t *entry) {
-  set_bit(entry, ENTRY_USER, 0);
+static inline void entry_set_supervisor(entry_t *entry)
+{
+	set_bit(entry, ENTRY_USER, 0);
 }
-static inline void entry_set_user(entry_t *entry) {
-  set_bit(entry, ENTRY_USER, 1);
+static inline void entry_set_user(entry_t *entry)
+{
+	set_bit(entry, ENTRY_USER, 1);
 }
-static inline int entry_is_supervisor(entry_t *entry) {
-  return get_bit(*entry, ENTRY_USER);
+static inline int entry_is_supervisor(entry_t *entry)
+{
+	return get_bit(*entry, ENTRY_USER);
 }
 
 /*
@@ -113,11 +122,13 @@ static inline int entry_is_supervisor(entry_t *entry) {
  *   caching of pages that contain memory mapped I/O ports.
  */
 #define ENTRY_CACHEDISABLED 4
-static inline void entry_disable_cache(entry_t *entry) {
-  set_bit(entry, ENTRY_CACHEDISABLED, 1);
+static inline void entry_disable_cache(entry_t *entry)
+{
+	set_bit(entry, ENTRY_CACHEDISABLED, 1);
 }
-static inline void entry_enable_cache(entry_t *entry) {
-  set_bit(entry, ENTRY_CACHEDISABLED, 0);
+static inline void entry_enable_cache(entry_t *entry)
+{
+	set_bit(entry, ENTRY_CACHEDISABLED, 0);
 }
 
 /*
@@ -135,11 +146,13 @@ static inline void entry_enable_cache(entry_t *entry) {
  *   the processor.
  */
 #define ENTRY_DIRTY 6
-static inline void entry_clear_dirty(entry_t *entry) {
-  set_bit(entry, ENTRY_DIRTY, 0);
+static inline void entry_clear_dirty(entry_t *entry)
+{
+	set_bit(entry, ENTRY_DIRTY, 0);
 }
-static inline int entry_is_dirty(entry_t *entry) {
-  return get_bit(*entry, ENTRY_DIRTY);
+static inline int entry_is_dirty(entry_t *entry)
+{
+	return get_bit(*entry, ENTRY_DIRTY);
 }
 
 /*
@@ -167,11 +180,13 @@ static inline int entry_is_dirty(entry_t *entry) {
  *   ONLY FOR > PENTIUM PRO PROCESSORS
  */
 #define ENTRY_GLOBAL 8
-static inline void entry_set_global(entry_t *entry) {
-  set_bit(entry, ENTRY_GLOBAL, 1);
+static inline void entry_set_global(entry_t *entry)
+{
+	set_bit(entry, ENTRY_GLOBAL, 1);
 }
-static inline int entry_is_global(entry_t *entry) {
-  return get_bit(*entry, ENTRY_GLOBAL);
+static inline int entry_is_global(entry_t *entry)
+{
+	return get_bit(*entry, ENTRY_GLOBAL);
 }
 
 
@@ -188,29 +203,33 @@ static inline int entry_is_global(entry_t *entry) {
  *   bits 12-31
  */
 #define ENTRY_ADDR_MASK (~MASK(11))
-static inline void entry_set_addr(entry_t *entry_ptr, unsigned long addr) {
-  ASSERT_EQUALS(FLOOR(X86_PAGE_SIZE, addr), addr);
-  *(entry_ptr) &= ~ENTRY_ADDR_MASK;
-  *(entry_ptr) |= addr;
+static inline void entry_set_addr(entry_t *entry_ptr, unsigned long addr)
+{
+	ASSERT_EQUALS(FLOOR(X86_PAGE_SIZE, addr), addr);
+	*(entry_ptr) &= ~ENTRY_ADDR_MASK;
+	*(entry_ptr) |= addr;
 }
-static inline unsigned long entry_get_addr(entry_t *entry) {
-  return (unsigned long) ((*entry) & ENTRY_ADDR_MASK);
+static inline unsigned long entry_get_addr(entry_t *entry)
+{
+	return (unsigned long) ((*entry) & ENTRY_ADDR_MASK);
 }
 
 /**
  * @return the virtual address of the page table pointed to by this page
  * directory entry.
  */
-static inline struct entry_table *entry_pt(entry_t *pde) {
-  unsigned long phys = entry_get_addr(pde);
-  return (struct entry_table *) (phys + CONFIG_KERNEL_VIRTUAL_START);
+static inline struct entry_table *entry_pt(entry_t *pde)
+{
+	unsigned long phys = entry_get_addr(pde);
+	return (struct entry_table *) (phys + CONFIG_KERNEL_VIRTUAL_START);
 }
 
 /**
  * @return the physical address pointed to by this page table entry.
  */
-static inline unsigned long entry_phys(entry_t *pte) {
-  return entry_get_addr(pte);
+static inline unsigned long entry_phys(entry_t *pte)
+{
+	return entry_get_addr(pte);
 }
 
 /*
@@ -220,7 +239,7 @@ static inline unsigned long entry_phys(entry_t *pte) {
  */
 #define ENTRY_TABLE_SIZE ((X86_PAGE_SIZE) / sizeof(entry_t))
 struct entry_table {
-  entry_t entries[ENTRY_TABLE_SIZE];
+	entry_t entries[ENTRY_TABLE_SIZE];
 };
 
 /**
@@ -228,29 +247,31 @@ struct entry_table {
  *
  * @return NULL if the allocation fails.
  */
-static inline struct entry_table *new_entry_table(void) {
-  struct entry_table *tbl;
-  unsigned i;
+static inline struct entry_table *new_entry_table(void)
+{
+	struct entry_table *tbl;
+	unsigned i;
 
-  TRACE();
+	TRACE();
 
-  tbl = kmemalign(X86_PAGE_SIZE, sizeof(struct entry_table));
+	tbl = kmemalign(X86_PAGE_SIZE, sizeof(struct entry_table));
 
-  for (i = 0; i < ENTRY_TABLE_SIZE; i++) {
-    /*
-     * zero out the entry to be safe but all that matters here is that the
-     * page entry is marked as not present.
-     */
-    tbl->entries[i] = 0;
-    entry_set_absent(tbl->entries + i);
-  }
+	for (i = 0; i < ENTRY_TABLE_SIZE; i++) {
+		/*
+		 * zero out the entry to be safe but all that matters here is that the
+		 * page entry is marked as not present.
+		 */
+		tbl->entries[i] = 0;
+		entry_set_absent(tbl->entries + i);
+	}
 
-  return tbl;
+	return tbl;
 }
 
-static inline void free_entry_table(struct entry_table *ptr) {
-  TRACE("ptr=%p", ptr);
-  kfree(ptr, sizeof(struct entry_table));
+static inline void free_entry_table(struct entry_table *ptr)
+{
+	TRACE("ptr=%p", ptr);
+	kfree(ptr, sizeof(struct entry_table));
 }
 
 
@@ -279,12 +300,14 @@ static inline void free_entry_table(struct entry_table *ptr) {
 #define PT_OFFSET(la)  (((la) >> 12) & MASK(10))
 #define PHYS_OFFSET(la) ((la) & MASK(12))
 
-static inline entry_t* get_pde(struct entry_table *pd, unsigned long vaddr) {
-  return &(pd->entries[PD_OFFSET(vaddr)]);
+static inline entry_t* get_pde(struct entry_table *pd, unsigned long vaddr)
+{
+	return &(pd->entries[PD_OFFSET(vaddr)]);
 }
 
-static inline entry_t* get_pte(struct entry_table *pt, unsigned long vaddr) {
-  return &(pt->entries[PT_OFFSET(vaddr)]);
+static inline entry_t* get_pte(struct entry_table *pt, unsigned long vaddr)
+{
+	return &(pt->entries[PT_OFFSET(vaddr)]);
 }
 
 #include <kernel/proc.h>

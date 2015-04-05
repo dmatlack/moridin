@@ -23,16 +23,17 @@
  *    NULL otherwise.
  */
 #define __page(virt) ({ \
-    unsigned long phys = __phys(virt); \
-    phys == (unsigned long) -1 ? NULL : page_struct(phys); \
-  })
+	unsigned long phys = __phys(virt); \
+	phys == (unsigned long) -1 ? NULL : page_struct(phys); \
+})
 
 
 void *new_address_space(void);
-static inline void *swap_address_space(void *new) {
-  void *old = (void *) (get_cr3() + CONFIG_KERNEL_VIRTUAL_START);
-  set_cr3((uint32_t) __phys(new));
-  return old;
+static inline void *swap_address_space(void *new)
+{
+	void *old = (void *) (get_cr3() + CONFIG_KERNEL_VIRTUAL_START);
+	set_cr3((uint32_t) __phys(new));
+	return old;
 }
 
 /**
@@ -51,7 +52,7 @@ struct page *mmu_unmap_page(void *page_dir, unsigned long virt);
  * address lookups.
  */
 static inline void tlb_flush(void) {
-  set_cr3(get_cr3());
+	set_cr3(get_cr3());
 }
 
 /**
@@ -59,12 +60,13 @@ static inline void tlb_flush(void) {
  * after vm_map if you want to write to or read from the pages you just
  * mapped.
  */
-static inline void tlb_invalidate(unsigned long addr, size_t size) {
-  unsigned long v;
+static inline void tlb_invalidate(unsigned long addr, size_t size)
+{
+	unsigned long v;
 
-  for (v = FLOOR(X86_PAGE_SIZE, addr); v < CEIL(X86_PAGE_SIZE, addr + size); v += X86_PAGE_SIZE) {
-    __invlpg(v);
-  }
+	for (v = FLOOR(X86_PAGE_SIZE, addr); v < CEIL(X86_PAGE_SIZE, addr + size); v += X86_PAGE_SIZE) {
+		__invlpg(v);
+	}
 }
 
 #endif /* !__X86_VM_H__ */

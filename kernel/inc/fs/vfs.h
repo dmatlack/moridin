@@ -34,12 +34,12 @@ list_typedef(struct vfs_file)   vfs_file_list_t;
  * time.
  */
 struct vfs_inode {
-  unsigned long inode;
+	unsigned long inode;
 
 #define VFS_R 0x1
 #define VFS_W 0x2
 #define VFS_X 0x4
-  unsigned int perm;   // permissions
+	unsigned int perm;   // permissions
 
 #define VFS_FILE         1
 #define VFS_DIRECTORY    2
@@ -49,12 +49,12 @@ struct vfs_inode {
 #define VFS_SYMLINK      6
 #define VFS_TYPE(flags) (flags & 0x7)
 #define MOUNTPOINT       8
-  unsigned int flags;   // node type
+	unsigned int flags;   // node type
 
-  size_t length;
-  struct vfs_file_ops *fops;
-  vfs_dirent_list_t dirents; // all the dirents referring to this file
-  void *object; // a pointer to private data (to be used by the underlying fs)
+	size_t length;
+	struct vfs_file_ops *fops;
+	vfs_dirent_list_t dirents; // all the dirents referring to this file
+	void *object; // a pointer to private data (to be used by the underlying fs)
 };
 
 /*
@@ -66,13 +66,13 @@ struct vfs_inode {
  */
 struct vfs_dirent {
 #define VFS_NAMESIZE 128
-  char name[VFS_NAMESIZE];
-  struct vfs_inode *inode;
-  struct vfs_dirent *parent;  // containing directory
-  vfs_dirent_list_t children; // NULL if vfs_file, list of children if directory
-  list_link(struct vfs_dirent) sibling_link; // other vfs_files in the same directory
-  list_link(struct vfs_dirent) hardlink_link; // hardlink brethren
-  int refs; // reference counter
+	char name[VFS_NAMESIZE];
+	struct vfs_inode *inode;
+	struct vfs_dirent *parent;  // containing directory
+	vfs_dirent_list_t children; // NULL if vfs_file, list of children if directory
+	list_link(struct vfs_dirent) sibling_link; // other vfs_files in the same directory
+	list_link(struct vfs_dirent) hardlink_link; // hardlink brethren
+	int refs; // reference counter
 };
 
 /*
@@ -81,10 +81,10 @@ struct vfs_dirent {
  * by many processes.
  */
 struct vfs_file {
-  struct vfs_dirent *dirent;
-  size_t offset; // read/write offset into the file
-  struct vfs_file_ops *fops;
-  int refs; // reference counter
+	struct vfs_dirent *dirent;
+	size_t offset; // read/write offset into the file
+	struct vfs_file_ops *fops;
+	int refs; // reference counter
 };
 
 #define F_NAME(_file_ptr) ((_file_ptr)->dirent->name)
@@ -93,53 +93,56 @@ struct vfs_file {
  * The operations that can be performed on a file.
  */
 struct vfs_file_ops {
-  int (*open)(struct vfs_file *);
-  void (*close)(struct vfs_file *);
+	int (*open)(struct vfs_file *);
+	void (*close)(struct vfs_file *);
 
-  /**
-   * @brief Read <size> bytes starting at <off> in <f> into <buf>.
-   *
-   * @return
-   *    < 0 code on error
-   *      TODO list possible error codes
-   *    the number of bytes read on success
-   */
-  ssize_t (*read)(struct vfs_file *f, char *buf, size_t size, size_t off);
+	/**
+	 * @brief Read <size> bytes starting at <off> in <f> into <buf>.
+	 *
+	 * @return
+	 *    < 0 code on error
+	 *      TODO list possible error codes
+	 *    the number of bytes read on success
+	 */
+	ssize_t (*read)(struct vfs_file *f, char *buf, size_t size, size_t off);
 
-  ssize_t (*write)(struct vfs_file *, char *, size_t size, size_t off);
+	ssize_t (*write)(struct vfs_file *, char *, size_t size, size_t off);
 
-  struct vfs_dirent *(*readdir)(struct vfs_file *, unsigned int index);
+	struct vfs_dirent *(*readdir)(struct vfs_file *, unsigned int index);
 };
 
 #define VFS_ERROR(_fmt, ...) \
-  ERROR("%d: "_fmt, __func__, ##__VA_ARGS__)
+	ERROR("%d: "_fmt, __func__, ##__VA_ARGS__)
 
 #define VFS_WARN(_fmt, ...) \
-  ERROR("%d: "_fmt, __func__, ##__VA_ARGS__)
+	ERROR("%d: "_fmt, __func__, ##__VA_ARGS__)
 
 #define VFS_NULL_FOP(_fop, file) \
-    VFS_WARN("fop %s() is NULL for file %s.", \
-             #_fop, (file)->dirent->name)
+	VFS_WARN("fop %s() is NULL for file %s.", \
+#_fop, (file)->dirent->name)
 
-static inline void dirent_init(struct vfs_dirent *d, char *name) {
-  memset(d, 0, sizeof(struct vfs_dirent));
+static inline void dirent_init(struct vfs_dirent *d, char *name)
+{
+	memset(d, 0, sizeof(struct vfs_dirent));
 
-  strncpy(d->name, name, VFS_NAMESIZE);
-  d->name[VFS_NAMESIZE-1] = (char) 0;
+	strncpy(d->name, name, VFS_NAMESIZE);
+	d->name[VFS_NAMESIZE-1] = (char) 0;
 
-  list_init(&d->children);
-  list_elem_init(d, sibling_link);
-  list_elem_init(d, hardlink_link);
+	list_init(&d->children);
+	list_elem_init(d, sibling_link);
+	list_elem_init(d, hardlink_link);
 }
 
-static inline bool dirent_isdir(struct vfs_dirent *dirent) {
-  return VFS_TYPE(dirent->inode->flags) == VFS_DIRECTORY;
+static inline bool dirent_isdir(struct vfs_dirent *dirent)
+{
+	return VFS_TYPE(dirent->inode->flags) == VFS_DIRECTORY;
 }
 
-static inline void inode_init(struct vfs_inode *i, unsigned long inode) {
-  memset(i, 0, sizeof(struct vfs_inode));
-  i->inode = inode;
-  list_init(&i->dirents);
+static inline void inode_init(struct vfs_inode *i, unsigned long inode)
+{
+	memset(i, 0, sizeof(struct vfs_inode));
+	i->inode = inode;
+	list_init(&i->dirents);
 }
 
 #define SEEK_SET 0 // offset from beginning of file

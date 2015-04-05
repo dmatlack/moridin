@@ -98,62 +98,62 @@
 #define ATA_CTL_TO_ISA          0x03
 
 #define ATA_WARN(_drive, fmt, ...) \
-  WARN("ATA %s Drive: "fmt, \
-       (_drive)->select & ATA_SELECT_MASTER ? "Master" : "Slave", \
-       ##__VA_ARGS__)
+	WARN("ATA %s Drive: "fmt, \
+			(_drive)->select & ATA_SELECT_MASTER ? "Master" : "Slave", \
+##__VA_ARGS__)
 
 #define ATA_MAX_TIMEOUT 0x1000
 #define ATA_WAIT(_cmd, _status, _timeout, _error, _fault) \
-do { \
-  _timeout = 0; \
-  _error = 0; \
-  _fault = 0; \
-  while (_timeout++ < ATA_MAX_TIMEOUT) { \
-    _status = inb(_cmd + ATA_CMD_STATUS); \
-     \
-    if (_status & ATA_ERR) { \
-      _error = inb(_cmd + ATA_CMD_ERROR); \
-      _timeout = 0; \
-      break; \
-    } \
-    if (_status & ATA_DF) { \
-      _fault = 1; \
-      _timeout = 0; \
-      break; \
-    } \
-    if (!(_status & ATA_BSY) && (_status & ATA_RDY) && !(_status & ATA_DRQ)) { \
-      _timeout = 0; \
-      break; \
-    } \
-  } \
-} while (0)
+	do { \
+		_timeout = 0; \
+		_error = 0; \
+		_fault = 0; \
+		while (_timeout++ < ATA_MAX_TIMEOUT) { \
+			_status = inb(_cmd + ATA_CMD_STATUS); \
+			\
+			if (_status & ATA_ERR) { \
+				_error = inb(_cmd + ATA_CMD_ERROR); \
+				_timeout = 0; \
+				break; \
+			} \
+			if (_status & ATA_DF) { \
+				_fault = 1; \
+				_timeout = 0; \
+				break; \
+			} \
+			if (!(_status & ATA_BSY) && (_status & ATA_RDY) && !(_status & ATA_DRQ)) { \
+				_timeout = 0; \
+				break; \
+			} \
+		} \
+	} while (0)
 
 enum ata_drive_type {
-  ATA_PATAPI,
-  ATA_SATAPI,
-  ATA_PATA,
-  ATA_SATA,
-  ATA_UNKNOWN
+	ATA_PATAPI,
+	ATA_SATAPI,
+	ATA_PATA,
+	ATA_SATA,
+	ATA_UNKNOWN
 };
 static inline const char *drive_type_string(enum ata_drive_type type) {
 #define DT(_t) case (_t): return #_t
-  switch (type) {
-    DT(ATA_PATAPI);
-    DT(ATA_SATAPI);
-    DT(ATA_PATA);
-    DT(ATA_SATA);
-    DT(ATA_UNKNOWN);
-    default: return "ATA_UNKNOWN";
-  }
+	switch (type) {
+		DT(ATA_PATAPI);
+		DT(ATA_SATAPI);
+		DT(ATA_PATA);
+		DT(ATA_SATA);
+		DT(ATA_UNKNOWN);
+	default: return "ATA_UNKNOWN";
+	}
 #undef DT
 }
 
 struct ata_signature {
-  uint8_t sector_count;
-  uint8_t lba_low;
-  uint8_t lba_mid;
-  uint8_t lba_high;
-  uint8_t device;
+	uint8_t sector_count;
+	uint8_t lba_low;
+	uint8_t lba_mid;
+	uint8_t lba_high;
+	uint8_t device;
 };
 
 
@@ -166,54 +166,54 @@ struct ata_signature {
  *  another drive.
  */
 struct ata_drive {
-  struct ata_signature sig;
-  enum ata_drive_type type;
-  uint8_t select; // ATA_SELECT_SLAVE or ATA_SELECT_MASTER
+	struct ata_signature sig;
+	enum ata_drive_type type;
+	uint8_t select; // ATA_SELECT_SLAVE or ATA_SELECT_MASTER
 
-  /*
-   * True if there exists a drive in this slot.
-   */
-  bool exists;
-  /*
-   * True if the drive is set up properly and ready to be used.
-   */
-  bool usable;
+	/*
+	 * True if there exists a drive in this slot.
+	 */
+	bool exists;
+	/*
+	 * True if the drive is set up properly and ready to be used.
+	 */
+	bool usable;
 
 #define ATA_IDENTIFY_SERIAL_WORD_OFFSET 10
 #define ATA_IDENTIFY_SERIAL_WORD_LENGTH 10
-  char serial[ATA_IDENTIFY_SERIAL_WORD_LENGTH*2 + 1];
+	char serial[ATA_IDENTIFY_SERIAL_WORD_LENGTH*2 + 1];
 
 #define ATA_IDENTIFY_FIRMWARE_WORD_OFFSET 23
 #define ATA_IDENTIFY_FIRMWARE_WORD_LENGTH 4
-  char firmware[ATA_IDENTIFY_FIRMWARE_WORD_LENGTH*2 + 1];
+	char firmware[ATA_IDENTIFY_FIRMWARE_WORD_LENGTH*2 + 1];
 
 #define ATA_IDENTIFY_MODEL_WORD_OFFSET 27
 #define ATA_IDENTIFY_MODEL_WORD_LENGTH 20
-  char model[ATA_IDENTIFY_MODEL_WORD_LENGTH*2 + 1];
+	char model[ATA_IDENTIFY_MODEL_WORD_LENGTH*2 + 1];
 
-  /*
-   * One greater than the total number of user addressable sectors. Determined
-   * via the IDENTIFY DEVICE command.
-   */
-  unsigned sectors;
+	/*
+	 * One greater than the total number of user addressable sectors. Determined
+	 * via the IDENTIFY DEVICE command.
+	 */
+	unsigned sectors;
 
 #define ATA_PIO_NOT_SUPPORTED -1
-  int supported_pio_mode;
+	int supported_pio_mode;
 #define ATA_DMA_NOT_SUPPORTED -1
-  int supported_dma_mode;
-  int dma_mode;
-  int dma_min_nano;
-  int dma_nano;
+	int supported_dma_mode;
+	int dma_mode;
+	int dma_min_nano;
+	int dma_nano;
 
-  /*
-   * number of sectors per block supported by READ/WRITE MULTIPLE command
-   */
-  unsigned sectors_per_block;
+	/*
+	 * number of sectors per block supported by READ/WRITE MULTIPLE command
+	 */
+	unsigned sectors_per_block;
 
-  uint16_t major_version;
-  uint16_t minor_version;
+	uint16_t major_version;
+	uint16_t minor_version;
 
-  struct ata_bus *bus;
+	struct ata_bus *bus;
 };
 
 /*
@@ -232,14 +232,14 @@ int  ata_drive_dma_done(struct ata_drive *drive);
  *
  */
 struct ata_bus {
-  bool exists;
+	bool exists;
 
-  int irq;
-  unsigned cmd;
-  unsigned ctl;
+	int irq;
+	unsigned cmd;
+	unsigned ctl;
 
-  struct ata_drive master;
-  struct ata_drive slave;
+	struct ata_drive master;
+	struct ata_drive slave;
 };
 
 int  ata_bus_init(struct ata_bus *bus, int irq, int cmd, int ctl);

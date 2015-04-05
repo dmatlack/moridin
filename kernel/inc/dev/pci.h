@@ -53,98 +53,98 @@ list_typedef(struct pci_bus) pci_bus_list_t;
  * pci_bus is a tree structure.
  */
 struct pci_bus {
-  /*
-   * A pointer to the pci_device struct for this bus. The device will
-   * be a PCI-PCI bridge device, of course.
-   */
-  struct pci_device *self;
+	/*
+	 * A pointer to the pci_device struct for this bus. The device will
+	 * be a PCI-PCI bridge device, of course.
+	 */
+	struct pci_device *self;
 
-  /*
-   * The bus number of this bus.
-   */
-  int bus;
+	/*
+	 * The bus number of this bus.
+	 */
+	int bus;
 
-  /*
-   * A list of devices connected to this bus.
-   */
-  pci_device_list_t devices;
+	/*
+	 * A list of devices connected to this bus.
+	 */
+	pci_device_list_t devices;
 
-  /*
-   * The PCI-PCI bridges connected to this bus.
-   */
-  pci_bus_list_t buses;
-  list_link(struct pci_bus) bus_link;
+	/*
+	 * The PCI-PCI bridges connected to this bus.
+	 */
+	pci_bus_list_t buses;
+	list_link(struct pci_bus) bus_link;
 };
 
 struct pci_device {
 
-  /*
-   * PCI configuration space selectors
-   */
-  int bus;
-  int device;
-  int func;
+	/*
+	 * PCI configuration space selectors
+	 */
+	int bus;
+	int device;
+	int func;
 
-  /*
-   * The PCI Device Configuration Space
-   */
-  struct {
-    uint16_t vendor_id;
-    uint16_t device_id;
-    uint16_t command;
-    uint16_t status;
-    uint8_t  revision_id;
-    uint8_t  progif;
-    uint8_t  subclass;
-    uint8_t  classcode;
-    uint8_t  cache_line_size;
-    uint8_t  latency_timer;
-    uint8_t  header_type;
-    uint8_t  bist;
-    union {
-      struct { /* header_type == 0x00 */
-        uint32_t bar0;
-        uint32_t bar1;
-        uint32_t bar2;
-        uint32_t bar3;
-        uint32_t bar4;
-        uint32_t bar5;
-        uint32_t cardbus_cis_pointer;
-        uint16_t subsystem_vendor_id;
-        uint16_t subsystem_id;
-        uint32_t expansion_rom;
-        uint8_t  capabilities;
-        /* interrupt_line does not affect the device in any way, it just
-         * provides a way for BIOS or OS to provide information about the
-         * device to the device driver. */
-        uint8_t  interrupt_line;
-        uint8_t  interrupt_pin;
-        uint8_t  min_grant;
-        uint8_t  max_latency;
-      };
-    };
-  };
+	/*
+	 * The PCI Device Configuration Space
+	 */
+	struct {
+		uint16_t vendor_id;
+		uint16_t device_id;
+		uint16_t command;
+		uint16_t status;
+		uint8_t  revision_id;
+		uint8_t  progif;
+		uint8_t  subclass;
+		uint8_t  classcode;
+		uint8_t  cache_line_size;
+		uint8_t  latency_timer;
+		uint8_t  header_type;
+		uint8_t  bist;
+		union {
+			struct { /* header_type == 0x00 */
+				uint32_t bar0;
+				uint32_t bar1;
+				uint32_t bar2;
+				uint32_t bar3;
+				uint32_t bar4;
+				uint32_t bar5;
+				uint32_t cardbus_cis_pointer;
+				uint16_t subsystem_vendor_id;
+				uint16_t subsystem_id;
+				uint32_t expansion_rom;
+				uint8_t  capabilities;
+				/* interrupt_line does not affect the device in any way, it just
+				 * provides a way for BIOS or OS to provide information about the
+				 * device to the device driver. */
+				uint8_t  interrupt_line;
+				uint8_t  interrupt_pin;
+				uint8_t  min_grant;
+				uint8_t  max_latency;
+			};
+		};
+	};
 
-  /*
-   * String descriptions of the device
-   */
-  const char *vendor_desc;
-  const char *device_desc;
-  const char *classcode_desc;
-  const char *subclass_desc;
+	/*
+	 * String descriptions of the device
+	 */
+	const char *vendor_desc;
+	const char *device_desc;
+	const char *classcode_desc;
+	const char *subclass_desc;
 
-  /* 
-   * list of all devices on the system 
-   */
-  list_link(struct pci_device) global_link;
-  /* 
-   * devices on the same bus as this device 
-   */
-  list_link(struct pci_device) bus_link;
+	/* 
+	 * list of all devices on the system 
+	 */
+	list_link(struct pci_device) global_link;
+	/* 
+	 * devices on the same bus as this device 
+	 */
+	list_link(struct pci_device) bus_link;
 
 #define PCI_DEVICE_MAX_DRIVERS 32
-  struct pci_device_driver *drivers[PCI_DEVICE_MAX_DRIVERS];
-  unsigned int num_drivers;
+	struct pci_device_driver *drivers[PCI_DEVICE_MAX_DRIVERS];
+	unsigned int num_drivers;
 };
 
 /*
@@ -305,17 +305,17 @@ typedef uint32_t prdt_addr_t;
 
 struct pci_bus_master {
 
-  /*
-   * I/O registers
-   */
-  unsigned cmd;
-  unsigned status;
-  unsigned prdtreg;
+	/*
+	 * I/O registers
+	 */
+	unsigned cmd;
+	unsigned status;
+	unsigned prdtreg;
 
-  /*
-   * The actual Physical Region Descriptor Table
-   */
-  prdt_addr_t prdt;
+	/*
+	 * The actual Physical Region Descriptor Table
+	 */
+	prdt_addr_t prdt;
 };
 
 int  pci_init_bm(struct pci_bus_master *bm, unsigned io);
@@ -326,10 +326,10 @@ void pci_destroy_bm(struct pci_bus_master *bm);
  * to the devices they want to drive.
  */
 struct pci_device_id {
-  uint16_t vendor_id;
-  uint16_t device_id;
-  uint8_t classcode;
-  uint8_t subclass;
+	uint16_t vendor_id;
+	uint16_t device_id;
+	uint8_t classcode;
+	uint8_t subclass;
 };
 
 #define PCI_VENDOR_ANY 0xFFFF
@@ -338,12 +338,12 @@ struct pci_device_id {
 #define PCI_SUBCLASS_ANY 0xFF
 
 #define STRUCT_PCI_DEVICE_ID(vid, did, cc, sc)\
-  {\
-    .vendor_id = vid,\
-    .device_id = did,\
-    .classcode = cc,\
-    .subclass = sc,\
-  }
+{\
+	.vendor_id = vid,\
+	.device_id = did,\
+	.classcode = cc,\
+	.subclass = sc,\
+}
 
 list_typedef(struct pci_device_driver) pci_device_driver_list_t;
 
@@ -352,26 +352,26 @@ list_typedef(struct pci_device_driver) pci_device_driver_list_t;
  * all devices that the driver requests to handle.
  */
 struct pci_device_driver {
-  const char *name;
+	const char *name;
 
-  /*
-   * The pci_device_id identifies the set of devices this driver will be
-   * matched to
-   */
-  struct pci_device_id id;
+	/*
+	 * The pci_device_id identifies the set of devices this driver will be
+	 * matched to
+	 */
+	struct pci_device_id id;
 
-  /**
-   * @brief Called once on the device driver, to allow it to do whatever
-   * initializations it may need.
-   */
-  int (*init)(void);
-  /**
-   * @brief Called with every device that matches this driver's pci_device_id
-   * struct.
-   */
-  int (*new_device)(struct pci_device *pci_d);
+	/**
+	 * @brief Called once on the device driver, to allow it to do whatever
+	 * initializations it may need.
+	 */
+	int (*init)(void);
+	/**
+	 * @brief Called with every device that matches this driver's pci_device_id
+	 * struct.
+	 */
+	int (*new_device)(struct pci_device *pci_d);
 
-  list_link(struct pci_device_driver) pci_link;
+	list_link(struct pci_device_driver) pci_link;
 };
 
 /*

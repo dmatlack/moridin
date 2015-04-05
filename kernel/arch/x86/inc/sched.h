@@ -8,8 +8,9 @@
 
 void __context_switch(void **save_addr, void *restore_addr);
 
-static inline void context_switch(struct thread *to) {
-  __context_switch(&CURRENT_THREAD->context, to->context);
+static inline void context_switch(struct thread *to)
+{
+	__context_switch(&CURRENT_THREAD->context, to->context);
 }
 
 #endif /* !__ARCH_X86_SCHED_H__ */

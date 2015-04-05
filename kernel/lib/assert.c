@@ -25,16 +25,18 @@ ASSERT_FUNCTION_GENERATOR( __assert_greatereq, >= )
 #define SOX_FMT "%s:%d, in %s(), %s returned %d (%s)"
 
 void __succeed_or_die(int expr, const char * exprstr,
-                      const char *file, const char *func, int line) {
-  if (0 != expr) {
-    ERROR(SOX_FMT, file, line, func, exprstr, expr, strerr(expr));
-    panic("PANIC "SOX_FMT, file, line, func, exprstr, expr, strerr(expr));
-  }
+                      const char *file, const char *func, int line)
+{
+	if (0 != expr) {
+		ERROR(SOX_FMT, file, line, func, exprstr, expr, strerr(expr));
+		panic("PANIC "SOX_FMT, file, line, func, exprstr, expr, strerr(expr));
+	}
 }
 
 void __succeed_or_warn(int expr, const char * exprstr,
-                       const char *file, const char *func, int line) {
-  if (0 != expr) {
-    WARN(SOX_FMT, file, line, func, exprstr, expr, strerr(expr));
-  }
+                       const char *file, const char *func, int line)
+{
+	if (0 != expr) {
+		WARN(SOX_FMT, file, line, func, exprstr, expr, strerr(expr));
+	}
 }

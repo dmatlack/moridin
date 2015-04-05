@@ -33,73 +33,73 @@
 #   the prototypes in inc/x86/exn.h !!!!!!!!!!!!!!
 .global exn_\vector
 exn_\vector: 
-  #
-  # Note that we don't generate the iret stack even though it is part
-  # of the registers struct. This is because the iret stack is provided 
-  # already by the machine when the exception occurs.
-  #
+	#
+	# Note that we don't generate the iret stack even though it is part
+	# of the registers struct. This is because the iret stack is provided 
+	# already by the machine when the exception occurs.
+	#
 
-  #
-  # There is an error code on the stack. We are trying to build up the
-  # registers struct here so we need to move the error code somewhere else.
-  # At this point, above (esp) is the iret stack. Below (esp) we will begin
-  # pushing the rest of the registers stack. And then we will push the address
-  # of the registers stack to pass as an argument to the exception handler.
-  #
-  push %eax               # we need to use a register to move data around so save the old value of eax on the stack
-  addl $4, %esp           # move esp back up to the error code on the stack
+	#
+	# There is an error code on the stack. We are trying to build up the
+	# registers struct here so we need to move the error code somewhere else.
+	# At this point, above (esp) is the iret stack. Below (esp) we will begin
+	# pushing the rest of the registers stack. And then we will push the address
+	# of the registers stack to pass as an argument to the exception handler.
+	#
+	push %eax               # we need to use a register to move data around so save the old value of eax on the stack
+	addl $4, %esp           # move esp back up to the error code on the stack
 .if \has_error_code
-  movl (%esp), %eax       # save the error code in eax
+	movl (%esp), %eax       # save the error code in eax
 .else
-  movl $0, %eax           # if there is no error code, use 0
+	movl $0, %eax           # if there is no error code, use 0
 .endif
-  movl %eax, -0x38(%esp)  # save the error code after where we push the registers
-  subl $4, %esp           # restore esp so it points to the old value of eax
-  popl %eax               # restore eax
+	movl %eax, -0x38(%esp)  # save the error code after where we push the registers
+	subl $4, %esp           # restore esp so it points to the old value of eax
+	popl %eax               # restore eax
 .if \has_error_code
-  addl $4, %esp           # finally move esp up again so the next push overwrites the error code
+	addl $4, %esp           # finally move esp up again so the next push overwrites the error code
 .endif
 
-  pushl %ds
-  pushl %es
-  pushl %fs
-  pushl %gs
+	pushl %ds
+	pushl %es
+	pushl %fs
+	pushl %gs
 
-  pushl %eax;
-  pushl %ecx;
-  pushl %edx;
-  pushl %ebx;
-  pushl %ebp;
-  pushl %esi;
-  pushl %edi;
+	pushl %eax;
+	pushl %ecx;
+	pushl %edx;
+	pushl %ebx;
+	pushl %ebp;
+	pushl %esi;
+	pushl %edi;
 
-  movl %cr2, %eax
-  pushl %eax
-  movl %cr3, %eax
-  pushl %eax
+	movl %cr2, %eax
+	pushl %eax
+	movl %cr3, %eax
+	pushl %eax
 
-  movl %esp, %eax       # push the adddress of the registers struct on the stack
-  pushl %eax
+	movl %esp, %eax       # push the adddress of the registers struct on the stack
+	pushl %eax
 
-  subl $4, %esp         # jump over the error code on the stack
+	subl $4, %esp         # jump over the error code on the stack
 
-  pushl $\vector        # push the exception vector onto the stack
+	pushl $\vector        # push the exception vector onto the stack
 
-  #
-  # The handler responsible for this exception is calculated using a jump table
-  #
-  movl $\vector, %eax
-  movl $exn_table, %ecx
-  movl (%ecx, %eax, 0x4), %ecx
-  call *%ecx
+	#
+	# The handler responsible for this exception is calculated using a jump table
+	#
+	movl $\vector, %eax
+	movl $exn_table, %ecx
+	movl (%ecx, %eax, 0x4), %ecx
+	call *%ecx
 
-  popl %eax             # pop off the vector
-  popl %eax             # pop off the error code
+	popl %eax             # pop off the vector
+	popl %eax             # pop off the error code
 
-  #
-  # esp now points to the address of the registers struct
-  #
-  call restore_registers
+	#
+	# esp now points to the address of the registers struct
+	#
+	call restore_registers
 
 .endm
 

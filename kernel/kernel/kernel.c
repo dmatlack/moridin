@@ -36,38 +36,39 @@
  * entry point mb_entry. Ok so it's not the entry point, but it is an entry
  * point.
  */
-void kernel_main() {
-  debug_init();
+void kernel_main()
+{
+	debug_init();
 
-  /*
-   * Set up kmalloc to only allocate dynamic memory in the first 16 MB of
-   * memory. This will allow us to use kmalloc during early startup.
-   *
-   * NOTE: if we use a higher half kernel we'll have to offset these
-   * values
-   */
-  kmalloc_early_init();
+	/*
+	 * Set up kmalloc to only allocate dynamic memory in the first 16 MB of
+	 * memory. This will allow us to use kmalloc during early startup.
+	 *
+	 * NOTE: if we use a higher half kernel we'll have to offset these
+	 * values
+	 */
+	kmalloc_early_init();
 
-  pages_init();
-  vm_init();
-  kmap_init();
-  irq_init();
-  timer_init();
-  initrd_init();
+	pages_init();
+	vm_init();
+	kmap_init();
+	irq_init();
+	timer_init();
+	initrd_init();
 
-  enable_irqs();
+	enable_irqs();
 
-  pci_init();
+	pci_init();
 
-  /////////////////////////////////////////////////////////////////////////////
-  // Temporary hack to get to userspace with some test argv/arc
-  /////////////////////////////////////////////////////////////////////////////
-  {
-    char *argv[4] = { "/init", "arg1", "arg2", ":)" };
-    int argc = 4;
+	///////////////////////////////////////////////////////////////////////
+	// Temporary hack to get to userspace with some test argv/arc
+	//////////////////////////////////////////////////////////////////////
+	{
+		char *argv[4] = { "/init", "arg1", "arg2", ":)" };
+		int argc = 4;
 
-    // TODO: pass in the name of the init binary as a parameter via the
-    // bootloader rather than hardcopying it.
-    run_init((char *) "/init", argc, argv );
-  }
+		// TODO: pass in the name of the init binary as a parameter via the
+		// bootloader rather than hardcopying it.
+		run_init((char *) "/init", argc, argv );
+	}
 }

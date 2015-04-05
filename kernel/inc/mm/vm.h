@@ -12,26 +12,26 @@
 #include <list.h>
 
 #if CONFIG_KERNEL_VIRTUAL_START == 0 // damn gcc warnings...
-  #define kernel_address(addr) \
-     (addr < CONFIG_KERNEL_VIRTUAL_END)
+#define kernel_address(addr) \
+	(addr < CONFIG_KERNEL_VIRTUAL_END)
 #else
-  #define kernel_address(addr) \
-    (addr >= CONFIG_KERNEL_VIRTUAL_START && \
-     addr <  CONFIG_KERNEL_VIRTUAL_END)
+#define kernel_address(addr) \
+	(addr >= CONFIG_KERNEL_VIRTUAL_START && \
+	 addr <  CONFIG_KERNEL_VIRTUAL_END)
 #endif
 
 struct vm_mapping {
-  struct vm_space *space;
+	struct vm_space *space;
 
-  /*
-   * The virtual address of the mapping.
-   */
-  size_t address;
+	/*
+	 * The virtual address of the mapping.
+	 */
+	size_t address;
 
-  /*
-   * The number of pages in the region.
-   */
-  unsigned long num_pages;
+	/*
+	 * The number of pages in the region.
+	 */
+	unsigned long num_pages;
 
 #define VM_R (1 << 0) // read
 #define VM_W (1 << 1) // write
@@ -40,39 +40,39 @@ struct vm_mapping {
 #define VM_S (1 << 4) // supervisor
 #define VM_G (1 << 5) // global
 #define VM_P (1 << 6) // present (FIXME need to implement in arch/x86/vm.c)
-  int flags;
+	int flags;
 
-  /*
-   * The mapped file, NULL if this is an anonymous mapping.
-   */
-  struct vfs_file *file;
-  unsigned long foff;
+	/*
+	 * The mapped file, NULL if this is an anonymous mapping.
+	 */
+	struct vfs_file *file;
+	unsigned long foff;
 
-  list_link(struct vm_mapping) link;
+	list_link(struct vm_mapping) link;
 };
 
 #define M_LENGTH(_m) \
-  ((_m)->num_pages * PAGE_SIZE)
+	((_m)->num_pages * PAGE_SIZE)
 
 #define M_END(_m) \
-  ((_m)->address + M_LENGTH(_m))
+	((_m)->address + M_LENGTH(_m))
 
 #define M_WRITEABLE(_m) \
-  ((_m)->flags & VM_W)
+	((_m)->flags & VM_W)
 
 list_typedef(struct vm_mapping) vm_mapping_list_t;
 
 struct vm_space {
-  /*
-   * Opaque pointer needed by the architecture specific Memory Management
-   * Unit (MMU) to support virtual memory.
-   */
-  void *mmu;
+	/*
+	 * Opaque pointer needed by the architecture specific Memory Management
+	 * Unit (MMU) to support virtual memory.
+	 */
+	void *mmu;
 
-  /*
-   * A list of all memory mapped regions of the address space.
-   */
-  vm_mapping_list_t mappings;
+	/*
+	 * A list of all memory mapped regions of the address space.
+	 */
+	vm_mapping_list_t mappings;
 };
 
 extern struct vm_space boot_vm_space;
@@ -99,8 +99,8 @@ int  vm_space_fork(struct vm_space *to, struct vm_space *from);
 #include <fs/vfs.h>
 
 unsigned long vm_mmap(unsigned long addr, unsigned long length,
-                      int prot, int flags,
-                      struct vfs_file *file, unsigned long off);
+		int prot, int flags,
+		struct vfs_file *file, unsigned long off);
 
 int vm_munmap(unsigned long addr, unsigned long length);
 

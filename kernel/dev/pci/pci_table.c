@@ -1,7 +1,7 @@
 /*
-pci_table.c
+   pci_table.c
 
-Tables with PCI vendor and device identifiers
+   Tables with PCI vendor and device identifiers
 
 Created:	Jan 2000 by Philip Homburg <philip@cs.vu.nl>
 
@@ -18,8 +18,8 @@ See the Linux PCI ID Repository <http://pciids.sourceforge.net/>.
 #include <stddef.h>
 
 struct pci_vendor_desc {
-  uint16_t vendor_id;
-  const char *desc;
+	uint16_t vendor_id;
+	const char *desc;
 };
 
 struct pci_vendor_desc pci_vendor_table[]=
@@ -57,19 +57,19 @@ struct pci_vendor_desc pci_vendor_table[]=
 	{ 0x0000, NULL }
 };
 const char *pci_lookup_vendor(uint16_t vendor_id) {
-  unsigned int i;
-  for (i = 0; i < arraylen(pci_vendor_table); i++) {
-    if (vendor_id == pci_vendor_table[i].vendor_id) {
-      return pci_vendor_table[i].desc;
-    }
-  }
-  return "UNKNOWN";
+	unsigned int i;
+	for (i = 0; i < arraylen(pci_vendor_table); i++) {
+		if (vendor_id == pci_vendor_table[i].vendor_id) {
+			return pci_vendor_table[i].desc;
+		}
+	}
+	return "UNKNOWN";
 }
 
 struct pci_device_desc {
-  uint16_t vendor_id;
-  uint16_t device_id;
-  const char *desc;
+	uint16_t vendor_id;
+	uint16_t device_id;
+	const char *desc;
 };
 struct pci_device_desc pci_device_table[]=
 {
@@ -159,20 +159,20 @@ struct pci_device_desc pci_device_table[]=
 	{ 0x8086, 0x1004, "Intel 82543GC Gigabit Ethernet Controller" },
 	{ 0x8086, 0x100E, "Intel PRO/1000 MT Desktop Adapter" },
 	{ 0x8086, 0x100F, "Intel PRO/1000 MT 82545EM" },
- 	{ 0x8086, 0x1029, "Intel EtherExpressPro100 ID1029" },
- 	{ 0x8086, 0x1030, "Intel Corporation 82559 InBusiness 10/100" },
+	{ 0x8086, 0x1029, "Intel EtherExpressPro100 ID1029" },
+	{ 0x8086, 0x1030, "Intel Corporation 82559 InBusiness 10/100" },
 	{ 0x8086, 0x1031, "Intel Corporation 82801CAM PRO/100 VE" },
 	{ 0x8086, 0x1032, "Intel Corporation 82801CAM PRO/100 VE" },
- 	{ 0x8086, 0x103d, "Intel Corporation 82801DB PRO/100 VE (MOB)" },
- 	{ 0x8086, 0x1064, "Intel Corporation 82562 PRO/100 VE" },
+	{ 0x8086, 0x103d, "Intel Corporation 82801DB PRO/100 VE (MOB)" },
+	{ 0x8086, 0x1064, "Intel Corporation 82562 PRO/100 VE" },
 	{ 0x8086, 0x107C, "Intel PRO/1000 GT Desktop Adapter" },
 	{ 0x8086, 0x10CD, "Intel PRO/1000 Gigabit Network Connection" },
 	{ 0x8086, 0x10D3, "Intel 82574L Gigabit Network Connection" },
 	{ 0x8086, 0x105E, "Intel 82571EB Gigabit Ethernet Controller" },
 	{ 0x8086, 0x1130, "Intel 82815/82815EM/EP Host-Hub Interface Bridge / DRAM Ctrlr" },
 	{ 0x8086, 0x1131, "Intel 82815/82815EM/EP AGP Bridge" },
- 	{ 0x8086, 0x1209, "Intel EtherExpressPro100 82559ER" },
- 	{ 0x8086, 0x1229, "Intel EtherExpressPro100 82557/8/9" },
+	{ 0x8086, 0x1209, "Intel EtherExpressPro100 82559ER" },
+	{ 0x8086, 0x1229, "Intel EtherExpressPro100 82557/8/9" },
 	{ 0x8086, 0x122D, "Intel 82437FX" },
 	{ 0x8086, 0x122E, "Intel 82371FB (PIIX)" },
 	{ 0x8086, 0x1230, "Intel 82371FB (IDE)" },
@@ -193,21 +193,21 @@ struct pci_device_desc pci_device_table[]=
 	{ 0x8086, 0x244B, "Intel 82801BA IDE Controller" } ,
 	{ 0x8086, 0x244C, "Intel 82801BAM LPC Interface Bridge" } ,
 	{ 0x8086, 0x244E, "Intel 82801DB Hub Interface to PCI Bridge" } ,
- 	{ 0x8086, 0x2449, "Intel EtherExpressPro100 82562EM" },
- 	{ 0x8086, 0x244e, "Intel 82801 PCI Bridge" },
- 	{ 0x8086, 0x2560, "Intel 82845G/GL[Brookdale-G]/GE/PE" },
- 	{ 0x8086, 0x2561, "Intel 82845G/GL/GE/PE Host-to-AGP Bridge" },
+	{ 0x8086, 0x2449, "Intel EtherExpressPro100 82562EM" },
+	{ 0x8086, 0x244e, "Intel 82801 PCI Bridge" },
+	{ 0x8086, 0x2560, "Intel 82845G/GL[Brookdale-G]/GE/PE" },
+	{ 0x8086, 0x2561, "Intel 82845G/GL/GE/PE Host-to-AGP Bridge" },
 	{ 0x8086, 0x7000, "Intel 82371SB" },
 	{ 0x8086, 0x7010, "Intel 82371SB (IDE)" },
 	{ 0x8086, 0x7020, "Intel 82371SB (USB)" },
- 	{ 0x8086, 0x7030, "Intel 82437VX" },	/* asw 2005-03-02 */
- 	{ 0x8086, 0x7100, "Intel 82371AB" },  	/* asw 2004-07-31 */
+	{ 0x8086, 0x7030, "Intel 82437VX" },	/* asw 2005-03-02 */
+	{ 0x8086, 0x7100, "Intel 82371AB" },  	/* asw 2004-07-31 */
 	{ 0x8086, 0x7100, "Intel 82371AB" },
 	{ 0x8086, 0x7110, "Intel 82371AB (PIIX4)" },
 	{ 0x8086, 0x7111, "Intel 82371AB (IDE)" },
 	{ 0x8086, 0x7112, "Intel 82371AB (USB)" },
 	{ 0x8086, 0x7113, "Intel 82371AB (Power)" },
- 	{ 0x8086, 0x7124, "Intel 82801AA" },	/* asw 2004-11-09 */
+	{ 0x8086, 0x7124, "Intel 82801AA" },	/* asw 2004-11-09 */
 	{ 0x8086, 0x7190, "Intel 82443BX" },
 	{ 0x8086, 0x7191, "Intel 82443BX (AGP bridge)" },
 	{ 0x8086, 0x7192, "Intel 82443BX (Host-to-PCI bridge)" },
@@ -217,19 +217,19 @@ struct pci_device_desc pci_device_table[]=
 	{ 0x0000, 0x0000, NULL }
 };
 const char *pci_lookup_device(uint16_t vendor_id, uint16_t device_id) {
-  unsigned int i;
-  for (i = 0; i < arraylen(pci_device_table); i++) {
-    struct pci_device_desc *d = pci_device_table + i;
-    if (vendor_id == d->vendor_id && device_id == d->device_id) {
-      return d->desc;
-    }
-  }
-  return "UNKNOWN";
+	unsigned int i;
+	for (i = 0; i < arraylen(pci_device_table); i++) {
+		struct pci_device_desc *d = pci_device_table + i;
+		if (vendor_id == d->vendor_id && device_id == d->device_id) {
+			return d->desc;
+		}
+	}
+	return "UNKNOWN";
 }
 
 struct pci_classcode_desc {
-  uint8_t classcode;
-  const char *desc;
+	uint8_t classcode;
+	const char *desc;
 };
 struct pci_classcode_desc pci_classcode_table[]=
 {
@@ -256,21 +256,21 @@ struct pci_classcode_desc pci_classcode_table[]=
 	{ 0x00, NULL }
 };
 const char *pci_lookup_classcode(uint8_t classcode) {
-  unsigned int i;
-  for (i = 0; i < arraylen(pci_classcode_table); i++) {
-    struct pci_classcode_desc *d = pci_classcode_table + i;
-    if (classcode == d->classcode) {
-      return d->desc;
-    }
-  }
-  return "UNKNOWN";
+	unsigned int i;
+	for (i = 0; i < arraylen(pci_classcode_table); i++) {
+		struct pci_classcode_desc *d = pci_classcode_table + i;
+		if (classcode == d->classcode) {
+			return d->desc;
+		}
+	}
+	return "UNKNOWN";
 }
 
 struct pci_subclass_desc {
-  uint8_t classcode;
-  uint8_t subclass;
-  uint8_t progif;
-  const char *desc;
+	uint8_t classcode;
+	uint8_t subclass;
+	uint8_t progif;
+	const char *desc;
 };
 /* 0xFF in the progif field is a wildcard */
 struct pci_subclass_desc pci_subclass_table[]=
@@ -330,16 +330,16 @@ struct pci_subclass_desc pci_subclass_table[]=
 	{ 0x00, 0x00, 0x00, NULL }
 };
 const char *pci_lookup_subclass(uint8_t classcode, uint8_t subclass,
-                                uint8_t progif) {
-  unsigned int i;
-  for (i = 0; i < arraylen(pci_subclass_table); i++) {
-    struct pci_subclass_desc *d = pci_subclass_table + i;
-    if (classcode == d->classcode && subclass == d->subclass &&
-        (0xFF == d->progif || progif == d->progif)) {
-      return d->desc;
-    }
-  }
-  return "UNKNOWN";
+		uint8_t progif) {
+	unsigned int i;
+	for (i = 0; i < arraylen(pci_subclass_table); i++) {
+		struct pci_subclass_desc *d = pci_subclass_table + i;
+		if (classcode == d->classcode && subclass == d->subclass &&
+				(0xFF == d->progif || progif == d->progif)) {
+			return d->desc;
+		}
+	}
+	return "UNKNOWN";
 }
 
 #if 0
@@ -359,9 +359,9 @@ struct pci_intel_ctrl pci_intel_ctrl[]=
 	{ 0x8086, 0x1250, },	/* Intel 82439HX */
 	{ 0x8086, 0x1A30, },	/* Intel 82845 MCH */
 	{ 0x8086, 0x2560, },	/* Intel 82845G/GL[Brookdale-G]/GE/PE */
- 	{ 0x8086, 0x7030, },	/* Intel 82437VX (asw 2005-03-02) */ 
- 	{ 0x8086, 0x7100, },	/* Intel 82371AB (asw 2004-07-31) */
- 	{ 0x8086, 0x7124, },	/* Intel 82801AA (asw 2004-11-09) */
+	{ 0x8086, 0x7030, },	/* Intel 82437VX (asw 2005-03-02) */ 
+	{ 0x8086, 0x7100, },	/* Intel 82371AB (asw 2004-07-31) */
+	{ 0x8086, 0x7124, },	/* Intel 82801AA (asw 2004-11-09) */
 	{ 0x8086, 0x7190, },	/* Intel 82443BX - AGP enabled */
 	{ 0x8086, 0x7192, },	/* Intel 82443BX - AGP disabled */
 	{ 0x0000, 0x0000, },
@@ -378,10 +378,10 @@ struct pci_isabridge pci_isabridge[]=
 	{ 0x8086, 0x122E, 1, PCI_IB_PIIX,	},	/* Intel 82371FB */
 	{ 0x8086, 0x2440, 1, PCI_IB_PIIX,	},	/* Intel 82801B */
 	{ 0x8086, 0x7000, 1, PCI_IB_PIIX,	},	/* Intel 82371SB */
- 	{ 0x8086, 0x7030, 1, PCI_IB_PIIX,	},	/* Intel 82437VX (asw 2005-03-02) */
- 	{ 0x8086, 0x7100, 1, PCI_IB_PIIX,	},	/* Intel 82371AB (asw 2004-07-31) */
- 	{ 0x8086, 0x7110, 1, PCI_IB_PIIX,	},	/* Intel PIIX4 */
- 	{ 0x8086, 0x7124, 1, PCI_IB_PIIX,	},	/* Intel 82801AA (asw 2004-11-09) */
+	{ 0x8086, 0x7030, 1, PCI_IB_PIIX,	},	/* Intel 82437VX (asw 2005-03-02) */
+	{ 0x8086, 0x7100, 1, PCI_IB_PIIX,	},	/* Intel 82371AB (asw 2004-07-31) */
+	{ 0x8086, 0x7110, 1, PCI_IB_PIIX,	},	/* Intel PIIX4 */
+	{ 0x8086, 0x7124, 1, PCI_IB_PIIX,	},	/* Intel 82801AA (asw 2004-11-09) */
 	{ 0x0000, 0x0000, 0, 0, 		},
 };
 

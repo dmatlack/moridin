@@ -37,28 +37,28 @@ list_typedef(struct process) proc_list_t;
 
 #define THREAD_STRUCT_ALIGN PAGE_SIZE
 struct thread {
-  char               kstack[KSTACK_SIZE];
-  struct process    *proc;
-  struct registers  *regs;
-  void              *context;
-  int                tid;
+	char               kstack[KSTACK_SIZE];
+	struct process    *proc;
+	struct registers  *regs;
+	void              *context;
+	int                tid;
 
-  list_link(struct thread) thread_link;
-  list_link(struct thread) sched_link;
+	list_link(struct thread) thread_link;
+	list_link(struct thread) sched_link;
 
 } __attribute__((aligned (THREAD_STRUCT_ALIGN)));
 
 
 
 struct process {
-  struct process    *parent; 
-  proc_list_t        children;
-  thread_list_t      threads;
-  struct vm_space    space;
-  int                next_tid;
-  int                pid;
+	struct process    *parent; 
+	proc_list_t        children;
+	thread_list_t      threads;
+	struct vm_space    space;
+	int                next_tid;
+	int                pid;
 
-  list_link(struct process) sibling_link;
+	list_link(struct process) sibling_link;
 
 };
 
@@ -69,17 +69,17 @@ struct process {
  * @brief Allocate an initialize a new thread struct.
  */
 static inline struct thread *new_thread_struct() {
-  struct thread *t;
-  
-  t = kmemalign(THREAD_STRUCT_ALIGN, sizeof(struct thread));
-  if (t) {
-    memset(t, 0, sizeof(struct thread));
-  }
-  return t;
+	struct thread *t;
+
+	t = kmemalign(THREAD_STRUCT_ALIGN, sizeof(struct thread));
+	if (t) {
+		memset(t, 0, sizeof(struct thread));
+	}
+	return t;
 }
 
 static inline void free_thread_struct(struct thread *t) {
-  kfree(t, sizeof(struct thread));
+	kfree(t, sizeof(struct thread));
 }
 
 int next_pid(void);
@@ -87,33 +87,37 @@ int next_pid(void);
 /**
  * @brief Allocate and initialize a new process struct.
  */
-static inline struct process *new_process_struct() {
-  struct process *p;
+static inline struct process *new_process_struct()
+{
+	struct process *p;
 
-  p = kmalloc(sizeof(struct process));
-  if (p) {
-    list_init(&p->children);
-    list_init(&p->threads);
-    list_elem_init(p, sibling_link);
-    p->pid = next_pid();
-    p->next_tid = 0;
-  }
-  return p;
+	p = kmalloc(sizeof(struct process));
+	if (p) {
+		list_init(&p->children);
+		list_init(&p->threads);
+		list_elem_init(p, sibling_link);
+		p->pid = next_pid();
+		p->next_tid = 0;
+	}
+	return p;
 }
 
-static inline void free_process_struct(struct process *p) {
-  kfree(p, sizeof(struct process));
+static inline void free_process_struct(struct process *p)
+{
+	kfree(p, sizeof(struct process));
 }
 
-static inline void add_thread(struct process *p, struct thread *t) {
-  list_insert_tail(&p->threads, t, thread_link);
-  t->proc = p;
-  t->tid = atomic_add(&p->next_tid, 1);
+static inline void add_thread(struct process *p, struct thread *t)
+{
+	list_insert_tail(&p->threads, t, thread_link);
+	t->proc = p;
+	t->tid = atomic_add(&p->next_tid, 1);
 }
 
-static inline void add_child_process(struct process *parent, struct process *child) {
-  child->parent = parent;
-  list_insert_tail(&parent->children, child, sibling_link);
+static inline void add_child_process(struct process *parent, struct process *child)
+{
+	child->parent = parent;
+	list_insert_tail(&parent->children, child, sibling_link);
 }
 
 #endif /* !_KERNEL_PROC_H__ */

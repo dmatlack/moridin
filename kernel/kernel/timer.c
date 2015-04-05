@@ -18,26 +18,27 @@ int __timer_hz;
 /**
  * @brief Initialize the system timer. This is the timer used for multitasking.
  */
-void timer_init(void) {
-  int ret;
+void timer_init(void)
+{
+	int ret;
 
-  TRACE("");
+	TRACE("");
 
-  __timer_hz = CONFIG_TIMER_HZ;
+	__timer_hz = CONFIG_TIMER_HZ;
 
-  /*
-   * Initialize the timer hardware
-   */
-  if (0 != (ret = pit_init(__timer_hz))) {
-    panic("Coudn't initialize the Programmable Interrupt Timer: %d/%s",
-        ret, strerr(ret));
-  }
+	/*
+	 * Initialize the timer hardware
+	 */
+	if (0 != (ret = pit_init(__timer_hz))) {
+		panic("Coudn't initialize the Programmable Interrupt Timer: %d/%s",
+				ret, strerr(ret));
+	}
 
-  /*
-   * Register a handler for timer interrupts
-   */
-  __timer_handler.top_handler    = NULL;
-  __timer_handler.bottom_handler = NULL;
+	/*
+	 * Register a handler for timer interrupts
+	 */
+	__timer_handler.top_handler    = NULL;
+	__timer_handler.bottom_handler = NULL;
 
-  register_irq(IRQ_TIMER, &__timer_handler);
+	register_irq(IRQ_TIMER, &__timer_handler);
 }

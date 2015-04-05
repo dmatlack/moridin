@@ -10,11 +10,11 @@
 #define arraylen(array) (sizeof(array)/sizeof(array[0]))
 
 #define offset_of(struct_type,field)	\
-  ((size_t) (&((struct_type *) 0)->field))
+	((size_t) (&((struct_type *) 0)->field))
 
 #define container_of(ptr, struct_type, struct_member)                     \
-  ({ const __typeof__(((struct_type *) 0)->struct_member) *__ptr = (ptr); \
-     (struct_type *) ((char *) __ptr - offset_of(struct_type, struct_member)); })
+	({ const __typeof__(((struct_type *) 0)->struct_member) *__ptr = (ptr); \
+	 (struct_type *) ((char *) __ptr - offset_of(struct_type, struct_member)); })
 
 /**
  * @brief return the largest value <= x that is a multiple of N.
@@ -41,7 +41,7 @@
  * @return the rounded up value
  */
 #define CEIL(size, val) \
-  (((((unsigned) (val)) + ((unsigned) (size) - 1)) / (size)) * (size))
+	(((((unsigned) (val)) + ((unsigned) (size) - 1)) / (size)) * (size))
 
 /**
  * @brief floors down to the nearest multiple of size
@@ -50,7 +50,7 @@
  * @return the rounded down value
  */
 #define FLOOR(size, val) \
-  ((((unsigned) (val)) / (size)) * (size))
+	((((unsigned) (val)) / (size)) * (size))
 
 /**
  * @brief Return the binary number that contains n ones in a row.
@@ -61,16 +61,18 @@
  */
 #define MASK(n) ((1 << n) - 1)
 
-static inline void __set_bit(int *word, int index, int bit) {
-  *word = (bit == 0) ?
-      (*word) & ~(1 << index)
-      :
-      (*word) | (1 << index);
+static inline void __set_bit(int *word, int index, int bit)
+{
+	*word = (bit == 0) ?
+		(*word) & ~(1 << index)
+		:
+		(*word) | (1 << index);
 }
 #define set_bit(w, i, b) __set_bit((int *) w, (int) i, (int) b)
 
-static inline int __get_bit(int word, int index) {
-  return (word >> index) & 0x1;
+static inline int __get_bit(int word, int index)
+{
+	return (word >> index) & 0x1;
 }
 #define get_bit(w, i)    __get_bit((int) w, (int) i)
 
@@ -79,9 +81,10 @@ static inline int __get_bit(int word, int index) {
  *
  * <index> is the BYTE INDEX. Meaning, <index> = 1 will affect bits 8-15.
  */
-static inline void __set_byte(int *word, int index, int byte) {
-  *word &= MASK(8) << (index*8);
-  *word &= byte << (index*8);
+static inline void __set_byte(int *word, int index, int byte)
+{
+	*word &= MASK(8) << (index*8);
+	*word &= byte << (index*8);
 }
 #define set_byte(w, i, b) __set_byte((int*)w, (int)i, (int)b)
 

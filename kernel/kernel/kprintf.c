@@ -15,26 +15,29 @@
 struct printf_state kprintf_state;
 void (*__kputchar)(char c);
 
-void kputchar_set(void (*kpc)(char)) {
-  __kputchar = kpc;
+void kputchar_set(void (*kpc)(char))
+{
+	__kputchar = kpc;
 }
 
-int kputchar(int c) {
-  __kputchar((char) c);
-  return c;
+int kputchar(int c)
+{
+	__kputchar((char) c);
+	return c;
 }
 
-int kprintf(const char *fmt, ...) {
-  va_list args;
-  int err;
+int kprintf(const char *fmt, ...)
+{
+	va_list args;
+	int err;
 
-  // here we specify our putchar method
-  kprintf_state.putchar = kputchar;
+	// here we specify our putchar method
+	kprintf_state.putchar = kputchar;
 
-  // now print using the specified putchar!
-  va_start(args, fmt);
-  err = _vprintf(&kprintf_state, fmt, args);
-  va_end(args);
+	// now print using the specified putchar!
+	va_start(args, fmt);
+	err = _vprintf(&kprintf_state, fmt, args);
+	va_end(args);
 
-  return err;
+	return err;
 }

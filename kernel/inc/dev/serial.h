@@ -33,10 +33,10 @@
 #define SERIAL_PORT_SRATCH        0x07
 
 struct serial_port {
-  unsigned port;
-  unsigned irq;
-  bool reserved;
-  const char *purpose;
+	unsigned port;
+	unsigned irq;
+	bool reserved;
+	const char *purpose;
 };
 
 void serial_port_init(void);

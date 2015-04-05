@@ -9,42 +9,42 @@
 #include <arch/irq.h>
 
 struct irq_context {
-  int irq;
+	int irq;
 };
 
 typedef void (*irq_handler_f)(struct irq_context *context);
 
 struct irq_handler {
-  /**
-   * @brief The top_handler, if registered, is executed in interrupt context,
-   * while interrupts are disabled. It should be short and sweet.
-   */
-  irq_handler_f top_handler;
-  /**
-   * @brief The bottom_handler, if registered, is executed some time after
-   * the interrupt has been acknowledged. It runs with interrupts enabled.
-   */
-  irq_handler_f bottom_handler;
+	/**
+	 * @brief The top_handler, if registered, is executed in interrupt context,
+	 * while interrupts are disabled. It should be short and sweet.
+	 */
+	irq_handler_f top_handler;
+	/**
+	 * @brief The bottom_handler, if registered, is executed some time after
+	 * the interrupt has been acknowledged. It runs with interrupts enabled.
+	 */
+	irq_handler_f bottom_handler;
 
-  list_link(struct irq_handler) link;
+	list_link(struct irq_handler) link;
 };
 
 list_typedef(struct irq_handler) irq_handler_list_t;
 
 struct irq_state {
-  /**
-   * @brief The list of handlers that are register to receive this interrupt.
-   */
-  irq_handler_list_t handlers;
-  /**
-   * @brief The number of times this interrupt has occured.
-   */
-  int count;
-  /**
-   * @brief Incremented upon receiving an interrupt, decremented after all
-   * handlers have been run.
-   */
-  int in_irq;
+	/**
+	 * @brief The list of handlers that are register to receive this interrupt.
+	 */
+	irq_handler_list_t handlers;
+	/**
+	 * @brief The number of times this interrupt has occured.
+	 */
+	int count;
+	/**
+	 * @brief Incremented upon receiving an interrupt, decremented after all
+	 * handlers have been run.
+	 */
+	int in_irq;
 };
 
 void irq_init(void);

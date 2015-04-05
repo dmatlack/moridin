@@ -15,22 +15,22 @@
 
 struct initrd_hdr {
 #define INITRD_MAGIC 0x98119
-  uint32_t magic;
-  uint32_t nfiles;
+	uint32_t magic;
+	uint32_t nfiles;
 };
 
 struct initrd_file {
 #define INITRD_NAMESIZE 128
-  char name[INITRD_NAMESIZE];
-  /*
-   * The location of the files data as an offset from the beginning of
-   * the ramdisk.
-   */
-  uint32_t data;
-  /*
-   * The length of the data in bytes
-   */
-  uint32_t length;
+	char name[INITRD_NAMESIZE];
+	/*
+	 * The location of the files data as an offset from the beginning of
+	 * the ramdisk.
+	 */
+	uint32_t data;
+	/*
+	 * The length of the data in bytes
+	 */
+	uint32_t length;
 };
 
 void initrd_init(void);

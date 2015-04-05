@@ -37,20 +37,20 @@ int trace(const char *fmt, ...);
 #define PANIC(fmt, ...) log(LOG_LEVEL_ERROR, "[PANIC] "fmt"\n", ##__VA_ARGS__)
 
 #ifdef KDEBUG
-  #define DEBUG_DO(...) \
-    do { \
-      log(LOG_LEVEL_DEBUG, __VA_ARGS__); \
-      kprintf(__VA_ARGS__); \
-    } while (0)
+#define DEBUG_DO(...) \
+	do { \
+		log(LOG_LEVEL_DEBUG, __VA_ARGS__); \
+		kprintf(__VA_ARGS__); \
+	} while (0)
 
-  #define DEBUG(fmt, ...) \
-    DEBUG_DO("[DEBUG][%s:%d %s()] "fmt"\n", __FILE__, __LINE__, __func__, ##__VA_ARGS__)
+#define DEBUG(fmt, ...) \
+	DEBUG_DO("[DEBUG][%s:%d %s()] "fmt"\n", __FILE__, __LINE__, __func__, ##__VA_ARGS__)
 
-  #define TRACE(fmt, ...) \
-    trace("[TRACE] %s("fmt")\n", __func__, ##__VA_ARGS__)
+#define TRACE(fmt, ...) \
+	trace("[TRACE] %s("fmt")\n", __func__, ##__VA_ARGS__)
 #else
-  #define DEBUG(fmt, ...)
-  #define TRACE(fmt, ...)
+#define DEBUG(fmt, ...)
+#define TRACE(fmt, ...)
 #endif
 
 #endif /* !__DEBUG_LOG_H__ */

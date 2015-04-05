@@ -12,12 +12,13 @@
 
 #define ELF32_MAGIC_SIZE 4
 static char elf32_magic[ELF32_MAGIC_SIZE] =
-  { ELFMAG0, ELFMAG1, ELFMAG2, ELFMAG3 };
+	{ ELFMAG0, ELFMAG1, ELFMAG2, ELFMAG3 };
 
-static inline bool is_elf32(char *header, size_t bytes) {
-  return (bytes >= ELF32_MAGIC_SIZE)
-         && 
-         (0 == memcmp(header, elf32_magic, ELF32_MAGIC_SIZE));
+static inline bool is_elf32(char *header, size_t bytes)
+{
+	return (bytes >= ELF32_MAGIC_SIZE)
+		&&
+		(0 == memcmp(header, elf32_magic, ELF32_MAGIC_SIZE));
 }
 
 int elf32_load(struct vfs_file *file);
