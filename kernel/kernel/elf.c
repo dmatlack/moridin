@@ -41,7 +41,7 @@ struct elf32_ehdr *elf32_get_ehdr(struct vfs_file *file)
 	ASSERT_EQUALS(ret, 0);
 
 	bytes = vfs_read(file, (char *) ehdr, sizeof(struct elf32_ehdr));
-	if (bytes < (ssize_t) sizeof(struct elf32_ehdr)) { 
+	if (bytes < (ssize_t) sizeof(struct elf32_ehdr)) {
 		kfree(ehdr, sizeof(struct elf32_ehdr));
 		return NULL;
 	}
@@ -70,19 +70,22 @@ struct elf32_phdr *elf32_get_phdrs(struct vfs_file *file,
 	ret = vfs_seek(file, ehdr->e_phoff, SEEK_SET);
 	if (ret < 0) {
 		DEBUG("%s: couldn't seek the program headers at 0x%x",
-				file->dirent->name, ehdr->e_phoff);
+			file->dirent->name, ehdr->e_phoff);
 	}
 
 	for (i = 0; i < ehdr->e_phnum; i++) {
-		ssize_t bytes = vfs_read(file, (char *) (phdrs + i), ehdr->e_phentsize);
+		void *phdr = phdrs + i;
+		ssize_t bytes;
+
+		bytes = vfs_read(file, phdr, ehdr->e_phentsize);
 		if (bytes < 0) {
 			DEBUG("%s: failed to read the %d phdr (vfs_read() returned %s)",
-					file->dirent->name, i, strerr(bytes));
+			      file->dirent->name, i, strerr(bytes));
 			goto phdrs_cleanup;
 		}
 		if (bytes < ehdr->e_phentsize) {
 			DEBUG("%s: failed to read the _entire_ %d phdr (read %d/%d bytes)",
-					file->dirent->name, i, bytes, ehdr->e_phentsize);
+			      file->dirent->name, i, bytes, ehdr->e_phentsize);
 			goto phdrs_cleanup;
 		}
 	}
@@ -111,11 +114,12 @@ static void elf32_unmap(struct elf32_ehdr *ehdr, struct elf32_phdr *phdrs)
 static void log_phdr(struct elf32_phdr *p)
 {
 	INFO("\n"
-			"  %-4s %-10s %-10s %-10s %-6s %-6s %-4s %-6s\n"
-			"  %-4d 0x%08x 0x%08x 0x%08x %-6d %-6d 0x%02x 0x%04x",
-			"type", "offset", "vaddr", "paddr", "filesz", "memsz", "flg", "align",
-			p->p_type, p->p_offset, p->p_vaddr, p->p_paddr, p->p_filesz,
-			p->p_memsz, p->p_flags, p->p_align);
+	     "  %-4s %-10s %-10s %-10s %-6s %-6s %-4s %-6s\n"
+	     "  %-4d 0x%08x 0x%08x 0x%08x %-6d %-6d 0x%02x 0x%04x",
+	     "type", "offset", "vaddr", "paddr", "filesz", "memsz", "flg",
+	     "align",
+	     p->p_type, p->p_offset, p->p_vaddr, p->p_paddr, p->p_filesz,
+	     p->p_memsz, p->p_flags, p->p_align);
 }
 
 /**
@@ -124,7 +128,8 @@ static void log_phdr(struct elf32_phdr *p)
  * @return
  *    0 on success
  */
-int __elf32_load(struct vfs_file *file, struct elf32_ehdr *ehdr, struct elf32_phdr *phdrs)
+int __elf32_load(struct vfs_file *file, struct elf32_ehdr *ehdr,
+		 struct elf32_phdr *phdrs)
 {
 	unsigned long error;
 	int i;
@@ -144,18 +149,21 @@ int __elf32_load(struct vfs_file *file, struct elf32_ehdr *ehdr, struct elf32_ph
 		/*
 		 * Map the elf into memory.
 		 */
-		error = vm_mmap(p->p_vaddr, p->p_memsz, prot, flags, file, p->p_offset);
+		error = vm_mmap(p->p_vaddr, p->p_memsz, prot,
+				flags, file, p->p_offset);
 		error %= PAGE_SIZE;
-		if (error) {
-			goto load_fail;      
-		}
+		if (error)
+			goto load_fail;
 
 		/*
-		 * Finally write 0s if the size of the section in memory is larger than
-		 * the size of the section in the file.
+		 * Finally write 0s if the size of the section in memory is
+		 * larger than the size of the section in the file.
 		 */
 		if (p->p_filesz < p->p_memsz) {
-			memset((void *) (p->p_vaddr + p->p_filesz), 0, p->p_memsz - p->p_filesz);
+			void *zero_start = (void *) p->p_vaddr + p->p_filesz;
+			unsigned long zero_size = p->p_memsz - p->p_filesz;
+
+			memset(zero_start, 0, zero_size);
 		}
 	}
 
@@ -199,7 +207,8 @@ int elf32_load(struct vfs_file *file)
 	 * Sanity check the executable
 	 */
 	if (ET_EXEC != ehdr->e_type) {
-		DEBUG("%s: unsupported type %s", file->dirent->name, elf32_type(ehdr->e_type));
+		DEBUG("%s: unsupported type %s", file->dirent->name,
+		      elf32_type(ehdr->e_type));
 		ret = ENOEXEC;
 		goto free_ehdr_ret;
 	}
