@@ -6,29 +6,31 @@
 #
 ###############################################################################
 
-ARCH:=x86
-ARCHMACRO := ARCH_$(shell echo $(ARCH) | tr '[:lower:]' '[:upper:]')
+ifndef ARCH
+$(error Must compile for a target architecture. Run 'make ARCH=foo' or \
+	set an ARCH environment variable)
+endif
 
 ifeq ($(ARCH),x86)
-CC = i586-elf-gcc
-LD = i586-elf-ld
-AS = i586-elf-as
+CC := i586-elf-gcc
+LD := i586-elf-ld
+AS := i586-elf-as
 else
-$(error "Cannot compile for unknown architecture: $(ARCH)")
+$(error Unknown architecture: $(ARCH))
 endif
 
 WARNINGS := \
-			-Wall \
-			-Wextra \
-			-Wshadow \
-			-Wcast-align \
-			-Wredundant-decls \
-			-Wnested-externs \
-			-Winline \
-			-Wuninitialized \
-			-Werror
+	    -Wall \
+	    -Wextra \
+	    -Wshadow \
+	    -Wcast-align \
+	    -Wredundant-decls \
+	    -Wnested-externs \
+	    -Winline \
+	    -Wuninitialized \
+	    -Werror
 
-CFLAGS := -g -std=c99 -ffreestanding -D$(ARCHMACRO) $(WARNINGS)
+CFLAGS := -g -std=c99 -ffreestanding -D__$(ARCH)__ $(WARNINGS)
 
 %.o: %.S
 	$(CC) $(CFLAGS) $(INCLUDES) -DASSEMBLER -c -o $@ $<
