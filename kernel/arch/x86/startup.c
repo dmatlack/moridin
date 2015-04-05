@@ -6,7 +6,7 @@
 #include <arch/exn.h>
 #include <arch/idt.h>
 #include <arch/irq.h>
-
+#include <dev/serial.h>
 #include <kernel/debug.h>
 #include <assert.h>
 
@@ -20,6 +20,8 @@ extern char boot_stack_bottom[];
 extern char boot_page_dir[];
 
 void invalid_interrupt(void) { panic("INVALID INTERRUPT OCCURRED"); }
+
+extern void init_8250(void);
 
 /**
  * @brief This function initializes most parts of the x86 system.
@@ -64,4 +66,7 @@ void arch_startup(void)
 	 * Initialize the interrupt controller and associated handlers.
 	 */
 	pic_irq_init();
+
+	/* Initialize the COM ports. */
+	init_8250();
 }
