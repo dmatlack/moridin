@@ -150,56 +150,68 @@ void free_marked_page_tables(struct entry_table *pd)
 	}
 }
 
+struct page *unmap_page_pde(entry_t *pde, unsigned long virt)
+{
+	entry_t *pte;
+
+	/*
+	 * Mark the page _directory_ entry so we know that we unmapped a page
+	 * in this page table and we can free it later (if it's empty). Don't
+	 * mark the page directory entry if it global though because it is
+	 * being shared with other processes.
+	 */
+	if (!entry_is_global(pde)) {
+		*pde = *pde | ENTRY_TABLE_UNMAP;
+	}
+	else {
+		/*
+		 * Actually...
+		 *  If the entry is global, there is probably a bug.
+		 *  Eventually it might be ok to unmap a global entry,
+		 *  but for now just panic.
+		 */
+		panic("Trying to unmap global page: 0x%08x (virtual)", virt);
+	}
+
+	pte = get_pte(entry_pt(pde), virt);
+
+	/*
+	 * This page wasn't mapped in the first place. Return NULL to indicate
+	 * no page was unmapped.
+	 */
+	if (!entry_is_present(pte)) {
+		ERROR("Trying to unmap page that was never mapped. virt 0x%lx, pte 0x%lx\n",
+		      virt, pte);
+		return NULL;
+	}
+
+	/*
+	 * Mark the page _table_ entry as not present, effectively unmapping
+	 * the page.
+	 */
+	entry_set_absent(pte);
+
+	return page_struct(entry_phys(pte));
+}
+
 struct page *mmu_unmap_page(void *pd, unsigned long virt)
 {
-	unsigned long vpage;
-	entry_t *pde, *pte;
-	int i;
 	struct page *page = NULL;
+	entry_t *pde;
+	int i;
 
 	TRACE("pd=%p, virt=0x%x", pd, virt);
 
 	for (i = 0; i < PAGE_SIZE / X86_PAGE_SIZE; i++) {
-		vpage = virt + (i * X86_PAGE_SIZE);
+		virt += i * X86_PAGE_SIZE;
 
-		pde = get_pde(pd, vpage);
+		pde = get_pde(pd, virt);
 
-		if (entry_is_present(pde)) {
-			/*
-			 * Mark the page _directory_ entry so we know that we unmapped a page
-			 * in this page table and we can free it later (if it's empty). Don't
-			 * mark the page directory entry if it global though because it is
-			 * being shared with other processes.
-			 */
-			if (!entry_is_global(pde)) {
-				*pde = *pde | ENTRY_TABLE_UNMAP;
-			}
-			else {
-				/*
-				 * Actually...
-				 *  If the entry is global, there is probably a bug. Eventually it
-				 *  might be ok to unmap a global entry, but for now just panic.
-				 */
-				panic("Trying to unmap global page: 0x%08x (virtual)", vpage);
-			}
+		if (!entry_is_present(pde))
+			continue;
 
-			pte = get_pte(entry_pt(pde), vpage);
-
-			/*
-			 * This page wasn't mapped in the first place. Return NULL to indicate
-			 * no page was unmapped.
-			 */
-			if (!entry_is_present(pte)) {
-				return NULL;
-			}
-
-			/*
-			 * Mark the page _table_ entry as not present, effectively unmapping
-			 * the page.
-			 */
-			entry_set_absent(pte);
-			if (!page) page = page_struct(entry_phys(pte));
-		}
+		if (!page)
+			page = unmap_page_pde(pde, virt);
 	}
 
 	free_marked_page_tables(pd);
@@ -217,7 +229,8 @@ struct page *mmu_unmap_page(void *pd, unsigned long virt)
  *      table data structure and the system has run out of available
  *      memory.
  */
-static int map(struct entry_table *pd, unsigned long virt, unsigned long phys, int flags)
+static int map(struct entry_table *pd, unsigned long virt,
+	       unsigned long phys, int flags)
 {
 	struct entry_table *pt;
 	entry_t *pde, *pte;
@@ -252,13 +265,14 @@ static int map(struct entry_table *pd, unsigned long virt, unsigned long phys, i
 	return 0;
 }
 
-int __map_page(struct entry_table *pd, unsigned long virt, struct page *page, int flags)
+int __map_page(struct entry_table *pd, unsigned long virt,
+	       struct page *page, int flags)
 {
 	unsigned i;
 
 	/*
-	 * We don't assume the system-wide page size (PAGE_SIZE) is the same as the
-	 * page size on x86 (X86_PAGE_SIZE).
+	 * We don't assume the system-wide page size (PAGE_SIZE) is the same
+	 * as the page size on x86 (X86_PAGE_SIZE).
 	 */
 	for (i = 0; i < PAGE_SIZE / X86_PAGE_SIZE; i++) {
 		unsigned long v = virt + (i * X86_PAGE_SIZE);
@@ -288,7 +302,8 @@ int __map_page(struct entry_table *pd, unsigned long virt, struct page *page, in
  */
 int mmu_map_page(void *pd, unsigned long virt, struct page *page, int flags)
 {
-	TRACE("pd=%p, virt=0x%x, page=0x%x, flags=%p", pd, virt, page_address(page), flags);
+	TRACE("pd=%p, virt=0x%x, page=0x%x, flags=%p",
+	      pd, virt, page_address(page), flags);
 
 	ASSERT(is_page_aligned(virt));
 
@@ -296,9 +311,9 @@ int mmu_map_page(void *pd, unsigned long virt, struct page *page, int flags)
 }
 
 /**
- * @brief This is the main page fault handling routine for arch/x86. It's job
- * is to parse the architecture generated exception and pass it up to the kernel
- * virtual memory manager to be handled.
+ * @brief This is the main page fault handling routine for arch/x86.
+ * It's job is to parse the architecture generated exception and pass
+ * it up to the kernel virtual memory manager to be handled.
  */
 void page_fault(int vector, int error, struct registers *regs)
 {
