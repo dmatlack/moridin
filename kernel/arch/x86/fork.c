@@ -11,9 +11,9 @@
 void fork_context(struct thread *new_thread)
 {
 	struct registers *cs_regs; /* context switch registers */
-	uint32_t new_cr3 = (uint32_t) new_thread->proc->space.mmu;
-	uint32_t *esp = (uint32_t *) _KSTACK_END(new_thread);
-	uint32_t *ebp;
+	u32 new_cr3 = (u32) new_thread->proc->space.mmu;
+	u32 *esp = (u32 *) _KSTACK_END(new_thread);
+	u32 *ebp;
 
 	/*
 	 * Copy the current (aka parent) thread's syscall registers to the
@@ -43,14 +43,14 @@ void fork_context(struct thread *new_thread)
 	 * Next is the return address of __context_switch:
 	 * return_from_syscall.
 	 */
-	*(--esp) = (uint32_t) &return_from_syscall;
+	*(--esp) = (u32) &return_from_syscall;
 
 	/*
 	 * Next is the old frame pointer for returning from
 	 * __context_switch.
 	 */
 	--esp;
-	*(esp) = (uint32_t) (esp + 1);
+	*(esp) = (u32) (esp + 1);
 	ebp = esp;
 
 	/*
@@ -61,7 +61,7 @@ void fork_context(struct thread *new_thread)
 	memset(cs_regs, 0, sizeof(struct registers));
 
 	cs_regs->cr3 = new_cr3;
-	cs_regs->ebp = (uint32_t) ebp;
+	cs_regs->ebp = (u32) ebp;
 	cs_regs->ds = SEGSEL_KERNEL_DS;
 	cs_regs->es = SEGSEL_KERNEL_DS;
 	cs_regs->fs = SEGSEL_KERNEL_DS;

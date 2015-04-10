@@ -240,7 +240,7 @@ __context_switch:
 	ret
 
 #
-# void jump_stacks(uint32_t stack, void (*func)(void *), void *arg);
+# void jump_stacks(u32 stack, void (*func)(void *), void *arg);
 #
 # Run function <func> with arg <arg> on the stack pointed to by
 # <stack> (the top of the stack).

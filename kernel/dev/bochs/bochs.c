@@ -9,5 +9,5 @@
 
 void bochs_putchar(char c)
 {
-	outb(BOCHS_PUTCHAR_PORT, (uint8_t) c);
+	outb(BOCHS_PUTCHAR_PORT, (u8) c);
 }

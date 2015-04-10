@@ -67,12 +67,12 @@
 #define IDT_SYSCALL_OFFSET    0x40   // system calls
 
 typedef struct {
-	uint32_t segsel;
-	uint32_t offset;
-	uint8_t  p;
-	uint8_t  dpl;
-	uint8_t  d;
-	uint8_t  type;
+	u32 segsel;
+	u32 offset;
+	u8  p;
+	u8  dpl;
+	u8  d;
+	u8  type;
 } idt_gate_t;
 
 /**
@@ -88,8 +88,8 @@ typedef struct {
  * @param d         The size of the gate word (1 = 32, 0 = 16).
  * @param type      The type of gate (trap or interrupt).
  **/
-void idt_install_gate(uint16_t index, uint32_t segsel, uint32_t offset, 
-		uint8_t p, uint8_t dpl, uint8_t d, uint8_t type);
+void idt_install_gate(u16 index, u32 segsel, u32 offset, 
+		      u8 p, u8 dpl, u8 d, u8 type);
 
 /**
  * @brief Install a new gate in the IDT that will run at the given
@@ -103,8 +103,7 @@ void idt_install_gate(uint16_t index, uint32_t segsel, uint32_t offset,
  * @param type The type of gate (trap or interrupt).
  * @param dpl priveledge level (0,1,2,3).
  */
-void idt_install_default_gate(uint16_t index, void (*handler)(), 
-		uint8_t type, uint8_t dpl);
+void idt_install_default_gate(u16 index, void (*handler)(), u8 type, u8 dpl);
 
 void idt_exn_gate(int vector, void (*handler)(void));
 void idt_irq_gate(int irq, void (*handler)(void));

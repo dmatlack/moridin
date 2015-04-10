@@ -47,14 +47,14 @@
  *
  * @return The 32-bit word described above.
  **/
-static inline uint32_t gd_upper(idt_gate_t *gate)
+static inline u32 gd_upper(idt_gate_t *gate)
 {
-	uint32_t offset_mask = (MS_2_BYTES & gate->offset);
-	uint32_t p_mask      = ((P_MASK & gate->p) << P_SHIFT);
-	uint32_t dpl_mask    = ((DPL_MASK & gate->dpl) << DPL_SHIFT);
-	uint32_t d_mask      = ((((D_MASK & gate->d) << D_SHIFT) + D_CONSTANT ) 
+	u32 offset_mask = (MS_2_BYTES & gate->offset);
+	u32 p_mask      = ((P_MASK & gate->p) << P_SHIFT);
+	u32 dpl_mask    = ((DPL_MASK & gate->dpl) << DPL_SHIFT);
+	u32 d_mask      = ((((D_MASK & gate->d) << D_SHIFT) + D_CONSTANT ) 
 			<< D_SHIFT_SHIFT);
-	uint32_t type_mask   = ((TYPE_MASK & gate->type) << TYPE_SHIFT);
+	u32 type_mask   = ((TYPE_MASK & gate->type) << TYPE_SHIFT);
 
 	return (0xFFFFFF00) & (offset_mask | p_mask | dpl_mask | d_mask | type_mask);
 }
@@ -77,18 +77,18 @@ static inline uint32_t gd_upper(idt_gate_t *gate)
  *
  * @return The 32-bit word described above.
  **/
-static inline uint32_t gd_lower(idt_gate_t *gate)
+static inline u32 gd_lower(idt_gate_t *gate)
 {
-	uint32_t segsel_mask = ((LS_2_BYTES & gate->segsel) << SEGSEL_SHIFT);
-	uint32_t offset_mask =  (LS_2_BYTES & gate->offset);
+	u32 segsel_mask = ((LS_2_BYTES & gate->segsel) << SEGSEL_SHIFT);
+	u32 offset_mask =  (LS_2_BYTES & gate->offset);
 
 	return (segsel_mask | offset_mask);  
 }
 
-void idt_install_gate(uint16_t index, uint32_t segsel, uint32_t offset, 
-		uint8_t p, uint8_t dpl, uint8_t d, uint8_t type)
+void idt_install_gate(u16 index, u32 segsel, u32 offset,u8 p,
+		      u8 dpl, u8 d, u8 type)
 {
-	uint32_t base = (uint32_t) idt_get_base();
+	u32 base = (u32) idt_get_base();
 	idt_gate_t gate;
 
 	// Build the gate descriptor struct
@@ -100,23 +100,22 @@ void idt_install_gate(uint16_t index, uint32_t segsel, uint32_t offset,
 	gate.type = type;
 
 	// write the gate descriptor to the IDT
-	*(uint32_t *)(base + index * IDT_GATE_SIZE) = gd_lower(&gate);
-	*(uint32_t *)(base + index * IDT_GATE_SIZE + IDT_GATE_SIZE/2) = gd_upper(&gate);
+	*(u32 *)(base + index * IDT_GATE_SIZE) = gd_lower(&gate);
+	*(u32 *)(base + index * IDT_GATE_SIZE + IDT_GATE_SIZE/2) = gd_upper(&gate);
 }
 
-void idt_install_default_gate(uint16_t index, void (*handler)(), uint8_t type,
-		uint8_t dpl)
+void idt_install_default_gate(u16 index, void (*handler)(), u8 type, u8 dpl)
 {
-	idt_install_gate(index, SEGSEL_KERNEL_CS, (uint32_t) handler, 
+	idt_install_gate(index, SEGSEL_KERNEL_CS, (u32) handler, 
 			IDT_GATE_PRESENT, dpl, IDT_D_32, type);
 }
 
 void idt_exn_gate(int vector, void (*handler)())
 {
 	idt_install_gate(
-			(uint16_t) IDT_EXN_OFFSET + vector,
+			(u16) IDT_EXN_OFFSET + vector,
 			SEGSEL_KERNEL_CS,
-			(uint32_t) handler,
+			(u32) handler,
 			IDT_GATE_PRESENT,
 			IDT_PL3,
 			IDT_D_32,
@@ -126,9 +125,9 @@ void idt_exn_gate(int vector, void (*handler)())
 void idt_syscall_gate(int vector, void (*handler)(void))
 {
 	idt_install_gate(
-			(uint16_t) vector,
+			(u16) vector,
 			SEGSEL_KERNEL_CS,
-			(uint32_t) handler,
+			(u32) handler,
 			IDT_GATE_PRESENT,
 			IDT_PL3,
 			IDT_D_32,
@@ -140,7 +139,7 @@ void idt_irq_gate(int irq, void (*handler)())
 	idt_install_gate(
 			irq,
 			SEGSEL_KERNEL_CS,
-			(uint32_t) handler,
+			(u32) handler,
 			IDT_GATE_PRESENT,
 			IDT_PL0,
 			IDT_D_32,

@@ -17,7 +17,7 @@
 /*
  * Invoke the assembly instruction "int $n"
  */
-void __int(uint8_t n);
+void __int(u8 n);
 
 /*
  * Entrypoints for IRQs. See irq_wrappers.S
@@ -101,7 +101,7 @@ void generate_irq(int irq)
  */
 bool is_spurious_irq(int irq)
 {
-	uint16_t isr;
+	u16 isr;
 
 	if (0 > irq || irq >= MAX_NUM_IRQS) return false;
 

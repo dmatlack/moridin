@@ -32,7 +32,7 @@ void *new_address_space(void);
 static inline void *swap_address_space(void *new)
 {
 	void *old = (void *) (get_cr3() + CONFIG_KERNEL_VIRTUAL_START);
-	set_cr3((uint32_t) __phys(new));
+	set_cr3((u32) __phys(new));
 	return old;
 }
 

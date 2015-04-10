@@ -29,7 +29,7 @@
 
 struct i8250_port {
 	struct serial_port serial;
-	uint16_t base;
+	u16 base;
 	int irq;
 };
 

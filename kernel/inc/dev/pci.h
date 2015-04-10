@@ -36,10 +36,10 @@
 /*
  * Functions to lookup string descriptions for devices. See pci_table.c.
  */
-const char *pci_lookup_vendor(uint16_t vendor_id);
-const char *pci_lookup_device(uint16_t vendor_id, uint16_t device_id);
-const char *pci_lookup_classcode(uint8_t classcode);
-const char *pci_lookup_subclass(uint8_t classcode, uint8_t subclass, uint8_t progif);
+const char *pci_lookup_vendor(u16 vendor_id);
+const char *pci_lookup_device(u16 vendor_id, u16 device_id);
+const char *pci_lookup_classcode(u8 classcode);
+const char *pci_lookup_subclass(u8 classcode, u8 subclass, u8 progif);
 
 struct pci_device;
 struct pci_bus;
@@ -89,38 +89,38 @@ struct pci_device {
 	 * The PCI Device Configuration Space
 	 */
 	struct {
-		uint16_t vendor_id;
-		uint16_t device_id;
-		uint16_t command;
-		uint16_t status;
-		uint8_t  revision_id;
-		uint8_t  progif;
-		uint8_t  subclass;
-		uint8_t  classcode;
-		uint8_t  cache_line_size;
-		uint8_t  latency_timer;
-		uint8_t  header_type;
-		uint8_t  bist;
+		u16 vendor_id;
+		u16 device_id;
+		u16 command;
+		u16 status;
+		u8  revision_id;
+		u8  progif;
+		u8  subclass;
+		u8  classcode;
+		u8  cache_line_size;
+		u8  latency_timer;
+		u8  header_type;
+		u8  bist;
 		union {
 			struct { /* header_type == 0x00 */
-				uint32_t bar0;
-				uint32_t bar1;
-				uint32_t bar2;
-				uint32_t bar3;
-				uint32_t bar4;
-				uint32_t bar5;
-				uint32_t cardbus_cis_pointer;
-				uint16_t subsystem_vendor_id;
-				uint16_t subsystem_id;
-				uint32_t expansion_rom;
-				uint8_t  capabilities;
+				u32 bar0;
+				u32 bar1;
+				u32 bar2;
+				u32 bar3;
+				u32 bar4;
+				u32 bar5;
+				u32 cardbus_cis_pointer;
+				u16 subsystem_vendor_id;
+				u16 subsystem_id;
+				u32 expansion_rom;
+				u8  capabilities;
 				/* interrupt_line does not affect the device in any way, it just
 				 * provides a way for BIOS or OS to provide information about the
 				 * device to the device driver. */
-				uint8_t  interrupt_line;
-				uint8_t  interrupt_pin;
-				uint8_t  min_grant;
-				uint8_t  max_latency;
+				u8  interrupt_line;
+				u8  interrupt_pin;
+				u8  min_grant;
+				u8  max_latency;
 			};
 		};
 	};
@@ -179,13 +179,13 @@ struct pci_device {
 #define PCI_MIN_GRANT           0x3E
 #define PCI_MAX_LATENCY         0x3F
 
-uint32_t pci_config_inl(struct pci_device *d, int offset);
-uint16_t pci_config_inw(struct pci_device *d, int offset);
-uint8_t  pci_config_inb(struct pci_device *d, int offset);
+u32 pci_config_inl(struct pci_device *d, int offset);
+u16 pci_config_inw(struct pci_device *d, int offset);
+u8  pci_config_inb(struct pci_device *d, int offset);
 
-void pci_config_outl(struct pci_device *d, int offset, uint32_t data);
-void pci_config_outw(struct pci_device *d, int offset, uint16_t data);
-void pci_config_outb(struct pci_device *d, int offset, uint8_t  data);
+void pci_config_outl(struct pci_device *d, int offset, u32 data);
+void pci_config_outw(struct pci_device *d, int offset, u16 data);
+void pci_config_outb(struct pci_device *d, int offset, u8  data);
 
 /******************************************************************************
  *
@@ -301,7 +301,7 @@ void pci_config_outb(struct pci_device *d, int offset, uint8_t  data);
 /*
  * A PRD Table address must fit into a 32-bit word.
  */
-typedef uint32_t prdt_addr_t;
+typedef u32 prdt_addr_t;
 
 struct pci_bus_master {
 
@@ -326,10 +326,10 @@ void pci_destroy_bm(struct pci_bus_master *bm);
  * to the devices they want to drive.
  */
 struct pci_device_id {
-	uint16_t vendor_id;
-	uint16_t device_id;
-	uint8_t classcode;
-	uint8_t subclass;
+	u16 vendor_id;
+	u16 device_id;
+	u8 classcode;
+	u8 subclass;
 };
 
 #define PCI_VENDOR_ANY 0xFFFF

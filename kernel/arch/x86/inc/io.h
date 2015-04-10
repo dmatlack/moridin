@@ -8,28 +8,28 @@
 /** 
  * @brief write 1 byte the given port 
  */
-void outb(uint16_t port, uint8_t  val);
+void outb(u16 port, u8 val);
 /** 
  * @brief write 2 byte the given port 
  */
-void outw(uint16_t port, uint16_t val);
+void outw(u16 port, u16 val);
 /** 
  * @brief write 4 byte the given port 
  */
-void outl(uint16_t port, uint32_t val);
+void outl(u16 port, u32 val);
 
 /**
  * @brief read 1 byte from the given port 
  */
-uint8_t inb(uint16_t port);
+u8 inb(u16 port);
 /** 
  * @brief read 2 byte from the given port 
  */
-uint16_t inw(uint16_t port);
+u16 inw(u16 port);
 /** 
  * @brief read 4 byte from the given port 
  */
-uint32_t inl(uint16_t port);
+u32 inl(u16 port);
 
 // Delay 1/8 microsecond
 void iodelay(void);

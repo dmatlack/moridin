@@ -196,9 +196,9 @@ static void crtc_set_cursor(int row, int col)
 
 	// update the CRTC
 	outb(CRTC_INDEX_REG, CRTC_CURSOR_LOCATION_LSB);
-	outb(CRTC_DATA_REG, (uint8_t) offset & 0xff);
+	outb(CRTC_DATA_REG, (u8) offset & 0xff);
 	outb(CRTC_INDEX_REG, CRTC_CURSOR_LOCATION_MSB);
-	outb(CRTC_DATA_REG, (uint8_t) (offset >> 8) & 0xff);
+	outb(CRTC_DATA_REG, (u8) (offset >> 8) & 0xff);
 }
 
 /**

@@ -8,9 +8,9 @@
 #include <kernel/debug.h>
 #include <kernel/kprintf.h>
 
-void pic_remap(uint32_t master_offset, uint32_t slave_offset)
+void pic_remap(u32 master_offset, u32 slave_offset)
 {
-	uint8_t slave_irq_mask, master_irq_mask;
+	u8 slave_irq_mask, master_irq_mask;
 
 	// save the current interrupt mask
 	master_irq_mask = inb(PIC_MASTER_DATA);
@@ -45,10 +45,10 @@ void pic_remap(uint32_t master_offset, uint32_t slave_offset)
 	outb(PIC_SLAVE_DATA, slave_irq_mask);
 }
 
-void pic_imr_set(uint8_t irq)
+void pic_imr_set(u8 irq)
 {
-	uint32_t port;
-	uint8_t mask;
+	u32 port;
+	u8 mask;
 
 	if (irq < 8) {
 		port = PIC_MASTER_DATA;
@@ -62,10 +62,10 @@ void pic_imr_set(uint8_t irq)
 	outb(port, mask);
 }
 
-void pic_imr_clear(uint8_t irq)
+void pic_imr_clear(u8 irq)
 {
-	uint32_t port;
-	uint8_t mask;
+	u32 port;
+	u8 mask;
 
 	if (irq < 8) {
 		port = PIC_MASTER_DATA;
@@ -79,9 +79,9 @@ void pic_imr_clear(uint8_t irq)
 	outb(port, mask);
 }
 
-static inline uint16_t pic_get_reg(uint8_t ocw3)
+static inline u16 pic_get_reg(u8 ocw3)
 {
-	uint8_t master, slave;
+	u8 master, slave;
 
 	outb(PIC_MASTER_CMD, ocw3);
 	master = inb(PIC_MASTER_CMD);
@@ -92,17 +92,17 @@ static inline uint16_t pic_get_reg(uint8_t ocw3)
 	return (slave << 8) | (master);
 }
 
-uint16_t pic_get_isr(void)
+u16 pic_get_isr(void)
 {
 	return pic_get_reg(PIC_READ_ISR);
 }
 
-uint16_t pic_get_irr(void)
+u16 pic_get_irr(void)
 {
 	return pic_get_reg(PIC_READ_IRR);
 }
 
-void pic_eoi(uint8_t irq)
+void pic_eoi(u8 irq)
 {
 	if (irq >= 8) {
 		outb(PIC_SLAVE_CMD, PIC_EOI);

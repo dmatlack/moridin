@@ -106,9 +106,9 @@ static bool does_bus_exist(int cmd)
  *    ETIMEDOUT if the drive takes too long to respond to the IDENTIFY command
  *    EGENERIC if the drive responds with an error to the IDENTIFY command
  */
-int ata_identify(struct ata_drive *drive, uint16_t data[256])
+int ata_identify(struct ata_drive *drive, u16 data[256])
 {
-	uint8_t idstatus;
+	u8 idstatus;
 	const int timeout = 0x100000;
 	int i;
 
@@ -163,7 +163,7 @@ int ata_identify(struct ata_drive *drive, uint16_t data[256])
 	 * will ignore ATAPI devices and not deal with them.
 	 */
 	if (idstatus & ATA_ERR) {
-		uint8_t error;
+		u8 error;
 		error = inb(drive->bus->cmd + ATA_CMD_ERROR);
 		WARN("Error occured while waiting for ATA_DRQ after IDENTIFY: 0x%02x. "
 				"This is probably an ATAPI device.", error);
@@ -188,7 +188,7 @@ int ata_identify(struct ata_drive *drive, uint16_t data[256])
  */
 int ata_set_features(struct ata_drive *d)
 {
-	uint8_t status, error;
+	u8 status, error;
 	int timeout;
 	bool fault;
 
@@ -209,7 +209,7 @@ int ata_set_features(struct ata_drive *d)
 	return 0;
 }
 
-static void ata_dma_setup(struct ata_drive *d, lba28_t lba, uint8_t sectors)
+static void ata_dma_setup(struct ata_drive *d, lba28_t lba, u8 sectors)
 {
 	outb(d->bus->cmd + ATA_CMD_SECTOR_COUNT, sectors);
 	outb(d->bus->cmd + ATA_CMD_LBA_LOW,  (lba >>  0) & MASK(8));
@@ -225,7 +225,7 @@ static void ata_dma_setup(struct ata_drive *d, lba28_t lba, uint8_t sectors)
  * @param lba The logical block address of the sectors to read.
  * @param sectors The number of sectors to read (0 == 256)
  */
-void ata_drive_read_dma(struct ata_drive *d, lba28_t lba, uint8_t sectors)
+void ata_drive_read_dma(struct ata_drive *d, lba28_t lba, u8 sectors)
 {
 	ASSERT_NOT_NULL(d);
 	ASSERT_LESS(lba, (1 << 29));
@@ -241,7 +241,7 @@ void ata_drive_read_dma(struct ata_drive *d, lba28_t lba, uint8_t sectors)
  * @param lba The logical block address of the sectors to read.
  * @param sectors The number of sectors to read (0 == 256).
  */
-void ata_drive_write_dma(struct ata_drive *d, lba28_t lba, uint8_t sectors)
+void ata_drive_write_dma(struct ata_drive *d, lba28_t lba, u8 sectors)
 {
 	ASSERT_NOT_NULL(d);
 	ASSERT_LESS(lba, (1 << 29));
@@ -272,7 +272,7 @@ void ata_drive_write_dma(struct ata_drive *d, lba28_t lba, uint8_t sectors)
  */
 int ata_drive_dma_done(struct ata_drive *drive)
 {
-	uint8_t status, error;
+	u8 status, error;
 
 	if (!(drive->select & inb(drive->bus->cmd + ATA_CMD_DEVICE))) {
 		ATA_WARN(drive, "Invalid Drive after READ DMA.");
@@ -336,10 +336,10 @@ void ata_disable_irqs(struct ata_drive *d)
  * This is useful because the result of IDENTIFY DEVICE contains strings
  * such as the firmware version and serial number of the device.
  */
-static void read_identify_string(uint16_t *data, char *buffer,
+static void read_identify_string(u16 *data, char *buffer,
 		unsigned offset, unsigned length)
 {
-	uint16_t word;
+	u16 word;
 	unsigned i;
 
 	/*
@@ -372,7 +372,7 @@ static void read_identify_string(uint16_t *data, char *buffer,
  * @param drive The drive we are concerned about
  * @param data The data from IDENTIFY DEVICE
  */
-static void ata_parse_identify(struct ata_drive *drive, uint16_t data[256])
+static void ata_parse_identify(struct ata_drive *drive, u16 data[256])
 {
 	/* 
 	 * drives conforming to the ATA standard will clear bit 15
@@ -436,9 +436,9 @@ static void ata_parse_identify(struct ata_drive *drive, uint16_t data[256])
  * @return 0
  */
 int ata_drive_init(struct ata_drive *drive, struct ata_bus *bus, 
-		uint8_t drive_select)
+		   u16 drive_select)
 {
-	uint16_t data[256];
+	u16 data[256];
 	int identify_ret;
 
 	TRACE("drive=%p, bus=%p, drive_select=0x%02x", drive, bus, drive_select);

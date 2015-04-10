@@ -21,11 +21,11 @@ void enable_write_protect(void);
  * priveldge level change (3 -> 0), which are usually caused by system 
  * calls and interrupts.
  */
-void set_esp0(uint32_t);
+void set_esp0(u32);
 
 // FIXME: move this somewhere else?
 void jump_to_userspace(void);
 // FIXME: move this somewhere else?
-void jump_stacks(uint32_t stack, void (*func)(void *), void *arg);
+void jump_stacks(u32 stack, void (*func)(void *), void *arg);
 
 #endif /* !__X86_CPU_H__ */

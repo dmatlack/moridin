@@ -20,11 +20,11 @@
 /**
  * @brief Return the 32-bit base address of the Interrupt Descriptor Table.
  */
-uint32_t idt_get_base(void); //TODO test me
+u32 idt_get_base(void); //TODO test me
 
 /**
  * @brief Return the 16-bit limit (size) of the Interrupt Descriptor Table.
  */
-uint16_t idt_get_limit(void); //TODO test me
+u16 idt_get_limit(void); //TODO test me
 
 #endif /* __IDTR_H_ */

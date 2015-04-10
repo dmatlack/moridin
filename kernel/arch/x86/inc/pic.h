@@ -85,7 +85,7 @@
 /**
  * @brief Remap the Master and Slave PIC's Vector Offsets.
  */
-void pic_remap(uint32_t master_offset, uint32_t slave_offset);
+void pic_remap(u32 master_offset, u32 slave_offset);
 
 /**
  * Interrupt Mask Register (IMR): A bitmap of the request lines going into 
@@ -94,9 +94,9 @@ void pic_remap(uint32_t master_offset, uint32_t slave_offset);
  */
 
 /** @brief Set a bit (0-15) in the Interrupt Mask Register (IMR). */
-void pic_imr_set(uint8_t irq);
+void pic_imr_set(u8 irq);
 /** @brief Clear a bit (0-15) in the Interrupt Mask Register (IMR). */
-void pic_imr_clear(uint8_t irq);
+void pic_imr_clear(u8 irq);
 
 /**
  * PIC Interrupt Status Registers: ISR, IRR
@@ -113,11 +113,11 @@ void pic_imr_clear(uint8_t irq);
 #define PIC_READ_ISR 0x0B
 
 /** @brief Return the PICs' In-Service Register */
-uint16_t pic_get_isr(void);
+u16 pic_get_isr(void);
 /** @brief Return the PICs' Interrupt Request Register */
-uint16_t pic_get_irr(void);
+u16 pic_get_irr(void);
 
 /** @brief Send an "END OF INTERRUPT" command to the PIC */
-void pic_eoi(uint8_t irq);
+void pic_eoi(u8 irq);
 
 #endif /* !__ARCH_X86_PIC_H__ */

@@ -149,11 +149,11 @@ static inline const char *drive_type_string(enum ata_drive_type type) {
 }
 
 struct ata_signature {
-	uint8_t sector_count;
-	uint8_t lba_low;
-	uint8_t lba_mid;
-	uint8_t lba_high;
-	uint8_t device;
+	u8 sector_count;
+	u8 lba_low;
+	u8 lba_mid;
+	u8 lba_high;
+	u8 device;
 };
 
 
@@ -168,7 +168,7 @@ struct ata_signature {
 struct ata_drive {
 	struct ata_signature sig;
 	enum ata_drive_type type;
-	uint8_t select; // ATA_SELECT_SLAVE or ATA_SELECT_MASTER
+	u8 select; // ATA_SELECT_SLAVE or ATA_SELECT_MASTER
 
 	/*
 	 * True if there exists a drive in this slot.
@@ -210,8 +210,8 @@ struct ata_drive {
 	 */
 	unsigned sectors_per_block;
 
-	uint16_t major_version;
-	uint16_t minor_version;
+	u16 major_version;
+	u16 minor_version;
 
 	struct ata_bus *bus;
 };
@@ -219,8 +219,8 @@ struct ata_drive {
 /*
  * DMA reqests to ATA drives
  */
-void ata_drive_read_dma(struct ata_drive *drive, lba28_t lba, uint8_t sectors);
-void ata_drive_write_dma(struct ata_drive *d, lba28_t lba, uint8_t sectors);
+void ata_drive_read_dma(struct ata_drive *drive, lba28_t lba, u8 sectors);
+void ata_drive_write_dma(struct ata_drive *d, lba28_t lba, u8 sectors);
 int  ata_drive_dma_done(struct ata_drive *drive);
 
 /*

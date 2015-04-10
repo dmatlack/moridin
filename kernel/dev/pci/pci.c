@@ -39,9 +39,9 @@ extern struct pci_device_driver piix_ide_driver;
 	 ((func) << 8)    | \
 	 ((offset) & (MASK(6) << 2)))
 
-uint32_t pci_config_inl(struct pci_device *d, int offset)
+u32 pci_config_inl(struct pci_device *d, int offset)
 {
-	uint32_t config;
+	u32 config;
 
 	config = PCI_CONFIG(d->bus, d->device, d->func, offset);
 	outl(CONFIG_ADDRESS, config);
@@ -49,32 +49,32 @@ uint32_t pci_config_inl(struct pci_device *d, int offset)
 	return inl(CONFIG_DATA);
 }
 
-uint16_t pci_config_inw(struct pci_device *d, int offset)
+u16 pci_config_inw(struct pci_device *d, int offset)
 {
-	uint32_t data;
+	u32 data;
 	data = pci_config_inl(d, offset);
 	return (data >> ((offset % 4) * 8)) & 0xFFFF;
 }
 
-uint8_t pci_config_inb(struct pci_device *d, int offset)
+u8 pci_config_inb(struct pci_device *d, int offset)
 {
-	uint32_t data;
+	u32 data;
 	data = pci_config_inl(d, offset);
 	return (data >> ((offset % 4) * 8)) & 0xFF;
 }
 
-void pci_config_outl(struct pci_device *d, int offset, uint32_t data)
+void pci_config_outl(struct pci_device *d, int offset, u32 data)
 {
-	uint32_t config;
+	u32 config;
 
 	config = PCI_CONFIG(d->bus, d->device, d->func, offset);
 	outl(CONFIG_ADDRESS, config);
 	outl(CONFIG_DATA, data);
 }
 
-void pci_config_outw(struct pci_device *d, int offset, uint16_t data)
+void pci_config_outw(struct pci_device *d, int offset, u16 data)
 {
-	uint32_t dword;
+	u32 dword;
 
 	dword = pci_config_inl(d, offset);
 	set_byte(&dword, offset % 4, data & 0xFF);
@@ -82,9 +82,9 @@ void pci_config_outw(struct pci_device *d, int offset, uint16_t data)
 	pci_config_outl(d, offset, dword);
 }
 
-void pci_config_outb(struct pci_device *d, int offset, uint8_t data)
+void pci_config_outb(struct pci_device *d, int offset, u8 data)
 {
-	uint32_t dword;
+	u32 dword;
 
 	dword = pci_config_inl(d, offset);
 	set_byte(&dword, offset % 4, data & 0xFF);

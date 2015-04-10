@@ -24,42 +24,42 @@ struct __attribute__((__packed__)) registers {
 	/*
 	 * control registers (cr0 and cr4 are system-level registers)
 	 */
-	uint32_t cr3;
-	uint32_t cr2;
+	u32 cr3;
+	u32 cr2;
 
 	/* 0x8 */
 
 	/*
 	 * general purpose registers (pusha order)
 	 */
-	uint32_t edi;
-	uint32_t esi;
-	uint32_t ebp;
-	uint32_t ebx;
-	uint32_t edx;
-	uint32_t ecx;
-	uint32_t eax;
+	u32 edi;
+	u32 esi;
+	u32 ebp;
+	u32 ebx;
+	u32 edx;
+	u32 ecx;
+	u32 eax;
 
 	/* 0x24 */
 
 	/*
 	 * data segment registers
 	 */
-	uint32_t gs;
-	uint32_t fs;
-	uint32_t es;
-	uint32_t ds;
+	u32 gs;
+	u32 fs;
+	u32 es;
+	u32 ds;
 
 	/* 0x34 */
 
 	/*
 	 * program registers (iret order)
 	 */
-	uint32_t eip;
-	uint32_t cs;
-	uint32_t eflags;
-	uint32_t esp;
-	uint32_t ss;
+	u32 eip;
+	u32 cs;
+	u32 eflags;
+	u32 esp;
+	u32 ss;
 
 	/* 0x48 */
 };
@@ -102,7 +102,7 @@ void restore_registers(struct registers *regs);
  * @brief Get the current value of the stack pointer. This reads directly from
  * the hardware register.
  */
-uint32_t get_esp();
+u32 get_esp();
 #define get_sp get_esp
 
 #define DEBUG_REGS(_regs) \
