@@ -71,7 +71,11 @@ void pic_irq_init(void)
 	 */
 	pic_remap(IDT_PIC_MASTER_OFFSET, IDT_PIC_SLAVE_OFFSET);
 
-	for (i = 0; i < MAX_NUM_IRQS; i++) spurious_irqs[i] = 0;
+	for (i = 0; i < MAX_NUM_IRQS; i++)
+		spurious_irqs[i] = 0;
+
+	/* Initialize the kernel's irq subsystem. */
+	irq_init();
 }
 
 /**

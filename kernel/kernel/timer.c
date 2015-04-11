@@ -11,7 +11,15 @@
 #include <kernel/debug.h>
 #include <errno.h>
 
-struct irq_handler __timer_handler;
+void timer_irq(struct irq_context *irq)
+{
+	(void) irq;
+}
+
+struct irq_handler __timer_handler = {
+	.f = timer_irq,
+};
+
 int __timer_hz;
 
 
@@ -20,25 +28,20 @@ int __timer_hz;
  */
 void timer_init(void)
 {
+	int hz = CONFIG_TIMER_HZ;
 	int ret;
 
 	TRACE("");
 
-	__timer_hz = CONFIG_TIMER_HZ;
-
 	/*
 	 * Initialize the timer hardware
 	 */
-	if (0 != (ret = pit_init(__timer_hz))) {
-		panic("Coudn't initialize the Programmable Interrupt Timer: %d/%s",
-				ret, strerr(ret));
-	}
+	ret = pit_init(hz);
+	ASSERT(!ret);
 
 	/*
 	 * Register a handler for timer interrupts
 	 */
-	__timer_handler.top_handler    = NULL;
-	__timer_handler.bottom_handler = NULL;
-
-	register_irq(IRQ_TIMER, &__timer_handler);
+	ret = register_irq(IRQ_TIMER, &__timer_handler);
+	ASSERT(!ret);
 }

@@ -52,7 +52,6 @@ void kernel_main()
 	pages_init();
 	vm_init();
 	kmap_init();
-	irq_init();
 	timer_init();
 	initrd_init();
 
