@@ -37,14 +37,14 @@ list_typedef(struct process) proc_list_t;
 
 #define THREAD_STRUCT_ALIGN PAGE_SIZE
 struct thread {
-	char               kstack[KSTACK_SIZE];
-	struct process    *proc;
-	struct registers  *regs;
-	void              *context;
-	int                tid;
-
+	char			kstack[KSTACK_SIZE];
+	struct process    *	proc;
+	struct registers  *	regs;
+	void *			context;
+	int			tid;
+	int			preempt;
 #define RESCHEDULE	0x1 /* the thread has been preempted */
-	u64		   flags;
+	u64			flags;
 
 	list_link(struct thread) thread_link;
 	list_link(struct thread) sched_link;

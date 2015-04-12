@@ -66,7 +66,7 @@ pid_t sys_fork(void)
 
 	fork_context(new_thread);
 
-	sched_make_runnable(new_thread);
+	make_runnable(new_thread);
 	return new_process->pid;
 
 sys_fork_fail:

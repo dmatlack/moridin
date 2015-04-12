@@ -2,6 +2,7 @@
  * @file kernel/sched.c
  */
 #include <kernel/sched.h>
+#include <kernel/spinlock.h>
 #include <kernel/config.h>
 #include <kernel/timer.h>
 #include <arch/sched.h>
@@ -9,48 +10,84 @@
 #include <arch/syscall.h>
 #include <list.h>
 
-static thread_list_t runnable;
+struct scheduler {
+	thread_list_t runnable;
+	struct spinlock lock;
+	unsigned long irq_flags;
+};
+
+struct scheduler scheduler;
 
 static inline struct thread *runnable_dequeue(void)
 {
-	return list_dequeue(&runnable, sched_link);
+	struct scheduler *s = &scheduler;
+
+	return list_dequeue(&s->runnable, sched_link);
 }
 
 static inline void runnable_enqueue(struct thread *thread)
 {
-	list_enqueue(&runnable, thread, sched_link);
+	struct scheduler *s = &scheduler;
+
+	list_enqueue(&s->runnable, thread, sched_link);
 }
 
-void sched_make_runnable(struct thread *thread)
+void make_runnable(struct thread *thread)
 {
-	list_enqueue(&runnable, thread, sched_link);
+	struct scheduler *s = &scheduler;
+	unsigned long flags;
+
+	spin_lock_irq(&s->lock, &flags);
+
+	runnable_enqueue(thread);
+
+	spin_unlock_irq(&s->lock, flags);
 }
 
 static inline bool runnable_empty(void)
 {
-	return list_empty(&runnable);
+	struct scheduler *s = &scheduler;
+
+	return list_empty(&s->runnable);
 }
 
 void sched_switch_begin(void)
 {
+	struct scheduler *s = &scheduler;
+
 	/*
-	 * Prevent scheduler ticks from trying to schedule us while
-	 * we're already scheduling!
+	 * Use the __spin_lock variation in order to avoid the preemption
+	 * handling code in the spin lock implementation.
 	 */
-	disable_irqs();
+	__spin_lock_irq(&s->lock, &s->irq_flags);
 }
 
 void sched_switch_end(void)
 {
+	struct scheduler *s = &scheduler;
+
 	arch_sched_switch_end();
 
-	enable_irqs();
+	__spin_unlock_irq(&s->lock, s->irq_flags);
 }
 
 void reschedule(void)
 {
+	ASSERT(can_preempt());
+
 	clear_flags(RESCHEDULE);
 	sched_switch();
+}
+
+void maybe_reschedule(void)
+{
+	if (!check_flags(RESCHEDULE))
+		return;
+
+	if (!can_preempt())
+		return;
+
+	reschedule();
 }
 
 void sched_switch(void)
@@ -68,6 +105,10 @@ void sched_switch(void)
 
 	context_switch(next);
 
+	/*
+	 * Think carefully before adding code between context_switch and
+	 * sched_switch_end.
+	 */
 end:
 	sched_switch_end();
 }
@@ -80,6 +121,11 @@ void child_return_from_fork(void)
 
 void sched_init(void)
 {
+	struct scheduler *s = &scheduler;
+
+	list_init(&s->runnable);
+	spin_lock_init(&s->lock);
+
 	start_timer(CONFIG_TIMER_HZ);
 }
 

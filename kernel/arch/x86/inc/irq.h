@@ -5,10 +5,12 @@
 #ifndef __X86_IRQ_H__
 #define __X86_IRQ_H__
 
-#include <kernel/debug.h>
-#include <kernel/irq.h>
 #include <arch/idt.h>
 #include <arch/pic.h>
+#include <arch/reg.h>
+
+#include <kernel/debug.h>
+#include <kernel/irq.h>
 #include <list.h>
 
 /*
@@ -47,21 +49,22 @@ void pic_irq_init(void);
 
 void generate_irq(int irq);
 
-extern void __disable_irqs(void);
-extern void __enable_irqs(void);
+#define cli() __asm__ __volatile__("cli");
+#define sti() __asm__ __volatile__("sti");
 
-static inline void disable_irqs(void)
+#define disable_irqs() cli()
+#define enable_irqs() sti()
+
+static inline void disable_save_irqs(unsigned long *flags)
 {
-	__disable_irqs();
+	*flags = get_eflags() & 0x200;
+	disable_irqs();
 }
 
-static inline void enable_irqs(void)
+static inline void restore_irqs(unsigned long flags)
 {
-	__enable_irqs();
+	if (flags & 0x200)
+		enable_irqs();
 }
-int  save_irqs(void);
-void restore_irqs(int);
-
-
 
 #endif /* !__X86_IRQ_H__ */

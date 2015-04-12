@@ -180,7 +180,7 @@ struct page *unmap_page_pde(entry_t *pde, unsigned long virt)
 	 * no page was unmapped.
 	 */
 	if (!entry_is_present(pte)) {
-		ERROR("Trying to unmap page that was never mapped. virt 0x%lx, pte 0x%lx\n",
+		ERROR("Trying to unmap page that was never mapped. virt 0x%lx, pte 0x%lx",
 		      virt, pte);
 		return NULL;
 	}

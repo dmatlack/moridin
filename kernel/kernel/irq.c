@@ -54,10 +54,7 @@ void kernel_irq_handler(int irq)
 
 void irq_exit(void)
 {
-	/* FIXME: do this here? */
-	/* The current thread might have been scheduled out by this IRQ. */
-	if (check_flags(RESCHEDULE))
-		reschedule();
+	maybe_reschedule();
 }
 
 int register_irq(int irq, struct irq_handler *new_handler)

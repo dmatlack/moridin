@@ -34,8 +34,6 @@ void vm_init(void)
 	ASSERT_NOT_NULL(kernel_space.mmu);
 	list_init(&kernel_space.mappings);
 
-	TRACE_OFF;
-
 	/*
 	 * Direct map the kdirect region of virtual memory.
 	 */
@@ -53,8 +51,6 @@ void vm_init(void)
 				   VM_P | VM_S | VM_G | VM_R | VM_W);
 		ASSERT_EQUALS(0, ret);
 	}
-
-	TRACE_ON;
 
 	/*
 	 * Finally switch off the boot virtual address space and into our new,

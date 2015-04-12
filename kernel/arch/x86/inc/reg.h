@@ -9,7 +9,6 @@
 
 #include <arch/seg.h>
 #include <stdint.h>
-#include <kernel/debug.h>
 
 /*
  *
@@ -270,11 +269,18 @@ void set_cr3(int32_t);
 int32_t get_cr4(void);
 void set_cr4(int32_t);
 
-/*
- * EFLAGS
- *
- * TODO
- */
-int32_t get_eflags(void);
+static inline unsigned long get_eflags(void)
+{
+	unsigned long flags;
+
+	__asm__ __volatile__(
+		"pushf; pop %[flags];"
+		: /* output */ [flags]"=r"(flags)
+		: /* intput */
+		: /* clobbers */
+	);
+
+	return flags;
+}
 
 #endif /* !__X86_REG_H__ */

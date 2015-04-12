@@ -32,7 +32,7 @@ void log_init(int (*putchar)(int), int level)
 {
 	__log_printf_state.putchar = putchar;
 	__log_level = level;
-	__log_trace = 1;
+	__log_trace = 0;
 	__log_magic = LOG_MAGIC;
 }
 

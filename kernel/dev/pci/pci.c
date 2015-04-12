@@ -523,7 +523,7 @@ void pci_init(void)
 		panic("Failed to create the PCI tree: %d/%s", ret, strerr(ret));
 	}
 
-	lspci();
+	//lspci();
 
 	kprintf("PCI: \n");
 	list_foreach(d, &__pci_devices, global_link) {

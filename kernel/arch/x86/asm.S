@@ -111,18 +111,6 @@ get_cr4:
 	movl %cr4, %eax
 	ret
 
-.global get_eflags
-get_eflags:
-	push %ebp
-	mov %esp, %ebp
-
-	pushf
-	pop %eax
-
-	leave
-	ret
-
-
 # cr0 is special: change must be followed
 # by a "far jump" (thanks, nwf).
 .global set_cr0
@@ -157,43 +145,6 @@ set_cr4:
 .global get_esp
 get_esp:
 	leal 4(%esp), %eax    # Get the address of esp from before get_esp was called
-	ret
-
-.global __enable_irqs
-__enable_irqs:
-	sti
-	ret
-
-.global __disable_irqs
-__disable_irqs:
-	cli
-	ret
-
-.global save_irqs
-save_irqs:
-	pushf                   # push EFLAGS onto the stack
-	popl %eax               # save EFLAGS into eax
-	andl $0x200, %eax       # zero out all but bit 9 (IF) of EFLAGS
-	cli                     # disable interrupts (clear IF)
-	ret
-
-.global restore_irqs
-restore_irqs:
-	push %ebp
-	movl %esp, %ebp
-
-	movl 0x8(%esp), %eax    # grab the old irq state (IF) off the stack
-	pushf                   # push EFLAGS onto the stack
-	popl %ebx               # put EFLAGS in ebx
-
-	orl %eax, %ebx          # OR the old interrupt state with EFLAGS (this will
-	                        # set IF it was set in the old interrupt state and
-	                        # do nothing otherwise)
-
-	pushl %ebx              # push the new EFLAGS onto the stack
-	popf                    # pop the new EFLAGS into the EFLAGS register
-
-	leave
 	ret
 
 .extern kernel_tss
