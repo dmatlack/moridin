@@ -21,7 +21,9 @@ extern char boot_page_dir[];
 
 void invalid_interrupt(void) { panic("INVALID INTERRUPT OCCURRED"); }
 
+/* x86 startup routines */
 extern void init_8250(void);
+extern void init_8253(void);
 
 /**
  * @brief This function initializes most parts of the x86 system.
@@ -67,6 +69,9 @@ void arch_startup(void)
 	 */
 	pic_irq_init();
 
-	/* Initialize the COM ports. */
+	/* COM Ports */
 	init_8250();
+
+	/* Programmable Interval Timer */
+	init_8253();
 }

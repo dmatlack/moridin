@@ -11,7 +11,7 @@
 #include <kernel/loader.h>
 #include <kernel/proc.h>
 #include <kernel/stack.h>
-#include <kernel/timer.h>
+#include <kernel/sched.h>
 #include <kernel/test.h>
 
 #include <mm/kmalloc.h>
@@ -52,8 +52,8 @@ void kernel_main()
 	pages_init();
 	vm_init();
 	kmap_init();
-	timer_init();
 	initrd_init();
+	sched_init();
 
 	enable_irqs();
 

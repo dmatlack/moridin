@@ -2,6 +2,8 @@
  * @file kernel/sched.c
  */
 #include <kernel/sched.h>
+#include <kernel/config.h>
+#include <kernel/timer.h>
 #include <arch/sched.h>
 #include <arch/irq.h>
 #include <list.h>
@@ -31,4 +33,9 @@ void sched_switch(void)
 	next = runnable_dequeue();
 
 	context_switch(next);
+}
+
+void sched_init(void)
+{
+	start_timer(CONFIG_TIMER_HZ);
 }

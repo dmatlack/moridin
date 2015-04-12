@@ -3,45 +3,31 @@
  *
  */
 #include <kernel/timer.h>
-#include <kernel/irq.h>
+#include <kernel/debug.h>
 #include <kernel/config.h>
 
-#include <dev/pit.h>
+/* The timer used to by the kernel. */
+struct timer *timer = NULL;
 
-#include <kernel/debug.h>
-#include <errno.h>
-
-void timer_irq(struct irq_context *irq)
+void timer_tick(void)
 {
-	(void) irq;
+	static int ticks = 0;
+
+	ticks++;
+
+	if ((ticks % CONFIG_TIMER_HZ) == 0)
+		INFO("Timer: %d", ticks);
 }
 
-struct irq_handler __timer_handler = {
-	.f = timer_irq,
-};
-
-int __timer_hz;
-
-
-/**
- * @brief Initialize the system timer. This is the timer used for multitasking.
- */
-void timer_init(void)
+void set_timer(struct timer *t)
 {
-	int hz = CONFIG_TIMER_HZ;
-	int ret;
+	INFO("Setting kernel timer to %s.\n", timer->name);
+	timer = t;
+}
 
-	TRACE("");
+void start_timer(int hz)
+{
+	ASSERT(timer);
 
-	/*
-	 * Initialize the timer hardware
-	 */
-	ret = pit_init(hz);
-	ASSERT(!ret);
-
-	/*
-	 * Register a handler for timer interrupts
-	 */
-	ret = register_irq(IRQ_TIMER, &__timer_handler);
-	ASSERT(!ret);
+	timer->start(timer, hz);
 }
