@@ -9,6 +9,7 @@
 #include <kernel/proc.h>
 #include <kernel/stack.h>
 #include <kernel/test.h>
+#include <kernel/sched.h>
 
 #include <arch/reg.h>
 #include <arch/cpu.h>
@@ -87,10 +88,12 @@ static void load_init_binary(char *path)
 void __run_init(void *ignore)
 {
 	int error;
-
 	(void) ignore;
 
 	ASSERT_EQUALS(CURRENT_PROC, &init_proc);
+
+	/* Now that we have a initial process, set up the scheduler. */
+	sched_init();
 
 	setup_init_vm();
 

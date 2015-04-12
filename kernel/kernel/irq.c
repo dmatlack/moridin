@@ -5,6 +5,7 @@
  *
  */
 #include <kernel/irq.h>
+#include <kernel/sched.h>
 #include <mm/kmalloc.h>
 
 #include <arch/atomic.h>
@@ -22,7 +23,6 @@ list_typedef(struct irq_handler) irq_handler_list_t;
 struct irq_desc {
 	irq_handler_list_t handlers;
 	int count;
-	int in_irq;
 } irq_descs[MAX_NUM_IRQS];
 
 void irq_init(void)
@@ -33,30 +33,31 @@ void irq_init(void)
 		struct irq_desc *desc = irq_descs + i;
 		list_init(&desc->handlers);
 		desc->count = 0;
-		desc->in_irq = 0;
 	}
 }
 
 void kernel_irq_handler(int irq)
 {
 	struct irq_desc *desc = irq_descs + irq;
+	struct irq_context context  = { .irq = irq };
 	struct irq_handler *handler;
-	struct irq_context context;
-	int prev_in_irq;
+
+	if (list_empty(&desc->handlers))
+		return;
 
 	atomic_add(&desc->count, 1);
-	prev_in_irq = atomic_add(&desc->in_irq, 1);
-	ASSERT_EQUALS(prev_in_irq, 0);
-
-	context.irq = irq;
 
 	list_foreach(handler, &desc->handlers, link) {
 		handler->f(&context);
 	}
+}
 
-	atomic_add(&desc->in_irq, -1);
-
-	ack_irq(irq);
+void irq_exit(void)
+{
+	/* FIXME: do this here? */
+	/* The current thread might have been scheduled out by this IRQ. */
+	if (check_flags(RESCHEDULE))
+		reschedule();
 }
 
 int register_irq(int irq, struct irq_handler *new_handler)

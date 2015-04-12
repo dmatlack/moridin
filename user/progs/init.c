@@ -70,22 +70,6 @@ int main(int argc, char **argv)
 		print_int(child_pid);
 		print("\n");
 	}
-	else if (child_pid == 0) {
-		print("CHILD: my pid = ");
-		print_int(getpid());
-		print(", parent pid = ");
-		print_int(pid);
-		print("\n");
-	}
-	else {
-		print("PARENT: my pid = ");
-		print_int(getpid());
-		print(", child pid = ");
-		print_int(child_pid);
-		print("\n");
-
-		yield();
-	}
 
 	return 0;
 }

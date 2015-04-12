@@ -66,16 +66,3 @@ void enable_write_protect(void)
 	TRACE();
 	cr0_set_bit(CR0_WP, 1);
 }
-
-void jump_to_userspace(void)
-{
-	struct registers *regs = CURRENT_THREAD->regs;
-
-	set_esp0(KSTACK_TOP);
-
-	regs->cr3 = __phys(CURRENT_PAGE_DIR);
-	regs->cr2 = 0;
-	regs->eflags = get_eflags();
-
-	restore_registers(regs);
-}

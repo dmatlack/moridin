@@ -6,6 +6,7 @@
 #include <arch/vm.h>
 #include <arch/syscall.h>
 #include <kernel/proc.h>
+#include <kernel/sched.h>
 #include <stddef.h>
 
 void fork_context(struct thread *new_thread)
@@ -27,23 +28,11 @@ void fork_context(struct thread *new_thread)
 
 	new_thread->regs->cr3 = new_cr3;
 
-	/*
-	 * Next put the argument for return_from_syscall. The
-	 * child returns 0 from fork.
-	 */
-	*(--esp) = 0;
-
-	/*
-	 * Next a fake return address for the return_from_syscall
-	 * stack frame.
-	 */
+	 /* a fake return address */
 	*(--esp) = 0xDEADBEEF;
 
-	/*
-	 * Next is the return address of __context_switch:
-	 * return_from_syscall.
-	 */
-	*(--esp) = (u32) &return_from_syscall;
+	/* __context_switch returns to ... */
+	*(--esp) = (u32) &child_return_from_fork;
 
 	/*
 	 * Next is the old frame pointer for returning from

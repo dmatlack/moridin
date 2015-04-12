@@ -43,15 +43,31 @@ struct thread {
 	void              *context;
 	int                tid;
 
+#define RESCHEDULE	0x1 /* the thread has been preempted */
+	u64		   flags;
+
 	list_link(struct thread) thread_link;
 	list_link(struct thread) sched_link;
 
 } __attribute__((aligned (THREAD_STRUCT_ALIGN)));
 
+static inline bool check_flags(u64 mask)
+{
+	return CURRENT_THREAD->flags & mask;
+}
 
+static inline void set_flags(u64 mask)
+{
+	CURRENT_THREAD->flags |= mask;
+}
+
+static inline void clear_flags(u64 mask)
+{
+	CURRENT_THREAD->flags &= ~mask;
+}
 
 struct process {
-	struct process    *parent; 
+	struct process    *parent;
 	proc_list_t        children;
 	thread_list_t      threads;
 	struct vm_space    space;

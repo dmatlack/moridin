@@ -53,10 +53,6 @@ void kernel_main()
 	vm_init();
 	kmap_init();
 	initrd_init();
-	sched_init();
-
-	enable_irqs();
-
 	pci_init();
 
 	///////////////////////////////////////////////////////////////////////

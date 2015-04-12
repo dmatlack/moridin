@@ -159,13 +159,13 @@ get_esp:
 	leal 4(%esp), %eax    # Get the address of esp from before get_esp was called
 	ret
 
-.global enable_irqs
-enable_irqs:
+.global __enable_irqs
+__enable_irqs:
 	sti
 	ret
 
-.global disable_irqs
-disable_irqs:
+.global __disable_irqs
+__disable_irqs:
 	cli
 	ret
 

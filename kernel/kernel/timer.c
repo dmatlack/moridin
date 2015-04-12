@@ -5,18 +5,14 @@
 #include <kernel/timer.h>
 #include <kernel/debug.h>
 #include <kernel/config.h>
+#include <kernel/sched.h>
 
 /* The timer used to by the kernel. */
 struct timer *timer = NULL;
 
 void timer_tick(void)
 {
-	static int ticks = 0;
-
-	ticks++;
-
-	if ((ticks % CONFIG_TIMER_HZ) == 0)
-		INFO("Timer: %d", ticks);
+	sched_tick();
 }
 
 void set_timer(struct timer *t)

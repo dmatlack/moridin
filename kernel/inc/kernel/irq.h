@@ -23,6 +23,9 @@ void irq_init(void);
 int register_irq(int irq, struct irq_handler *new_handler);
 void kernel_irq_handler(int irq);
 
+/* called at the very end of all interrupt handlers. */
+void irq_exit(void);
+
 void irq_status_bar(int bar_row);
 
 #endif /* !__KERNEL_IRQ_H__ */

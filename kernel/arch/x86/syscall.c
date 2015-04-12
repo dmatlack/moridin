@@ -4,19 +4,32 @@
 #include <kernel/proc.h>
 #include <arch/cpu.h>
 #include <arch/vm.h>
+#include <arch/syscall.h>
 
-//TODO: move function this somewhere else
 void return_from_syscall(int ret)
 {
+	struct thread *current = CURRENT_THREAD;
+
 	TRACE("ret=0x%x", ret);
 
-	CURRENT_THREAD->regs->eax = ret;
+	current->regs->eax = ret;
+	restore_registers(current->regs);
+}
 
-	// FIXME: we will need to set this when returning from all interrupts
-	// and exceptions since eventually they all can result in a task switch
-	// (e.g. timer firing switches tasks, or keyboard interrupt causes task
-	// switch to the process waiting on IO).
+void arch_sched_switch_end(void)
+{
+	set_esp0(KSTACK_TOP);
+}
+
+void jump_to_userspace(void)
+{
+	struct registers *regs = CURRENT_THREAD->regs;
+
 	set_esp0(KSTACK_TOP);
 
-	restore_registers(CURRENT_THREAD->regs);
+	regs->cr3 = __phys(CURRENT_PAGE_DIR);
+	regs->cr2 = 0;
+	regs->eflags = get_eflags() | 0x200; /* enable interrupts */
+
+	return_from_syscall(0);
 }

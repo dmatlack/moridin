@@ -30,4 +30,9 @@ int __xchg(int *ptr, int new);
 int __cmpxchg(int *ptr, int old, int new);
 #define atomic_testandset(ptr, old, new) __cmpxchg((ptr), (old), (new))
 
+static inline int atomic_get(int *ptr)
+{
+	return *ptr;
+}
+
 #endif /* !__ARCH_X86_ATOMIC_H__ */

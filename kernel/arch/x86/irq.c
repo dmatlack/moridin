@@ -66,8 +66,8 @@ void pic_irq_init(void)
 	idt_irq_gate(IDT_PIC_SLAVE_OFFSET  + 7, irq_15);
 
 	/*
-	 * Remap the master and the slave so they invode the correct service routines
-	 * in the IDT.
+	 * Remap the master and the slave so they invode the correct
+	 * service routines in the IDT.
 	 */
 	pic_remap(IDT_PIC_MASTER_OFFSET, IDT_PIC_SLAVE_OFFSET);
 
@@ -133,8 +133,8 @@ void interrupt_request(int irq)
 		WARN("Spurious IRQ: %d (total %d)", irq, spurious_irqs[irq]);
 
 		/*
-		 * If the spurious IRQ is from the slave PIC, we still need to send an
-		 * EOI to the master.
+		 * If the spurious IRQ is from the slave PIC, we still
+		 * need to send an EOI to the master.
 		 */
 		if (irq >= 8) outb(PIC_MASTER_CMD, PIC_EOI);
 		return;
@@ -149,6 +149,10 @@ void interrupt_request(int irq)
 	 * Pass the interrupt request up to the kernel
 	 */
 	kernel_irq_handler(irq);
+
+	pic_eoi(irq);
+
+	irq_exit();
 }
 
 /**

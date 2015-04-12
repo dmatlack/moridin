@@ -5,6 +5,7 @@
 #ifndef __X86_IRQ_H__
 #define __X86_IRQ_H__
 
+#include <kernel/debug.h>
 #include <kernel/irq.h>
 #include <arch/idt.h>
 #include <arch/pic.h>
@@ -46,9 +47,18 @@ void pic_irq_init(void);
 
 void generate_irq(int irq);
 
-void disable_irqs(void);
-void enable_irqs(void);
+extern void __disable_irqs(void);
+extern void __enable_irqs(void);
 
+static inline void disable_irqs(void)
+{
+	__disable_irqs();
+}
+
+static inline void enable_irqs(void)
+{
+	__enable_irqs();
+}
 int  save_irqs(void);
 void restore_irqs(int);
 

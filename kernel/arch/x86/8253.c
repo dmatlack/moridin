@@ -27,7 +27,7 @@
 #define LOHIBYTE		(3 << 4)
 
 #define OPMODE0			(0 << 1) /* interrupt on terminal count */
-#define OPMODE1			(1 << 1) /* hardware re-triggerable one-shot */
+#define ONE_SHOT		(1 << 1) /* hardware re-triggerable one-shot */
 #define OPMODE2			(2 << 1) /* rate generator */
 #define SQUARE_WAVE		(3 << 1) /* square wave generator */
 #define OPMODE4			(4 << 1) /* software triggered strobe */
@@ -38,7 +38,6 @@
 #define BINARYMODE		(0 << 0) /* 0  6-bit binary */
 #define BCDMODE			(1 << 0) /* 1  our-digit BCD */
 
-
 static void pit_irq(struct irq_context *irq)
 {
 	(void) irq;
@@ -46,10 +45,14 @@ static void pit_irq(struct irq_context *irq)
 	timer_tick();
 }
 
+static struct irq_handler pit_irq_handler = {
+	.f = pit_irq,
+};
+
 static void pit_start(struct timer *timer, int hz)
 {
 	int freq_div;
-
+	int ret;
 	(void) timer;
 
 	/*
@@ -60,6 +63,9 @@ static void pit_start(struct timer *timer, int hz)
 	outb(PIT_COMMAND_PORT, IRQ_CHANNEL | LOHIBYTE | SQUARE_WAVE | BINARYMODE);
 	outb(PIT_CHANNEL0_PORT, (freq_div >> 0) & 0xff);
 	outb(PIT_CHANNEL0_PORT, (freq_div >> 8) & 0xff);
+
+	ret = register_irq(IRQ_TIMER, &pit_irq_handler);
+	ASSERT_EQUALS(0, ret);
 }
 
 static struct timer pit_8253_timer = {
@@ -67,18 +73,7 @@ static struct timer pit_8253_timer = {
 	.name = "Programmable Interval Timer (8253)"
 };
 
-static struct irq_handler pit_irq_handler = {
-	.f = pit_irq,
-};
-
 void init_8253(void)
 {
-	int ret;
-
-	/* TODO: need to reset the timer registers? */
-
-	ret = register_irq(IRQ_TIMER, &pit_irq_handler);
-	ASSERT(!ret);
-
 	set_timer(&pit_8253_timer);
 }

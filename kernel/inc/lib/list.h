@@ -60,6 +60,7 @@
 #define list_size(list_ptr)                   ((list_ptr)->size)
 #define list_next(elem_ptr, link_name)        ((elem_ptr)->link_name.next)
 #define list_prev(elem_ptr, link_name)        ((elem_ptr)->link_name.prev)
+#define list_empty(list_ptr)                  (list_size(list_ptr) == 0)
 
 
 #define list_elem_init(elem_ptr, link_name)                                   \
