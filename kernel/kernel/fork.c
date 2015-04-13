@@ -66,6 +66,10 @@ pid_t sys_fork(void)
 
 	fork_context(new_thread);
 
+	INFO("Process %d:%d forked %d:%d",
+	     CURRENT_PROC->pid, CURRENT_THREAD->tid,
+	     new_process->pid, new_thread->tid);
+
 	make_runnable(new_thread);
 	return new_process->pid;
 

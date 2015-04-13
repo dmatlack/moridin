@@ -59,11 +59,12 @@ void kernel_main()
 	// Temporary hack to get to userspace with some test argv/arc
 	//////////////////////////////////////////////////////////////////////
 	{
-		char *argv[4] = { "/init", "arg1", "arg2", ":)" };
+		#define INIT "/fork_test"
+		char *argv[4] = { INIT, "arg1", "arg2", ":)" };
 		int argc = 4;
 
 		// TODO: pass in the name of the init binary as a parameter via the
 		// bootloader rather than hardcopying it.
-		run_init((char *) "/init", argc, argv );
+		run_init(INIT, argc, argv );
 	}
 }
