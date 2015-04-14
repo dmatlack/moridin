@@ -23,3 +23,8 @@ int yield(void)
 {
 	return SYSCALL0(SYS_YIELD);
 }
+
+void exit(int status)
+{
+	SYSCALL1(SYS_EXIT, status);
+}

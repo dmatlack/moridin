@@ -10,7 +10,6 @@
 #define SYSCALL_H
 
 #if 0
-void _exit(void);
 int close(int fd);
 int execve(char *name, char **argv, char **env);
 int fstat(int fd, struct stat *st);
@@ -29,6 +28,7 @@ int wait(int *status);
 int write(int fd, char *ptr, int len);
 int getpid(void);
 int fork(void);
+void exit(int status);
 
 /*
  * System calls not part of newlib:

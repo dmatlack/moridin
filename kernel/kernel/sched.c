@@ -12,23 +12,20 @@
 
 struct scheduler {
 	thread_list_t runnable;
+	thread_list_t exited;
 	struct spinlock lock;
 };
 
 struct scheduler scheduler;
 
-static inline struct thread *runnable_dequeue(void)
+static inline struct thread *dequeue(thread_list_t *list)
 {
-	struct scheduler *s = &scheduler;
-
-	return list_dequeue(&s->runnable, sched_link);
+	return list_dequeue(list, sched_link);
 }
 
-static inline void runnable_enqueue(struct thread *thread)
+static inline void enqueue(thread_list_t *list, struct thread *thread)
 {
-	struct scheduler *s = &scheduler;
-
-	list_enqueue(&s->runnable, thread, sched_link);
+	list_enqueue(list, thread, sched_link);
 }
 
 void make_runnable(struct thread *thread)
@@ -38,16 +35,9 @@ void make_runnable(struct thread *thread)
 
 	spin_lock_irq(&s->lock, &flags);
 
-	runnable_enqueue(thread);
+	enqueue(&s->runnable, thread);
 
 	spin_unlock_irq(&s->lock, flags);
-}
-
-static inline bool runnable_empty(void)
-{
-	struct scheduler *s = &scheduler;
-
-	return list_empty(&s->runnable);
 }
 
 void sched_switch_begin(void)
@@ -70,6 +60,8 @@ void sched_switch_end(void)
 	arch_sched_switch_end();
 
 	__spin_unlock_irq(&s->lock, current->sched_switch_irqs);
+
+	INFO("Context Switch to %d:%d.", current->proc->pid, current->tid);
 }
 
 void reschedule(void)
@@ -93,16 +85,22 @@ void maybe_reschedule(void)
 
 void sched_switch(void)
 {
+	struct scheduler *s = &scheduler;
 	struct thread *current = CURRENT_THREAD;
 	struct thread *next;
 
 	sched_switch_begin();
 
-	if (runnable_empty())
-		goto end;
+	if (check_state(RUNNABLE))
+		enqueue(&s->runnable, current);
+	if (check_state(EXITED))
+		enqueue(&s->exited, current);
 
-	runnable_enqueue(current);
-	next = runnable_dequeue();
+	next = dequeue(&s->runnable);
+	ASSERT(next);
+
+	if (next == current)
+		goto out;
 
 	context_switch(next);
 
@@ -110,7 +108,7 @@ void sched_switch(void)
 	 * Think carefully before adding code between context_switch and
 	 * sched_switch_end.
 	 */
-end:
+out:
 	sched_switch_end();
 }
 

@@ -8,7 +8,8 @@
 #define SYS_GETPID		1
 #define SYS_FORK		2
 #define SYS_YIELD		3
-#define SYS_MAX                 4
+#define SYS_EXIT		4
+#define SYS_MAX                 5
 
 #ifndef ASSEMBLER
 
@@ -20,6 +21,7 @@ int sys_write(int fd, char *ptr, int len);
 int sys_getpid(void);
 pid_t sys_fork(void);
 int sys_yield(void);
+void sys_exit(int status);
 
 void bad_syscall(int syscall);
 

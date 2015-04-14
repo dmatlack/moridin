@@ -311,7 +311,7 @@ static inline entry_t* get_pte(struct entry_table *pt, unsigned long vaddr)
 }
 
 #include <kernel/proc.h>
-#define CURRENT_PAGE_DIR (CURRENT_PROC)->space.mmu
+#define CURRENT_PAGE_DIR (CURRENT_PROCESS)->space.mmu
 
 void __invlpg(unsigned long);
 

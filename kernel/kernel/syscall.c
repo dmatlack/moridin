@@ -11,10 +11,11 @@
 
 void *syscall_table[] =
 {
-	[SYS_WRITE]  = (void *) sys_write,
-	[SYS_GETPID] = (void *) sys_getpid,
-	[SYS_FORK]   = (void *) sys_fork,
-	[SYS_YIELD]  = (void *) sys_yield,
+	[SYS_WRITE]	= (void *) sys_write,
+	[SYS_GETPID]	= (void *) sys_getpid,
+	[SYS_FORK]	= (void *) sys_fork,
+	[SYS_YIELD]	= (void *) sys_yield,
+	[SYS_EXIT]	= (void *) sys_exit,
 };
 
 int sys_write(int fd, char *ptr, int len)

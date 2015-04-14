@@ -29,13 +29,14 @@ int next_pid(void)
 
 pid_t sys_fork(void)
 {
+	struct thread *current = CURRENT_THREAD;
 	struct thread *new_thread = NULL;
 	struct process *new_process = NULL;
 	int error;
 
 	TRACE();
 
-	if (num_threads(CURRENT_PROC) > 1) {
+	if (num_threads(current->proc) > 1) {
 		/*
 		 * For POSIX specification on multithreaded fork see:
 		 * http://pubs.opengroup.org/onlinepubs/000095399/functions/fork.html
@@ -56,18 +57,18 @@ pid_t sys_fork(void)
 		goto sys_fork_fail;
 	}
 
-	error = vm_space_fork(&new_process->space, &CURRENT_PROC->space);
+	error = vm_space_fork(&new_process->space, &current->proc->space);
 	if (error) {
 		goto sys_fork_fail;
 	}
 
 	add_thread(new_process, new_thread);
-	add_child_process(CURRENT_PROC, new_process);
+	add_child_process(current->proc, new_process);
 
 	fork_context(new_thread);
 
 	INFO("Process %d:%d forked %d:%d",
-	     CURRENT_PROC->pid, CURRENT_THREAD->tid,
+	     current->proc->pid, current->tid,
 	     new_process->pid, new_thread->tid);
 
 	make_runnable(new_thread);

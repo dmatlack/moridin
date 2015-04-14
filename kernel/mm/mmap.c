@@ -176,7 +176,7 @@ cow_fail:
 int vm_page_fault(unsigned long addr, int flags)
 {
 	struct vm_mapping *mapping;
-	struct vm_space *space = &CURRENT_PROC->space;
+	struct vm_space *space = &CURRENT_PROCESS->space;
 
 	TRACE("addr=0x%08x, flags=0x%x", addr, flags);
 
@@ -255,7 +255,7 @@ int vm_page_fault(unsigned long addr, int flags)
 unsigned long __vm_mmap(unsigned long addr, unsigned long length, int prot,
 			int flags, struct vfs_file *file, unsigned long off)
 {
-	struct vm_space *space = &CURRENT_PROC->space;
+	struct vm_space *space = &CURRENT_PROCESS->space;
 	struct vm_mapping *m, *prev = NULL;
 	int vmflags = 0;
 	bool found = false;
@@ -378,7 +378,7 @@ unsigned long vm_mmap(unsigned long addr, unsigned long length, int prot,
 int vm_munmap(unsigned long addr, unsigned long length)
 {
 	struct vm_mapping *next;
-	struct vm_space *space = &CURRENT_PROC->space;
+	struct vm_space *space = &CURRENT_PROCESS->space;
 	struct vm_mapping *m;
 	unsigned long virt;
 
@@ -518,7 +518,7 @@ BEGIN_TEST(mmap_test)
 	do { \
 		error = vm_munmap(_start, (_end) - (_start)); \
 		ASSERT(!error); \
-		vm_dump_maps(__log, &CURRENT_PROC->space); \
+		vm_dump_maps(__log, &CURRENT_PROCESS->space); \
 	} while (0)
 
 	_MAP(0x80000000, 3 * PAGE_SIZE);

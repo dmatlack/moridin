@@ -54,7 +54,7 @@ struct {
 
 static void setup_init_vm(void)
 {
-	struct vm_space *space = &CURRENT_PROC->space;
+	struct vm_space *space = &CURRENT_PROCESS->space;
 	int error;
 
 	error = vm_space_init(space);
@@ -90,7 +90,7 @@ void __run_init(void *ignore)
 	int error;
 	(void) ignore;
 
-	ASSERT_EQUALS(CURRENT_PROC, &init_proc);
+	ASSERT_EQUALS(CURRENT_PROCESS, &init_proc);
 
 	/* Now that we have a initial process, set up the scheduler. */
 	sched_init();
@@ -104,7 +104,7 @@ void __run_init(void *ignore)
 		panic("Couldn't initialize the runtime stack for init: %s", strerr(error));
 	}
 
-	vm_dump_maps(__log, &CURRENT_PROC->space);
+	vm_dump_maps(__log, &CURRENT_PROCESS->space);
 
 	_TEST_KERNEL_();
 

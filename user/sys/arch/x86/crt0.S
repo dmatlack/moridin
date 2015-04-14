@@ -1,5 +1,7 @@
 .section .text
 
+.extern exit
+
 #
 # void _start(int argc, char **argv);
 #
@@ -11,7 +13,11 @@ _start:
 	pushl 0xC(%ebp)
 	pushl 0x8(%ebp)
 
+	xor %eax, %eax
 	call main
 
-exit_not_implemented:
-	jmp exit_not_implemented 
+	pushl %eax
+	call exit
+
+exit_returned:
+	jmp exit_returned

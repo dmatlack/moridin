@@ -19,21 +19,21 @@ list_typedef(struct process) proc_list_t;
 
 #include <arch/reg.h>
 
-#define _THREAD(stack_addr)        ((struct thread *) PAGE_ALIGN_DOWN(stack_addr))
-#define _PROC(stack_addr)          ((_THREAD(stack_addr))->proc)
+#define _THREAD(stack_addr)		((struct thread *) PAGE_ALIGN_DOWN(stack_addr))
+#define _PROCESS(stack_addr)		((_THREAD(stack_addr))->proc)
 
-#define CURRENT_THREAD             _THREAD(get_sp())
-#define CURRENT_PROC               _PROC(get_sp())
+#define CURRENT_THREAD			_THREAD(get_sp())
+#define CURRENT_PROCESS			_PROCESS(get_sp())
 
-#define KSTACK_SIZE 2048
+#define KSTACK_SIZE			2048
 
-#define _KSTACK_START(_thread)    ((unsigned long) (_thread)->kstack)
-#define _KSTACK_END(_thread)      (_KSTACK_START(_thread) + KSTACK_SIZE)
-#define _KSTACK_TOP(_thread)      (_KSTACK_END(_thread) - sizeof(void*))
+#define _KSTACK_START(_thread)		((unsigned long) (_thread)->kstack)
+#define _KSTACK_END(_thread)		(_KSTACK_START(_thread) + KSTACK_SIZE)
+#define _KSTACK_TOP(_thread)		(_KSTACK_END(_thread) - sizeof(void*))
 
-#define KSTACK_START              _KSTACK_START(CURRENT_THREAD)
-#define KSTACK_END                _KSTACK_END(CURRENT_THREAD)
-#define KSTACK_TOP                _KSTACK_TOP(CURRENT_THREAD)
+#define KSTACK_START			_KSTACK_START(CURRENT_THREAD)
+#define KSTACK_END			_KSTACK_END(CURRENT_THREAD)
+#define KSTACK_TOP			_KSTACK_TOP(CURRENT_THREAD)
 
 #define THREAD_STRUCT_ALIGN PAGE_SIZE
 struct thread {
@@ -52,11 +52,19 @@ struct thread {
 	 * soon after that when the child returns into userspace.
 	 */
 	unsigned long		sched_switch_irqs;
+#define RUNNABLE	0x0 /* the default state: able to run */
+#define EXITED		0x1 /* unable to run, should not be scheduled */
+	int			state;
 
 	list_link(struct thread) thread_link;
 	list_link(struct thread) sched_link;
 
 } __attribute__((aligned (THREAD_STRUCT_ALIGN)));
+
+static inline bool check_state(int state)
+{
+	return CURRENT_THREAD->state == state;
+}
 
 static inline bool check_flags(u64 mask)
 {
