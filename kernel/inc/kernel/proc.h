@@ -45,6 +45,13 @@ struct thread {
 	int			preempt;
 #define RESCHEDULE	0x1 /* the thread has been preempted */
 	u64			flags;
+	/*
+	 * Since sched_switch_irqs is initialized to zero, the child of
+	 * a fork will not have irqs enabled when it is first scheduled
+	 * ina (child_return_from_fork). However, irqs will be enabled
+	 * soon after that when the child returns into userspace.
+	 */
+	unsigned long		sched_switch_irqs;
 
 	list_link(struct thread) thread_link;
 	list_link(struct thread) sched_link;

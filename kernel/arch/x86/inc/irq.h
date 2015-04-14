@@ -67,4 +67,9 @@ static inline void restore_irqs(unsigned long flags)
 		enable_irqs();
 }
 
+static inline bool irqs_enabled(void)
+{
+	return get_eflags() & 0x200;
+}
+
 #endif /* !__X86_IRQ_H__ */

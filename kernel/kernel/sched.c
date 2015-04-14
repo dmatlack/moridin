@@ -13,7 +13,6 @@
 struct scheduler {
 	thread_list_t runnable;
 	struct spinlock lock;
-	unsigned long irq_flags;
 };
 
 struct scheduler scheduler;
@@ -53,22 +52,24 @@ static inline bool runnable_empty(void)
 
 void sched_switch_begin(void)
 {
+	struct thread *current = CURRENT_THREAD;
 	struct scheduler *s = &scheduler;
 
 	/*
 	 * Use the __spin_lock variation in order to avoid the preemption
 	 * handling code in the spin lock implementation.
 	 */
-	__spin_lock_irq(&s->lock, &s->irq_flags);
+	__spin_lock_irq(&s->lock, &current->sched_switch_irqs);
 }
 
 void sched_switch_end(void)
 {
+	struct thread *current = CURRENT_THREAD;
 	struct scheduler *s = &scheduler;
 
 	arch_sched_switch_end();
 
-	__spin_unlock_irq(&s->lock, s->irq_flags);
+	__spin_unlock_irq(&s->lock, current->sched_switch_irqs);
 }
 
 void reschedule(void)
