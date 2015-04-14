@@ -10,13 +10,14 @@
 #include <kernel/log.h>
 #include <arch/irq.h>
 
-#define panic(_fmt, ...) \
-	do { \
-		log(LOG_LEVEL_ERROR, \
-				"[PANIC][%s:%d %s()] "_fmt"\n", __FILE__, __LINE__, __func__, ##__VA_ARGS__); \
-		kprintf("[PANIC][%s:%d %s()] "_fmt"\n", __FILE__, __LINE__, __func__, ##__VA_ARGS__); \
-		disable_irqs(); \
-		while (1) continue; \
+#define panic(_fmt, ...)						      \
+	do {								      \
+		disable_irqs();						      \
+		log(LOG_LEVEL_ERROR, "[PANIC][%s:%d %s()] "_fmt"\n",	      \
+			__FILE__, __LINE__, __func__, ##__VA_ARGS__);	      \
+		kprintf("[PANIC][%s:%d %s()] "_fmt"\n",			      \
+			__FILE__, __LINE__, __func__, ##__VA_ARGS__);	      \
+		while (1) continue;					      \
 	} while (0)
 
 #define assert(expression) \

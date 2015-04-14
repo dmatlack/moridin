@@ -21,6 +21,7 @@
 #
 ###
 #include <arch/x86/macros.S>
+#include <kernel/syscall.h>
 
 .extern syscall_table
 .extern set_thread_regs
@@ -50,6 +51,9 @@ __syscall_entry:
 
 	popl %eax               # restore the syscall number
 
+	cmp $SYS_MAX, %eax	# Check if the syscall number is valid.
+	jge bad_sys
+
 	#
 	# eax is the system call we want to execute. we lookup the eax'th system
 	# call in the syscall_table and call that address.
@@ -59,7 +63,14 @@ __syscall_entry:
 	movl $syscall_table, %ecx
 	movl (%ecx, %eax, 0x4), %ecx
 	call *%ecx
+	jmp sys_out
 
+bad_sys:
+	pushl %eax
+	call bad_syscall
+	popl %eax
+
+sys_out:
 	popl %ecx
 	popl %ecx
 	popl %ecx
