@@ -8,6 +8,7 @@
 #ifndef __MM_PAGES_H__
 #define __MM_PAGES_H__
 
+#include <kernel/spinlock.h>
 #include <stddef.h>
 #include <mm/memory.h>
 
@@ -34,8 +35,7 @@ struct page_zone {
 	unsigned long num_pages;  /* total number of pages in the zone */
 	unsigned long num_free;   /* number of free pages in the zone */
 	unsigned long index;      /* allows searches to pick up where the last left off */
-
-	// lock struct thingy
+	struct spinlock lock;
 };
 #define MAX_ZONES 1
 

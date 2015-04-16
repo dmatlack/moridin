@@ -38,6 +38,8 @@ void page_zones_init(void)
 	zone->num_pages = phys_mem_pages;
 	zone->num_free = phys_mem_pages;
 	zone->index = 0;
+
+	spin_lock_init(&zone->lock);
 }
 
 
@@ -87,17 +89,18 @@ struct page_zone *zone_containing(size_t addr)
 
 static struct page *__alloc_pages_at(size_t addr, unsigned long n, struct page_zone *zone)
 {
+	unsigned long flags;
 	struct page *page;
 	struct page *end;
+	struct page *p = NULL;
 
-	// zone lock
+	__spin_lock_irq(&zone->lock, &flags);
 
 	end = page_struct(addr + (n * PAGE_SIZE));
 
 	for (page = page_struct(addr); page < end; page++) {
-		if (page->count) {
-			return NULL;
-		}
+		if (page->count)
+			goto out;
 	}
 
 	for (page = page_struct(addr); page < end; page++) {
@@ -106,9 +109,11 @@ static struct page *__alloc_pages_at(size_t addr, unsigned long n, struct page_z
 
 	zone->num_free -= n;
 
-	// zone unlock
+	p = page_struct(addr);
 
-	return page_struct(addr);
+out:
+	__spin_unlock_irq(&zone->lock, flags);
+	return p;
 }
 
 /**
@@ -170,10 +175,11 @@ static struct page *find_contig_pages(unsigned long n, struct page_zone *zone)
 
 struct page *__alloc_pages(unsigned long n, struct page_zone *zone)
 {
+	unsigned long flags;
 	struct page *pages;
 	struct page *p;
 
-	// zone lock
+	__spin_lock_irq(&zone->lock, &flags);
 
 	pages = find_contig_pages(n, zone);
 	if (!pages) {
@@ -187,7 +193,7 @@ struct page *__alloc_pages(unsigned long n, struct page_zone *zone)
 	zone->num_free -= n;
 
 alloc_pages_out:
-	// zone unlock
+	__spin_unlock_irq(&zone->lock, flags);
 	return pages;
 }
 
@@ -207,9 +213,10 @@ struct page *alloc_pages(unsigned long n)
 
 void __free_pages(struct page *pages, unsigned long n, struct page_zone *zone)
 {
+	unsigned long flags;
 	struct page *p;
 
-	// zone lock
+	__spin_lock_irq(&zone->lock, &flags);
 
 	for (p = pages; p < pages + n; p++) {
 		page_put(p);
@@ -217,7 +224,7 @@ void __free_pages(struct page *pages, unsigned long n, struct page_zone *zone)
 
 	zone->num_free += n;
 
-	// zone unlock
+	__spin_unlock_irq(&zone->lock, flags);
 }
 
 /**
