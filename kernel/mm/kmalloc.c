@@ -8,6 +8,7 @@
  */
 #include <mm/kmalloc.h>
 #include <kernel/debug.h>
+#include <kernel/spinlock.h>
 
 #include <stddef.h>
 #include <stdlib.h>
@@ -23,6 +24,7 @@
  */
 static lmm_t kheap_lmm;
 static lmm_region_t global_region;
+static struct spinlock kmalloc_lock = INITIALIZED_SPINLOCK;
 
 char *kheap_start;         /* The start address of the kernel heap */
 char *kheap_end;           /* The end address of the kernel heap */
@@ -90,12 +92,18 @@ size_t kmalloc_bytes_used(void)
 
 static void *__kmalloc(size_t size)
 {
+	unsigned long flags;
 	void *chunk;
 
-	if (!(chunk = lmm_alloc(&kheap_lmm, size, 0)))
-		return NULL;
+	spin_lock_irq(&kmalloc_lock, &flags);
+
+	chunk = lmm_alloc(&kheap_lmm, size, 0);
+	if (!chunk)
+		goto out;
 
 	kheap_used += size;
+out:
+	spin_unlock_irq(&kmalloc_lock, flags);
 	return chunk;
 }
 
@@ -108,11 +116,7 @@ static void *__kmalloc(size_t size)
  */
 void *kmalloc(size_t size)
 {
-	void* addr;
-
-	addr = __kmalloc(size);
-
-	return addr;
+	return __kmalloc(size);
 }
 
 /**
@@ -130,6 +134,7 @@ void *kmalloc(size_t size)
  */
 void *kmemalign(size_t alignment, size_t size)
 {
+	unsigned long flags;
 	unsigned shift;
 	void *chunk;
 
@@ -138,15 +143,21 @@ void *kmemalign(size_t alignment, size_t size)
 	/* Find the alignment shift in bits.  XXX use proc_ops.h  */
 	for (shift = 0; (1 << shift) < alignment; shift++);
 
+	spin_lock_irq(&kmalloc_lock, &flags);
+
 	/*
 	 * Allocate a chunk of LMM memory with the specified alignment shift
 	 * and an offset such that the memory block we return will be aligned.
 	 */
-	if (!(chunk = lmm_alloc_aligned(&kheap_lmm, size, 0, shift, 0)))
-		return NULL;
+	chunk = lmm_alloc_aligned(&kheap_lmm, size, 0, shift, 0);
+	if (!chunk)
+		goto out;
+
 #pragma GCC diagnostic pop
 
 	kheap_used += size;
+out:
+	spin_unlock_irq(&kmalloc_lock, flags);
 	return chunk;
 }
 
@@ -158,6 +169,13 @@ void *kmemalign(size_t alignment, size_t size)
  */
 void kfree(void *buf, size_t size)
 {
+	unsigned long flags;
+
 	kheap_used -= size;
+
+	spin_lock_irq(&kmalloc_lock, &flags);
+
 	lmm_free(&kheap_lmm, buf, size);
+
+	spin_unlock_irq(&kmalloc_lock, flags);
 }

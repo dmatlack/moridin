@@ -11,7 +11,7 @@ struct spinlock {
 	int serving;
 };
 
-#define INITIALIZED_SPINLOCK = {					\
+#define INITIALIZED_SPINLOCK {						\
 	.ticket = 0,							\
 	.serving = 0,							\
 }
