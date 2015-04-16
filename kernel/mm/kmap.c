@@ -2,9 +2,9 @@
  * @file mm/kmap.c
  */
 #include <mm/pages.h>
-#include <mm/pages.h>
 #include <arch/vm.h>
 #include <kernel/debug.h>
+#include <kernel/spinlock.h>
 #include <assert.h>
 
 char *kmap_start;
@@ -14,6 +14,7 @@ extern struct vm_space kernel_space;
 
 char  *kmap_bitmap;
 size_t kmap_bitmap_size;
+static struct spinlock kmap_lock = INITIALIZED_SPINLOCK;
 
 #define KMAP_VM_FLAGS (VM_S | VM_P | VM_R | VM_W)
 
@@ -47,23 +48,27 @@ static inline void *kmap_address(char *block, int bit)
  */
 void *kmap_alloc_page(void)
 {
+	unsigned long flags;
+	void *address = NULL;
 	char *block;
+
+	spin_lock_irq(&kmap_lock, &flags);
 
 	for (block = kmap_bitmap; block < kmap_bitmap + kmap_bitmap_size; block++) {
 		if (block) {
 			int bit;
 
-			for (bit = 0; ((*block >> bit) & 1) != 0; bit++) {
+			for (bit = 0; ((*block >> bit) & 1) != 0; bit++)
 				ASSERT_NOTEQUALS(bit, 8);
-			}
 
 			*block |= (1 << bit);
-
-			return kmap_address(block, bit);
+			address = kmap_address(block, bit);
+			break;
 		}
 	}
 
-	return NULL;
+	spin_unlock_irq(&kmap_lock, flags);
+	return address;
 }
 
 /**
@@ -118,9 +123,14 @@ void kmap_free_page(void *virt)
 {
 	char *block = kmap_block(virt);
 	int bit = kmap_bit(virt);
+	unsigned long flags;
+
+	spin_lock_irq(&kmap_lock, &flags);
 
 	ASSERT(*block & (1 << bit));
 	*block &= ~(1 << bit);
+
+	spin_unlock_irq(&kmap_lock, flags);
 }
 
 /**
