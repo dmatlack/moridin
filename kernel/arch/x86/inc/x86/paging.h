@@ -202,7 +202,7 @@ static inline int entry_is_global(entry_t *entry)
  * Page Table Base Address (PT) or Physical Page Address (PP)
  *   bits 12-31
  */
-#define ENTRY_ADDR_MASK (~MASK(11))
+#define ENTRY_ADDR_MASK (~MASK(12))
 static inline void entry_set_addr(entry_t *entry_ptr, unsigned long addr)
 {
 	ASSERT_EQUALS(FLOOR(X86_PAGE_SIZE, addr), addr);
@@ -242,6 +242,11 @@ struct entry_table {
 	entry_t entries[ENTRY_TABLE_SIZE];
 };
 
+#define foreach_entry(_entry, _entry_table)				      \
+	for ((_entry) = (_entry_table)->entries;			      \
+	     (_entry) < (_entry_table)->entries + ENTRY_TABLE_SIZE;	      \
+	     (_entry)++)
+
 /**
  * @brief Allocate a new entry_table, with the proper memory address alignment.
  *
@@ -250,19 +255,15 @@ struct entry_table {
 static inline struct entry_table *new_entry_table(void)
 {
 	struct entry_table *tbl;
-	unsigned i;
-
-	TRACE();
+	entry_t *e;
 
 	tbl = kmemalign(X86_PAGE_SIZE, sizeof(struct entry_table));
+	if (!tbl)
+		return NULL;
 
-	for (i = 0; i < ENTRY_TABLE_SIZE; i++) {
-		/*
-		 * zero out the entry to be safe but all that matters here is that the
-		 * page entry is marked as not present.
-		 */
-		tbl->entries[i] = 0;
-		entry_set_absent(tbl->entries + i);
+	foreach_entry(e, tbl) {
+		*e = 0;
+		entry_set_absent(e);
 	}
 
 	return tbl;
@@ -270,7 +271,6 @@ static inline struct entry_table *new_entry_table(void)
 
 static inline void free_entry_table(struct entry_table *ptr)
 {
-	TRACE("ptr=%p", ptr);
 	kfree(ptr, sizeof(struct entry_table));
 }
 

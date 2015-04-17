@@ -13,6 +13,8 @@
  */
 int __xadd(int *ptr, int add);
 #define atomic_add(ptr, add) __xadd((ptr), (add))
+#define atomic_inc(ptr) __xadd((ptr), (1))
+#define atomic_dec(ptr) __xadd((ptr), (-1))
 
 /**
  * @brief Atomically perform: *(ptr) = value

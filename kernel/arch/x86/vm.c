@@ -20,11 +20,14 @@
 #include <kernel/debug.h>
 #include <errno.h>
 
-#define DEFAULT_PDE_FLAGS (VM_P | VM_R | VM_W | VM_U)
-
 static inline bool is_page_aligned(unsigned long addr)
 {
 	return FLOOR(X86_PAGE_SIZE, addr) == addr;
+}
+
+static inline bool is_kernel_entry(entry_t *e)
+{
+	return entry_is_global(e);
 }
 
 /**
@@ -45,36 +48,60 @@ void *new_address_space(void)
 	return (void *) page_directory;
 }
 
+static inline void free_page_table_pde(entry_t *pde)
+{
+	ASSERT(entry_is_present(pde));
+	ASSERT(!is_kernel_entry(pde));
+
+	free_entry_table(entry_pt(pde));
+}
+
+void free_address_space(void *mmu)
+{
+	struct entry_table *page_directory = mmu;
+	entry_t *pde;
+
+	/* should not be destroying the page tables while they are in use */
+	ASSERT_NOTEQUALS(page_directory, get_cr3());
+
+	foreach_entry(pde, page_directory) {
+		/* don't free kernel page tables */
+		if (is_kernel_entry(pde))
+			continue;
+
+		if (entry_is_present(pde))
+			free_page_table_pde(pde);
+	}
+
+	free_entry_table(page_directory);
+}
+
 /**
  * @brief This function looks at the flags (see mm/vm.h) and sets the
  * correct bits in the page (table|directory) entry.
  */
 void entry_set_flags(entry_t *entry, int flags)
 {
-	if (flags & VM_W) {
+	/* zero out all old flags */
+	*entry &= ENTRY_ADDR_MASK;
+
+	if (flags & VM_W)
 		entry_set_readwrite(entry);
-	}
-	else {
+	else
 		entry_set_readonly(entry);
-	}
 
-	if (flags & VM_S) {
+	if (flags & VM_S)
 		entry_set_supervisor(entry);
-	}
-	else {
+	else
 		entry_set_user(entry);
-	}
 
-	if (flags & VM_G) {
+	if (flags & VM_G)
 		entry_set_global(entry);
-	}
 
-	if (flags & VM_P) {
+	if (flags & VM_P)
 		entry_set_present(entry);
-	}
-	else {
+	else
 		entry_set_absent(entry);
-	}
 }
 
 /**
@@ -93,14 +120,14 @@ unsigned long to_phys(struct entry_table *pd, unsigned long virt)
 
 		pde = get_pde(pd, virt);
 
-		if (!entry_is_present(pde)) { 
+		if (!entry_is_present(pde)) {
 			return VIRT_NOT_MAPPED;
 		}
 
 		pt = entry_pt(pde);
 		pte = get_pte(pt, virt);
 
-		if (!entry_is_present(pte)) { 
+		if (!entry_is_present(pte)) {
 			return VIRT_NOT_MAPPED;
 		}
 
@@ -115,34 +142,28 @@ unsigned long to_phys(struct entry_table *pd, unsigned long virt)
 void free_marked_page_tables(struct entry_table *pd)
 {
 	entry_t *pde, *pte;
-	int i, j;
 
-	for (i = 0; i < (int) ENTRY_TABLE_SIZE; i++) {
-		pde = pd->entries + i;
+	foreach_entry(pde, pd) {
 
 		/*
-		 * If we marked the page _directory_ entry, then we need to check 
-		 * if the corresponding page table is empty, and if so free it.
+		 * if we marked the page _directory_ entry, then we need to
+		 * check if the corresponding page table is empty, and if so
+		 * free it.
 		 */
 		if (entry_is_present(pde) && (*pde & ENTRY_TABLE_UNMAP)) {
 			struct entry_table *pt = entry_pt(pde);
 			bool page_table_empty = true;
 
-			for (j = 0; j < (int) ENTRY_TABLE_SIZE; j++) {
-				pte = pt->entries + j;
+			foreach_entry(pte, pt) {
 				if (entry_is_present(pte)) {
 					page_table_empty = false;
 					break;
 				}
 			}
 
-			/*
-			 * If the page table was empty, mark the page directory entry as
-			 * absent and free the page table.
-			 */
 			if (page_table_empty) {
+				free_page_table_pde(pde);
 				entry_set_absent(pde);
-				free_entry_table(pt);
 			}
 
 			*pde &= ~ENTRY_TABLE_UNMAP;
@@ -160,18 +181,7 @@ struct page *unmap_page_pde(entry_t *pde, unsigned long virt)
 	 * mark the page directory entry if it global though because it is
 	 * being shared with other processes.
 	 */
-	if (!entry_is_global(pde)) {
-		*pde = *pde | ENTRY_TABLE_UNMAP;
-	}
-	else {
-		/*
-		 * Actually...
-		 *  If the entry is global, there is probably a bug.
-		 *  Eventually it might be ok to unmap a global entry,
-		 *  but for now just panic.
-		 */
-		panic("Trying to unmap global page: 0x%08x (virtual)", virt);
-	}
+	*pde |= ENTRY_TABLE_UNMAP;
 
 	pte = get_pte(entry_pt(pde), virt);
 
@@ -248,7 +258,7 @@ static int map(struct entry_table *pd, unsigned long virt,
 		}
 
 		entry_set_addr(pde, __phys(pt));
-		entry_set_flags(pde, DEFAULT_PDE_FLAGS);
+		entry_set_flags(pde, flags | VM_P);
 	}
 
 	pt = (struct entry_table *) entry_get_addr(pde);

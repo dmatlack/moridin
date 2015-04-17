@@ -29,6 +29,8 @@
 
 
 void *new_address_space(void);
+void free_address_space(void *mmu);
+
 static inline void *swap_address_space(void *new)
 {
 	void *old = (void *) (get_cr3() + CONFIG_KERNEL_VIRTUAL_START);

@@ -94,7 +94,7 @@ static struct page *__alloc_pages_at(size_t addr, unsigned long n, struct page_z
 	struct page *end;
 	struct page *p = NULL;
 
-	__spin_lock_irq(&zone->lock, &flags);
+	spin_lock_irq(&zone->lock, &flags);
 
 	end = page_struct(addr + (n * PAGE_SIZE));
 
@@ -112,7 +112,7 @@ static struct page *__alloc_pages_at(size_t addr, unsigned long n, struct page_z
 	p = page_struct(addr);
 
 out:
-	__spin_unlock_irq(&zone->lock, flags);
+	spin_unlock_irq(&zone->lock, flags);
 	return p;
 }
 
@@ -179,7 +179,7 @@ struct page *__alloc_pages(unsigned long n, struct page_zone *zone)
 	struct page *pages;
 	struct page *p;
 
-	__spin_lock_irq(&zone->lock, &flags);
+	spin_lock_irq(&zone->lock, &flags);
 
 	pages = find_contig_pages(n, zone);
 	if (!pages) {
@@ -193,7 +193,7 @@ struct page *__alloc_pages(unsigned long n, struct page_zone *zone)
 	zone->num_free -= n;
 
 alloc_pages_out:
-	__spin_unlock_irq(&zone->lock, flags);
+	spin_unlock_irq(&zone->lock, flags);
 	return pages;
 }
 
@@ -216,7 +216,7 @@ void __free_pages(struct page *pages, unsigned long n, struct page_zone *zone)
 	unsigned long flags;
 	struct page *p;
 
-	__spin_lock_irq(&zone->lock, &flags);
+	spin_lock_irq(&zone->lock, &flags);
 
 	for (p = pages; p < pages + n; p++) {
 		page_put(p);
@@ -224,7 +224,7 @@ void __free_pages(struct page *pages, unsigned long n, struct page_zone *zone)
 
 	zone->num_free += n;
 
-	__spin_unlock_irq(&zone->lock, flags);
+	spin_unlock_irq(&zone->lock, flags);
 }
 
 /**

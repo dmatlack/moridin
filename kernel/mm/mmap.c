@@ -298,30 +298,21 @@ unsigned long __vm_mmap(unsigned long addr, unsigned long length, int prot,
 		      "not implemented yet...");
 	}
 	else {
-		m = (struct vm_mapping *) kmalloc(sizeof(struct vm_mapping));
-		if (!m) {
-			return ENOMEM;
+		if (flags & MAP_ANONYMOUS) {
+			file = NULL;
+			off = 0;
 		}
+
+		m = new_vm_mapping(addr, length, vmflags, file, off);
+		if (!m)
+			return ENOMEM;
 
 		m->space = space;
-		m->address = addr;
-		m->num_pages = length / PAGE_SIZE;
-		m->flags = vmflags;
-		if (flags & MAP_ANONYMOUS) {
-			m->file = NULL;
-			m->foff = 0;
-		}
-		else {
-			m->file = file;
-			m->foff = off;
-		}
 
-		if (prev) {
+		if (prev)
 			list_insert_after(&space->mappings, prev, m, link);
-		}
-		else {
+		else
 			list_insert_head(&space->mappings, m, link);
-		}
 	}
 
 	return addr;
@@ -375,29 +366,17 @@ unsigned long vm_mmap(unsigned long addr, unsigned long length, int prot,
  *
  * It is not an error to unmap a region of memory that contains no mappings.
  */
-int vm_munmap(unsigned long addr, unsigned long length)
+int __vm_munmap(struct vm_space *space, unsigned long addr, unsigned long length)
 {
 	struct vm_mapping *next;
-	struct vm_space *space = &CURRENT_PROCESS->space;
 	struct vm_mapping *m;
 	unsigned long virt;
 
-	TRACE("addr=0x%08x, length=0x%x", addr, length);
+	TRACE("space=%p, addr=0x%08x, length=0x%x", space, addr, length);
 
 	// hmm... nobody should be unmapping the kernel...
 	if (kernel_address(addr)) {
 		panic("Attempt to unmap kernel virtual address 0x%08x", addr);
-	}
-
-	if (!IS_PAGE_ALIGNED(addr)) {
-		DEBUG("addr not page aligned: 0x%x", addr);
-		return EINVAL;
-	}
-
-	if (addr + length < addr) {
-		DEBUG("Overflow: 0x%08x + 0x%08x = 0x%08x", addr, length,
-		      addr + length);
-		return EINVAL;
 	}
 
 	length = PAGE_ALIGN_UP(length);
@@ -412,22 +391,22 @@ int vm_munmap(unsigned long addr, unsigned long length)
 	 * it in two.
 	 */
 	if (addr > m->address && (addr + length) < M_END(m)) {
-		next = kmalloc(sizeof(struct vm_mapping));
-		if (!next) {
-			return ENOMEM;
-		}
+		unsigned long next_addr = addr + length;
+		unsigned long next_off = 0;
 
-		next->space = space;
-		next->address = addr + length;
-		next->num_pages = (M_END(m) - next->address) / PAGE_SIZE;
-		next->flags = m->flags;
-		next->file = m->file; //TODO: increase file->refs?
 		/*
 		 * The file offset has to change because the start address of
 		 * the mapping changed.
 		 */
 		if (m->file)
-			next->foff = m->foff + (next->address - m->address);
+			next_off = m->foff + (next_addr - m->address);
+
+		next = new_vm_mapping(next_addr, M_END(m) - next_addr,
+				      m->flags, m->file, next_off);
+		if (!next)
+			return ENOMEM;
+
+		next->space = space;
 
 		list_insert_after(&space->mappings, m, next, link);
 
@@ -481,8 +460,7 @@ int vm_munmap(unsigned long addr, unsigned long length)
 
 				next = list_next(m, link);
 				list_remove(&space->mappings, m, link);
-				//TODO: decrease file->refs?
-				kfree(m, sizeof(struct vm_mapping));
+				free_vm_mapping(m);
 				m = next;
 			}
 
@@ -499,6 +477,24 @@ int vm_munmap(unsigned long addr, unsigned long length)
 	}
 
 	return 0;
+}
+
+int vm_munmap(unsigned long addr, unsigned long length)
+{
+	struct vm_space *space = &CURRENT_PROCESS->space;
+
+	if (!IS_PAGE_ALIGNED(addr)) {
+		DEBUG("addr not page aligned: 0x%x", addr);
+		return EINVAL;
+	}
+
+	if (addr + length < addr) {
+		DEBUG("Overflow: 0x%08x + 0x%08x = 0x%08x", addr, length,
+		      addr + length);
+		return EINVAL;
+	}
+
+	return __vm_munmap(space, addr, length);
 }
 
 #include <kernel/test.h>

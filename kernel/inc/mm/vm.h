@@ -98,10 +98,16 @@ int  vm_space_fork(struct vm_space *to, struct vm_space *from);
 
 #include <fs/vfs.h>
 
+struct vm_mapping *new_vm_mapping(unsigned long addr, unsigned long length,
+				  int vmflags, struct vfs_file *file,
+				  unsigned long off);
+void free_vm_mapping(struct vm_mapping *m);
+
 unsigned long vm_mmap(unsigned long addr, unsigned long length,
 		int prot, int flags,
 		struct vfs_file *file, unsigned long off);
 
+int __vm_munmap(struct vm_space *space, unsigned long addr, unsigned long length);
 int vm_munmap(unsigned long addr, unsigned long length);
 
 #define PF_READ       (1 << 0) // page fault was a read

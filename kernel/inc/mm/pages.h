@@ -10,6 +10,7 @@
 
 #include <kernel/spinlock.h>
 #include <stddef.h>
+#include <kernel/spinlock.h>
 #include <mm/memory.h>
 
 void pages_init(void);

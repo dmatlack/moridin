@@ -42,6 +42,7 @@ void vm_init(void)
 	kdirect_pages = alloc_pages_at(0x0, kdirect_num_pages);
 	ASSERT_NOT_NULL(kdirect_pages);
 
+	TRACE_OFF;
 	for (page = kdirect_pages; page < kdirect_pages + kdirect_num_pages;
 	     page++) {
 		size_t virt = (size_t) kdirect_start + page_address(page);
@@ -51,6 +52,7 @@ void vm_init(void)
 				   VM_P | VM_S | VM_G | VM_R | VM_W);
 		ASSERT_EQUALS(0, ret);
 	}
+	TRACE_ON;
 
 	/*
 	 * Finally switch off the boot virtual address space and into our new,
@@ -71,6 +73,43 @@ int vm_space_init(struct vm_space *space)
 	 * space that only maps the kernel.
 	 */
 	return vm_space_fork(space, &kernel_space);
+}
+
+struct vm_mapping *new_vm_mapping(unsigned long addr, unsigned long length,
+				  int vmflags, struct vfs_file *file,
+				  unsigned long off)
+{
+	struct vm_mapping *m;
+
+	m = kmalloc(sizeof(*m));
+	if (!m)
+		return NULL;
+
+	m->address = addr;
+	m->num_pages = length / PAGE_SIZE;
+	m->flags = vmflags;
+	m->file = file;
+	m->foff = off;
+
+	if (file)
+		atomic_inc(&file->refs);
+
+	return m;
+}
+
+void free_vm_mapping(struct vm_mapping *m)
+{
+	if (m->file)
+		atomic_dec(&m->file->refs);
+
+	kfree(m, sizeof(*m));
+}
+
+static struct vm_mapping *vm_mapping_fork(struct vm_mapping *from)
+{
+	return new_vm_mapping(
+		from->address, from->num_pages * PAGE_SIZE, from->flags,
+		from->file, from->foff);
 }
 
 int vm_space_fork(struct vm_space *to, struct vm_space *from)
@@ -99,18 +138,13 @@ int vm_space_fork(struct vm_space *to, struct vm_space *from)
 	error = ENOMEM;
 	list_init(&to->mappings);
 	list_foreach(m, &from->mappings, link) {
-		struct vm_mapping *new_m;
+		struct vm_mapping *copy = vm_mapping_fork(m);
 
-		new_m = kmalloc(sizeof(struct vm_mapping));
-		if (!new_m) {
+		if (!copy)
 			goto vm_fork_fail;
-		}
 
-		memcpy(new_m, m, sizeof(struct vm_mapping));
-		new_m->space = to;
-		atomic_add(&new_m->file->refs, 1);
-
-		list_insert_tail(&to->mappings, new_m, link);
+		copy->space = to;
+		list_insert_tail(&to->mappings, copy, link);
 	}
 
 	return 0;
@@ -122,7 +156,20 @@ vm_fork_fail:
 
 void vm_space_destroy(struct vm_space *space)
 {
-	(void)space; panic("implement me");
+	/*
+	 * Switch to the kernel-only address space so we don't have to worry
+	 * about destroying our own address space.
+	 */
+	swap_address_space(kernel_space.mmu);
+
+	while (!list_empty(&space->mappings)) {
+		struct vm_mapping *m = list_dequeue(&space->mappings, link);
+
+		/* frees the mapping */
+		__vm_munmap(space, m->address, M_LENGTH(m));
+	}
+
+	free_address_space(space->mmu);
 }
 
 int vm_map_page(struct vm_space *space, unsigned long virt, int flags)
