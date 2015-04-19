@@ -124,9 +124,12 @@ kernel_tss:
 _start:
 	cli                         # disable all interrupts 
 	movl $boot_stack_top, %esp  # set esp so that we can run on a stack
+	pushl $0x0                  # fake return address
+	push $0x0                   # fake previous base pointer
+	mov %esp, %ebp
+
 	pushl %ebx                  # push the address of the multiboot info struct
 	pushl %eax                  # push the multiboot magic value
-	movl %esp, %ebp             # save this stack address in %ebp
 
 	movl $kernel_tss, %eax      # set up the Global Descriptor Table
 	subl $kernel_gdt, %eax
@@ -150,14 +153,17 @@ _start:
 	call boot_paging_init
 
 	movl %ebp, %esp             # restore the stack
+	subl $8, %esp               # move the stack pointer down below the
+	                            # multiboot info struct address and the
+	                            # multiboot magic value.
 	call mb_entry               # mb_entry(multiboot_magic, multiboot_info)
 
 	# Y U RETURN FROM KERNEL?
 
 	cli                         # disable interrupts
 	hlt                         # halt the cpu until the next interrupt arrives
-.Lhang:                             # create a local label rather than a real symbol
-	jmp .Lhang                  # loop endlessly
+1:
+	jmp 1b                      # loop endlessly
 
 #
 # boot_paging_init -- Set up the boot_page_dir to direct map the first

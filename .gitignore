@@ -18,5 +18,6 @@ iso/
 user/bin/
 
 tools/create_initrd
+kernel/tools/inject_symbol_table
 
 tags

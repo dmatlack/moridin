@@ -42,6 +42,7 @@ SECTIONS
     {
         *(.bpgdir)
         *(.data)
+	*(.symbols)
     }
 
     kdata_end = .;
@@ -50,9 +51,10 @@ SECTIONS
     /* Read-write data (uninitialized) and stack */
     .bss BLOCK(4K) : ALIGN(4K)
     {
+	/* align the stack */
+        *(.bootstrap_stack)
         *(COMMON)
         *(.bss)
-        *(.bootstrap_stack)
     }
 
     kbss_end = .;

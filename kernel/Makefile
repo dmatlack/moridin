@@ -31,11 +31,11 @@ CFLAGS += -DKDEBUG
 
 default: kernel
 
-kernel: $(OFILES) $(HFILES) $(LINKER_SCRIPT)
+kernel: $(OFILES) $(HFILES) $(LINKER_SCRIPT) symbols
 	$(CC) -T $(LINKER_SCRIPT) -o KERNEL.o -ffreestanding -O2 -nostdlib $(OFILES) -lgcc
-	objdump -Dg KERNEL.o > KERNEL.S
-	objcopy --only-keep-debug KERNEL.o KERNEL.bin.sym
-	nm KERNEL.bin.sym | grep -E " [Tt] " | awk '{ print 0x$$1" "$$3 }' > KERNEL.sym
+	nm -n KERNEL.o | tools/inject_symbol_table kernel/symbols.o \
+		$(shell tools/symbols_section_offset.sh kernel/symbols.o)
+	$(CC) -T $(LINKER_SCRIPT) -o KERNEL.o -ffreestanding -O2 -nostdlib $(OFILES) -lgcc
 
 $(OFILES): arch
 
@@ -52,10 +52,12 @@ arch:
 
 clean:
 	rm -f inc/arch
-	rm -f KERNEL.S
 	rm -f KERNEL.o
-	rm -f KERNEL.sym KERNEL.bin.sym
+	rm -f tools/inject_symbol_table
 	rm -f $(OFILES)
+
+symbols: tools/inject_symbol_table.c
+	gcc tools/inject_symbol_table.c -o tools/inject_symbol_table
 
 %.o: %.S
 	$(CC) $(CFLAGS) $(INCLUDES) -DASSEMBLER -c -o $@ $<

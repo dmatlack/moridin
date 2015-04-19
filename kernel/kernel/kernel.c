@@ -12,7 +12,9 @@
 #include <kernel/proc.h>
 #include <kernel/stack.h>
 #include <kernel/sched.h>
+#include <kernel/symbols.h>
 #include <kernel/test.h>
+#include <kernel/compiler.h>
 
 #include <mm/kmalloc.h>
 #include <mm/memory.h>

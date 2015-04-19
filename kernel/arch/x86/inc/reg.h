@@ -104,6 +104,18 @@ void restore_registers(struct registers *regs);
 u32 get_esp();
 #define get_sp get_esp
 
+#define get_ebp() ({							\
+	u32 __ebp;							\
+									\
+	__asm__ __volatile__ ("mov %%ebp, %[ebp]"			\
+		: /* output */ [ebp]"=r"(__ebp)				\
+		: /* input */						\
+		: /* clobber */						\
+	);								\
+									\
+	__ebp;								\
+})
+
 #define DEBUG_REGS(_regs) \
 	DEBUG("struct registers %p\n" \
 		"cr3:    0x%08x\n" \
@@ -282,5 +294,7 @@ static inline unsigned long get_eflags(void)
 
 	return flags;
 }
+
+void backtrace(void);
 
 #endif /* !__X86_REG_H__ */

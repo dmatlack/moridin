@@ -1,0 +1,69 @@
+Kernel Symbols
+==============================================================================
+
+In order to provide useful backtraces, you need to be able to convert a return
+address on the stack into the name of the function which contains that address.
+The kernel object file conveniently has that information in the .symtab
+section, but that data isn't loaded into a running kernel. In order to get
+the symbol table into the kernel, I had to do some hackery:
+
+  1. Fully link the kernel.
+  2. Get the symbol table out of the linked kernel object file.
+  3. Inject that symbol table back into the kernel.
+  4. Re-link the kernel with the symbol table this time.
+
+Steps 1 and 4 are trivial to understand. Steps 2 and 3 are tricky. Details
+below...
+
+Step 2: How do I get the symbol table out the kernel?
+------------------------------------------------------------------------------
+
+Instead of writing an elf parser (once was enough), I just used the nm
+tool. This converts the kernel's symbol table into a simple text
+representation. For example:
+
+$ nm kernel/KERNEL.o | head
+0010a3f6 T abs
+00105bbf t add_child_process
+001027d8 t addr
+00105b34 t add_thread
+00110028 T __alloc_pages
+001100be T alloc_pages
+0010fd83 t __alloc_pages_at
+0010fe60 T alloc_pages_at
+00112392 T arch_sched_switch_end
+00110784 T arch_startup
+
+Step 3: How do I inject the symbol table back into the kernel?
+------------------------------------------------------------------------------
+
+This is a multi-step process.
+
+I create a large empty table in kernel/symbols.c, called symbol_table.
+Normally this table would go into the bss and there wouldn't be space
+reserved for the table in the object file. This is not what I want. So
+I put it in a special section .symbols, which I tell the linker to put
+in the data section. This forces the compiled object file of
+kernel/symbols.c to contain empty space for the symbol table.
+
+Next I convert the output of nm into the symbol table format described
+in <kernel/symbols.h>. Then I inject this table into the already compiled
+kernel/symbols.o object file.
+
+kernel/tools/inject_symbol_table.c is the tool which does both:
+* convert the output of nm into the binary symbol table format.
+* inject the binary symbol table into kernel/symbols.o
+
+CAVEATS / WARNINGS
+------------------------------------------------------------------------------
+
+1. Endianness
+
+The binary format of the symbol table doesn't have a defined endianness. So
+if you're host platform does not match your target, the inject table will be
+the wrong endianess.
+
+2. Struct Packing
+
+Since the symbol table is a binary format, the struct is packed. This might
+cause problems on platforms which have trouble accessing unaligned data.

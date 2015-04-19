@@ -31,6 +31,18 @@ typedef unsigned int uintptr_t;
 #define s32 int32_t
 #define s64 int64_t
 
+/* from the linux kernel */
+#define BUILD_BUG_ON(condition) ((void)sizeof(char[1 - 2*!!(condition)]))
+
+/* Compile-time assertions for types.h. */
+static inline void ____check_types____(void)
+{
+	BUILD_BUG_ON(sizeof(u8) != 1);
+	BUILD_BUG_ON(sizeof(u16) != 2);
+	BUILD_BUG_ON(sizeof(u32) != 4);
+	BUILD_BUG_ON(sizeof(u64) != 8);
+}
+
 #endif /* !ASSEMBLER */
 
 #endif /* !LIB_STDINT_H */
