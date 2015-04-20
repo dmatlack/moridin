@@ -12,22 +12,16 @@
 
 struct scheduler {
 	thread_list_t runnable;
-	thread_list_t exited;
+	thread_list_t exited; /* TODO remove this list from scheduler */
 	struct spinlock lock;
 };
 
 struct scheduler scheduler;
 
-static inline struct thread *dequeue(thread_list_t *list)
-{
-	return list_dequeue(list, sched_link);
-}
-
-static inline void enqueue(thread_list_t *list, struct thread *thread)
-{
-	list_enqueue(list, thread, sched_link);
-}
-
+/*
+ * FIXME: make_runnable does not work on SMP because the thread could
+ * already be running on another cpu.
+ */
 void make_runnable(struct thread *thread)
 {
 	struct scheduler *s = &scheduler;
@@ -35,7 +29,11 @@ void make_runnable(struct thread *thread)
 
 	spin_lock_irq(&s->lock, &flags);
 
-	enqueue(&s->runnable, thread);
+	ASSERT_NOTEQUALS(thread, CURRENT_THREAD);
+	ASSERT_NOTEQUALS(thread->state, EXITED);
+	thread->state = RUNNABLE;
+
+	list_enqueue(&s->runnable, thread, state_link);
 
 	spin_unlock_irq(&s->lock, flags);
 }
@@ -66,8 +64,6 @@ void sched_switch_end(void)
 
 void reschedule(void)
 {
-	ASSERT(can_preempt());
-
 	clear_flags(RESCHEDULE);
 	sched_switch();
 }
@@ -91,12 +87,12 @@ void sched_switch(void)
 
 	sched_switch_begin();
 
-	if (check_state(RUNNABLE))
-		enqueue(&s->runnable, current);
-	if (check_state(EXITED))
-		enqueue(&s->exited, current);
+	if (current->state == RUNNABLE)
+		list_enqueue(&s->runnable, current, state_link);
+	if (current->state == EXITED)
+		list_enqueue(&s->exited, current, state_link);
 
-	next = dequeue(&s->runnable);
+	next = list_dequeue(&s->runnable, state_link);
 	ASSERT(next);
 
 	if (next == current)
@@ -123,6 +119,7 @@ void sched_init(void)
 	struct scheduler *s = &scheduler;
 
 	list_init(&s->runnable);
+	list_init(&s->exited);
 	spin_lock_init(&s->lock);
 
 	start_timer(CONFIG_TIMER_HZ);

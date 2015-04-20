@@ -5,6 +5,7 @@
 #ifndef __KERNEL_PROC_H__
 #define __KERNEL_PROC_H__
 
+#include <kernel/compiler.h>
 #include <mm/kmalloc.h>
 #include <arch/atomic.h>
 #include <mm/memory.h>
@@ -54,21 +55,30 @@ struct thread {
 	unsigned long		sched_switch_irqs;
 #define RUNNABLE	0x0 /* the default state: able to run */
 #define EXITED		0x1 /* unable to run, should not be scheduled */
+#define BLOCKED		0x2 /* blocked on a mutex */
 	int			state;
 
+	/* used by the thread's proces */
 	list_link(struct thread) thread_link;
-	list_link(struct thread) sched_link;
 
-} __attribute__((aligned (THREAD_STRUCT_ALIGN)));
+	/*
+	 * use depends by the thread's state:
+	 *   RUNNABLE - scheduler runnable queue
+	 *   EXITED   - exited list
+	 *   BLOCKED  - mutex thread list
+	 */
+	list_link(struct thread) state_link;
 
-static inline bool check_state(int state)
+} __aligned(THREAD_STRUCT_ALIGN);
+
+static inline bool __check_flags(struct thread *thread, u64 mask)
 {
-	return CURRENT_THREAD->state == state;
+	return thread->flags & mask;
 }
 
 static inline bool check_flags(u64 mask)
 {
-	return CURRENT_THREAD->flags & mask;
+	return __check_flags(CURRENT_THREAD, mask);
 }
 
 static inline void set_flags(u64 mask)

@@ -207,7 +207,7 @@ jump_stacks:
 
 	movl 0x10(%ebp), %ecx        # ecx = argument to <func>
 	movl %ecx, -0x4(%eax)        # push ecx at top of new stack
-	movl $0xDEADBEEF, -0x8(%eax) # push bogus return address of <func>
+	movl $0x0, -0x8(%eax)        # push bogus return address of <func>
 
 	leal 0xC(%ebp), %ecx         # save the address of <func> in ecx
 
