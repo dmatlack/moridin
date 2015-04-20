@@ -6,6 +6,7 @@
 #include <dev/serial.h>
 #include <arch/io.h>
 #include <lib/stddef.h>
+#include <kernel/spinlock.h>
 
 /*
  * Offsets into the Serial Port I/O Space.
@@ -29,6 +30,7 @@
 
 struct i8250_port {
 	struct serial_port serial;
+	struct spinlock lock;
 	u16 base;
 	int irq;
 };
@@ -80,9 +82,14 @@ static int i8250_init(struct serial_port *s)
 static void i8250_putchar(struct serial_port *s, char c)
 {
 	struct i8250_port *p = to_i8250(s);
+	unsigned long flags;
+
+	spin_lock_irq(&p->lock, &flags);
 
 	while ((inb(p->base + SERIAL_PORT_LINE_STATUS) & 0x20) == 0);
 	outb(p->base + SERIAL_PORT_DATA, c);
+
+	spin_unlock_irq(&p->lock, flags);
 }
 
 #define DECLARE_I8250_PORT(_base, _irq, _name) {			\
