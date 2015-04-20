@@ -159,7 +159,6 @@ static inline void inode_init(struct vfs_inode *i, unsigned long inode)
 void vfs_chroot(struct vfs_dirent *root);
 
 struct vfs_file *vfs_file_get(char *path);
-void vfs_file_put(struct vfs_file *file);
 
 int     vfs_open  (struct vfs_file *file);
 void    vfs_close (struct vfs_file *file);

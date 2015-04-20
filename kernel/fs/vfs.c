@@ -1,30 +1,26 @@
 /**
  * @file fs/vfs.h
- *
- * FIXME: Once we have synchonization, this file needs to be carefully
- * walked through to have locking added.
- *
  */
 #include <fs/vfs.h>
 
+#include <kernel/mutex.h>
+#include <kernel/debug.h>
+
+#include <mm/memory.h>
 #include <mm/kmalloc.h>
+
 #include <arch/atomic.h>
+
 #include <stdint.h>
 #include <types.h>
 #include <string.h>
 #include <list.h>
-#include <kernel/debug.h>
 #include <errno.h>
-#include <mm/memory.h>
 
 struct vfs_dirent *__vfs_root_dirent = NULL;
+struct mutex vfs_mutex = INITIALIZED_MUTEX;
 
-/**
- * @brief Set the root of the filesystem. This is like "mounting" a filesystem
- * at /, except a really bad version of "mounting" :)
- *
- * After calling this function, the filesystem rooted at <root>, will be the VFS.
- */
+/* this is bullshit */
 void vfs_chroot(struct vfs_dirent *root)
 {
 	__vfs_root_dirent = root;
@@ -72,11 +68,14 @@ static struct vfs_dirent *vfs_find_dirent(struct vfs_dirent *d, const char *name
  */
 struct vfs_dirent *vfs_get_dirent(char *path)
 {
+	struct vfs_dirent *found = NULL;
 	struct vfs_dirent *d;
 	char *cur;
 	char *next;
 
 	TRACE("path=%s", path);
+
+	mutex_aquire(&vfs_mutex);
 
 	/*
 	 * Luckily our virutal filesystem is simplistic for the time. All dirents
@@ -85,7 +84,7 @@ struct vfs_dirent *vfs_get_dirent(char *path)
 
 	if (path[0] != VFS_PATH_DELIM) {
 		WARN("%s(path=%s): relative paths are not supported!", __func__, path);
-		return NULL;
+		goto out;
 	}
 
 	/*
@@ -102,7 +101,7 @@ struct vfs_dirent *vfs_get_dirent(char *path)
 	cur = next = path + 1;
 	if (!__vfs_root_dirent) {
 		DEBUG("VFS has no root.");
-		return NULL;
+		goto out;
 	}
 
 	d = __vfs_root_dirent;
@@ -112,7 +111,7 @@ struct vfs_dirent *vfs_get_dirent(char *path)
 
 		if (!dirent_isdir(d)) {
 			WARN("%s is not a directory!", d->name);
-			return NULL;
+			goto out;
 		}
 
 		tmp = *next;
@@ -122,7 +121,7 @@ struct vfs_dirent *vfs_get_dirent(char *path)
 
 		if (!d) {
 			WARN("Path %s does not exist starting at %s", path, cur);
-			return NULL;
+			goto out;
 		}
 
 		if (!*next) break;
@@ -136,7 +135,11 @@ struct vfs_dirent *vfs_get_dirent(char *path)
 	}
 
 	atomic_add(&d->refs, 1);
-	return d;
+	found = d;
+
+out:
+	mutex_release(&vfs_mutex);
+	return found;
 }
 
 /**
@@ -189,35 +192,46 @@ void vfs_file_put(struct vfs_file *file)
 {
 	vfs_put_dirent(file->dirent);
 
-	// lock file
-	if (0 == atomic_add(&file->refs, -1)) {
-		kfree(file, sizeof(struct vfs_file));
-	}
-	// unlock file
+	if (atomic_add(&file->refs, -1))
+		return;
+
+	kfree(file, sizeof(struct vfs_file));
 }
 
 int vfs_open(struct vfs_file *file)
 {
+	int ret;
+
 	TRACE("file=%p", file);
 	ASSERT_NOT_NULL(file);
-	if (NULL == file->fops->open) {
-		VFS_NULL_FOP(open, file);
-		return -EINVAL;
-	}
+
+	mutex_aquire(&vfs_mutex);
+
 	file->offset = 0;
-	return file->fops->open(file);
+	if (file->fops->open) {
+		file->fops->open(file);
+	} else {
+		VFS_NULL_FOP(open, file);
+		ret = -EINVAL;
+	}
+
+	mutex_release(&vfs_mutex);
+	return ret;
 }
 
 void vfs_close(struct vfs_file *file)
 {
 	TRACE("file=%p", file);
 	ASSERT_NOT_NULL(file);
-	if (NULL == file->fops->close) {
-		VFS_NULL_FOP(close, file);
-	}
-	else {
+
+	mutex_aquire(&vfs_mutex);
+
+	if (file->fops->close)
 		file->fops->close(file);
-	}
+	else
+		VFS_NULL_FOP(close, file);
+
+	mutex_release(&vfs_mutex);
 }
 
 /**
@@ -237,12 +251,13 @@ ssize_t vfs_read(struct vfs_file *file, char *buf, size_t size)
 
 	TRACE("file=%p, buf=%p, size=0x%x", file, buf, size);
 
-	//TODO lock the file
+	mutex_aquire(&vfs_mutex);
 
 	ASSERT_NOT_NULL(file);
-	if (NULL == file->fops->read) {
+	if (!file->fops->read) {
 		VFS_NULL_FOP(read, file);
-		return -EINVAL;
+		ret = -EINVAL;
+		goto out;
 	}
 
 	ret = file->fops->read(file, buf, size, file->offset);
@@ -251,6 +266,8 @@ ssize_t vfs_read(struct vfs_file *file, char *buf, size_t size)
 		file->offset += ret;
 	}
 
+out:
+	mutex_release(&vfs_mutex);
 	return ret;
 }
 
@@ -265,29 +282,36 @@ ssize_t vfs_read(struct vfs_file *file, char *buf, size_t size)
  */
 ssize_t vfs_seek(struct vfs_file *file, ssize_t offset, int whence)
 {
-	size_t from;
 	ssize_t new_offset;
+	size_t from;
+	ssize_t ret = 0;
 
 	TRACE("file=%p, offset=0x%x, whence=%d", file, offset, whence);
 	ASSERT_NOT_NULL(file);
 
-	//TODO lock the file
+	mutex_aquire(&vfs_mutex);
 
 	switch (whence) {
 	case SEEK_SET: from = 0;                           break;
 	case SEEK_CUR: from = file->offset;                break;
 	case SEEK_END: from = file->dirent->inode->length; break;
-	default: return -EINVAL;
+	default: ret = -EINVAL; goto out;
 	}
 
 	new_offset = from + offset;
 
 	if (new_offset >= 0 && new_offset < (ssize_t) file->dirent->inode->length) {
 		file->offset = new_offset;
-		return new_offset;
+		ret = new_offset;
+		goto out;
 	}
+
 	// DON'T CHANGE THIS ERROR CODE. vfs_read_page() uses it.
-	return -EFAULT;
+	ret = -EFAULT;
+
+out:
+	mutex_release(&vfs_mutex);
+	return ret;
 }
 
 ssize_t vfs_read_page(struct vfs_file *file, ssize_t offset, char *page)
