@@ -76,14 +76,13 @@ static int to_section(char c)
 	return UNKNOWN_SECTION;
 }
 
-static void add_symbol(char *line, int index)
+static void line_to_symbol(char *line, struct symbol *symbol)
 {
-	struct symbol *symbol = symbol_table + index;
 	char *s;
 
-	/* example line: 001127d9 T __xchg */
-
 	memset(symbol, 0, sizeof(*symbol));
+
+	/* example line: 001127d9 T __xchg */
 
 	/* address */
 	s = strtok(line, " \n");
@@ -100,7 +99,7 @@ static void add_symbol(char *line, int index)
 	CHECK(strlen(s) <= SYMBOL_NAME_LENGTH);
 	strcpy(symbol->name, s);
 
-	if (index > 0)
+	if (symbol > symbol_table)
 		/* symbols must be sorted by address */
 		CHECK(symbol->address >= (symbol - 1)->address);
 }
@@ -141,7 +140,9 @@ int main(int argc, char **argv)
 		 */
 		CHECK(index < (SYMBOL_TABLE_LENGTH - 1));
 
-		add_symbol(buf, index++);
+		line_to_symbol(buf, symbol_table + index);
+
+		index++;
 	}
 
 	/* zero the final symbol table entry */
