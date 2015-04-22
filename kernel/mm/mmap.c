@@ -113,43 +113,38 @@ static int page_fault_anon(struct vm_mapping *m, unsigned long addr)
 	return 0;
 }
 
+/*
+ * For cow, we take the easy way out and avoid races. Whenever faulting
+ * on a cow mapping, always allocate a new page and copy the old page to
+ * the new page. Never try to use the old page.
+ */
 static int page_fault_cow(struct vm_mapping *m, unsigned long addr)
 {
 	struct page *old_page = NULL;
 	struct page *new_page = NULL;
 	void *old_page_addr = NULL;
 	unsigned long virt;
-	int error;
+	int error = ENOMEM;
 
-	/*
-	 * Get the physical page that is currently mapped.
-	 */
+	/* Get the physical page that is currently mapped. */
 	old_page = __page(addr);
 	ASSERT_NOTEQUALS(old_page, -1);
 
-
-	error = ENOMEM;
-
 	/*
-	 * Create a temporary kernel mapping to that page so we can reference
-	 * it later.
+	 * Create a temporary kernel mapping to that page so we
+	 * can read it from the kernel.
 	 */
 	old_page_addr = kmap(old_page);
 	if (!old_page_addr) {
 		goto cow_fail;
 	}
 
-	/*
-	 * Allocate a new physical page
-	 */
 	new_page = alloc_page();
 	if (!new_page) {
 		goto cow_fail;
 	}
 
-	/*
-	 * Re-map the virtual address to the new physical page.
-	 */
+	/* Map the faulted page to the newly allocated page. */
 	virt = PAGE_ALIGN_DOWN(addr);
 	error = mmu_map_page(m->space->mmu, virt, new_page, m->flags);
 	if (error) {
@@ -159,7 +154,12 @@ static int page_fault_cow(struct vm_mapping *m, unsigned long addr)
 	tlb_invalidate(virt, PAGE_SIZE);
 
 	/*
-	 * Finally copy the contents of the old page over to the new page.
+	 * Finally copy the contents of the old page over to the
+	 * new page. Note we don't need to kmap new_page because
+	 * we are already in the process's address space. The
+	 * previous mmu_map_page and tlb_invalidate will allow
+	 * us to write to new_page simply by writing to the
+	 * faulting virtual address.
 	 */
 	memcpy((void *) virt, old_page_addr, PAGE_SIZE);
 

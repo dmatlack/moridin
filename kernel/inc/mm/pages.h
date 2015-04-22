@@ -28,7 +28,10 @@ extern struct page *phys_pages;
 
 #include <arch/atomic.h>
 #define page_get(_page) (atomic_add(&((_page)->count),  1))
-#define page_put(_page) (atomic_add(&((_page)->count), -1))
+#define page_put(_page) do {						\
+	atomic_add(&((_page)->count), -1);				\
+	ASSERT((_page)->count >= 0);					\
+} while (0)
 
 struct page_zone {
 	struct page *pages;       /* array of all pages in the zone */
