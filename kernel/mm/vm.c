@@ -42,7 +42,6 @@ void vm_init(void)
 	kdirect_pages = alloc_pages_at(0x0, kdirect_num_pages);
 	ASSERT_NOT_NULL(kdirect_pages);
 
-	TRACE_OFF;
 	for (page = kdirect_pages; page < kdirect_pages + kdirect_num_pages;
 	     page++) {
 		size_t virt = (size_t) kdirect_start + page_address(page);
@@ -52,7 +51,6 @@ void vm_init(void)
 				   VM_P | VM_S | VM_G | VM_R | VM_W);
 		ASSERT_EQUALS(0, ret);
 	}
-	TRACE_ON;
 
 	/*
 	 * Finally switch off the boot virtual address space and into our new,

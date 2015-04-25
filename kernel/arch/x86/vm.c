@@ -312,9 +312,6 @@ int __map_page(struct entry_table *pd, unsigned long virt,
  */
 int mmu_map_page(void *pd, unsigned long virt, struct page *page, int flags)
 {
-	TRACE("pd=%p, virt=0x%x, page=0x%x, flags=%p",
-	      pd, virt, page_address(page), flags);
-
 	ASSERT(is_page_aligned(virt));
 
 	return __map_page((struct entry_table *) pd, virt, page, flags);

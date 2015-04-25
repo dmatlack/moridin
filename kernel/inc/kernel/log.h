@@ -1,56 +1,35 @@
 /**
  * @file debug/log.h
  */
-#ifndef __DEBUG_LOG_H__
-#define __DEBUG_LOG_H__
+#ifndef __KERNEL_LOG_H__
+#define __KERNEL_LOG_H__
 
 #include <fmt/_printf.h>
 #include <types.h>
 #include <stddef.h>
 #include <kernel/kprintf.h>
 
-#define LOG_LEVEL_OFF  -1
-#define LOG_LEVEL_ERROR 0
-#define LOG_LEVEL_WARN  1
-#define LOG_LEVEL_INFO  2
-#define LOG_LEVEL_DEBUG 3
-
-extern struct printf_state __log_printf_state;
-extern int                 __log_level;
-extern int                 __log_trace;
+#define LOG_ERROR 0
+#define LOG_WARN  1
+#define LOG_INFO  2
+#define LOG_DEBUG 3
 
 void log_init(int (*putchar)(int), int level);
-void log_setputchar(int (*putchar)(int));
-void log_setlevel(int level);
+int log(const char *fmt, ...);
+bool log_check(int level);
 
-int __log(const char *fmt, ...);
-int log(int log_level, const char *fmt, ...);
-int trace(const char *fmt, ...);
+#define log_level(_level, _fmt, ...) do {				\
+	if (!log_check(_level))						\
+		break;							\
+	log(_fmt, ##__VA_ARGS__);					\
+} while (0)
 
-#define TRACE_ON      do { __log_trace++; } while (0)
-#define TRACE_RESTORE do { __log_trace--; } while (0)
-#define TRACE_OFF     do { __log_trace = 0; } while (0)
+#define INFO(_fmt, ...)	  log_level(LOG_INFO, "I "_fmt"\n", ##__VA_ARGS__)
+#define WARN(_fmt, ...)   log_level(LOG_WARN, "W "_fmt"\n", ##__VA_ARGS__)
+#define ERROR(_fmt, ...)  log_level(LOG_ERROR, "E "_fmt"\n", ##__VA_ARGS__)
+#define DEBUG(_fmt, ...)  log_level(LOG_DEBUG, "D "_fmt"\n", ##__VA_ARGS__)
+#define FATAL(_fmt, ...)  log("F "_fmt"\n", ##__VA_ARGS__)
 
-#define INFO(fmt, ...) log(LOG_LEVEL_INFO, "[INFO] "fmt"\n", ##__VA_ARGS__)
-#define WARN(fmt, ...) log(LOG_LEVEL_WARN, "[WARN] "fmt"\n", ##__VA_ARGS__)
-#define ERROR(fmt, ...) log(LOG_LEVEL_ERROR, "[ERROR] "fmt"\n", ##__VA_ARGS__)
-#define PANIC(fmt, ...) log(LOG_LEVEL_ERROR, "[PANIC] "fmt"\n", ##__VA_ARGS__)
+#define TRACE(_fmt, ...) DEBUG("%s("_fmt")", __func__, ##__VA_ARGS__)
 
-#ifdef KDEBUG
-#define DEBUG_DO(...) \
-	do { \
-		log(LOG_LEVEL_DEBUG, __VA_ARGS__); \
-		kprintf(__VA_ARGS__); \
-	} while (0)
-
-#define DEBUG(fmt, ...) \
-	DEBUG_DO("[DEBUG][%s:%d %s()] "fmt"\n", __FILE__, __LINE__, __func__, ##__VA_ARGS__)
-
-#define TRACE(fmt, ...) \
-	trace("[TRACE] %s("fmt")\n", __func__, ##__VA_ARGS__)
-#else
-#define DEBUG(fmt, ...)
-#define TRACE(fmt, ...)
-#endif
-
-#endif /* !__DEBUG_LOG_H__ */
+#endif /* !__KERNEL_LOG_H__ */

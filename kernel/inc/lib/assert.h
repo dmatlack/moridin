@@ -13,10 +13,8 @@
 #define panic(_fmt, ...)						      \
 	do {								      \
 		disable_irqs();						      \
-		log(LOG_LEVEL_ERROR, "[PANIC][%s:%d %s()] "_fmt"\n",	      \
-			__FILE__, __LINE__, __func__, ##__VA_ARGS__);	      \
-		kprintf("[PANIC][%s:%d %s()] "_fmt"\n",			      \
-			__FILE__, __LINE__, __func__, ##__VA_ARGS__);	      \
+		FATAL("[%s:%d %s()] "_fmt,				      \
+		      __FILE__, __LINE__, __func__, ##__VA_ARGS__);	      \
 		backtrace();						      \
 		while (1) continue;					      \
 	} while (0)

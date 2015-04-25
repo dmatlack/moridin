@@ -26,5 +26,5 @@ void debug_init(void)
 	if (!debug_serial_port) {
 		panic("Could not reserve serial port for debugging.\n");
 	}
-	log_init(debug_putchar, LOG_LEVEL_DEBUG);
+	log_init(debug_putchar, LOG_DEBUG);
 }

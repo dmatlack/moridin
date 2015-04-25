@@ -514,7 +514,7 @@ BEGIN_TEST(mmap_test)
 	do { \
 		error = vm_munmap(_start, (_end) - (_start)); \
 		ASSERT(!error); \
-		vm_dump_maps(__log, &CURRENT_PROCESS->space); \
+		vm_dump_maps(log, &CURRENT_PROCESS->space); \
 	} while (0)
 
 	_MAP(0x80000000, 3 * PAGE_SIZE);
