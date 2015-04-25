@@ -134,7 +134,7 @@ struct vfs_dirent *vfs_get_dirent(char *path)
 		return NULL;
 	}
 
-	atomic_add(&d->refs, 1);
+	atomic_inc(&d->refs);
 	found = d;
 
 out:
@@ -148,7 +148,7 @@ out:
  */
 void vfs_put_dirent(struct vfs_dirent *d)
 {
-	atomic_add(&d->refs, -1);
+	atomic_dec(&d->refs);
 }
 
 /**
@@ -192,7 +192,7 @@ void vfs_file_put(struct vfs_file *file)
 {
 	vfs_put_dirent(file->dirent);
 
-	if (atomic_add(&file->refs, -1))
+	if (atomic_dec(&file->refs))
 		return;
 
 	kfree(file, sizeof(struct vfs_file));

@@ -28,9 +28,9 @@ extern struct page *phys_pages;
 	(phys_pages + ((_address) / PAGE_SIZE))
 
 #include <arch/atomic.h>
-#define page_get(_page) (atomic_add(&((_page)->count),  1))
+#define page_get(_page) (atomic_inc(&((_page)->count)))
 #define page_put(_page) do {						\
-	atomic_add(&((_page)->count), -1);				\
+	atomic_dec(&((_page)->count));					\
 	ASSERT((_page)->count >= 0);					\
 } while (0)
 

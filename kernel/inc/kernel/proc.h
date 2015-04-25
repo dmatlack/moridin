@@ -152,7 +152,7 @@ static inline void add_thread(struct process *p, struct thread *t)
 {
 	list_insert_tail(&p->threads, t, thread_link);
 	t->proc = p;
-	t->tid = atomic_add(&p->next_tid, 1);
+	t->tid = atomic_inc(&p->next_tid);
 }
 
 static inline void add_child_process(struct process *parent, struct process *child)

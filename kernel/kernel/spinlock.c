@@ -16,7 +16,7 @@ static inline void __lock(struct spinlock *s)
 	int my_ticket;
 
 	// FIXME: spinlock rely on overflow to correctly work
-	my_ticket = atomic_add(&s->ticket, 1);
+	my_ticket = atomic_inc(&s->ticket);
 
 	/*
 	 * Spin until the ticket being served equals my ticket. Hopefully

@@ -9,8 +9,6 @@
 #include <kernel/spinlock.h>
 #include <mm/kmalloc.h>
 
-#include <arch/atomic.h>
-
 #include <kernel/debug.h>
 #include <assert.h>
 #include <list.h>
@@ -50,7 +48,7 @@ void kernel_irq_handler(int irq)
 	if (list_empty(&desc->handlers))
 		goto out;
 
-	atomic_add(&desc->count, 1);
+	desc->count++;
 
 	list_foreach(handler, &desc->handlers, link) {
 		handler->f(&context);

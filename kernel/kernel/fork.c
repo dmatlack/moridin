@@ -24,7 +24,7 @@ int __next_pid = 2;
 
 int next_pid(void)
 {
-	return atomic_add(&__next_pid, 1);
+	return atomic_inc(&__next_pid);
 }
 
 pid_t sys_fork(void)
