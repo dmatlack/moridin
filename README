@@ -7,6 +7,7 @@ Features (LAST UPDATED: 03/30/2013)
       * getpid
       * fork
       * yield
+      * exit
 
   memory: arch/, mm/
     - physical memory management (frame allocator)
@@ -23,6 +24,9 @@ Features (LAST UPDATED: 03/30/2013)
     - vga (console) driver
     - pci device scanning/discovery
     - serial port
+
+  development
+    - symbolic kernel backtraces
 
 Build
 -------------------------------------------------------------------------------
@@ -56,9 +60,9 @@ Run
             --disable-docbook \
             --with-x --with-x11 --with-term
 
-  To run the kernel with qemu, emulating 1GB of memory, run: 
+  To run the kernel with qemu run: 
 
-    $ qemu-system-i386 -m 1024 OS.iso -serial stdio
+    $ ./qemu.sh
 
 Thanks
 -------------------------------------------------------------------------------
