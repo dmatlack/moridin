@@ -22,13 +22,13 @@ size_t sbrk(int incr);
 int stat(char *name, struct stat *st);
 int times(struct tms *buf);
 int unlink(char *name);
-int wait(int *status);
 #endif
 
 int write(int fd, char *ptr, int len);
 int getpid(void);
 int fork(void);
 void exit(int status);
+int wait(int *status);
 
 /*
  * System calls not part of newlib:

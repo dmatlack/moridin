@@ -9,7 +9,8 @@
 #define SYS_FORK		2
 #define SYS_YIELD		3
 #define SYS_EXIT		4
-#define SYS_MAX                 5
+#define SYS_WAIT		5
+#define SYS_MAX                 6
 
 #ifndef ASSEMBLER
 
@@ -22,6 +23,7 @@ int sys_getpid(void);
 pid_t sys_fork(void);
 int sys_yield(void);
 void sys_exit(int status);
+int sys_wait(int *status);
 
 void bad_syscall(int syscall);
 

@@ -3,25 +3,26 @@
 
 #include <kernel/spinlock.h>
 #include <kernel/proc.h>
+#include <kernel/wait.h>
 
 #include <lib/list.h>
 
 struct mutex {
 	struct spinlock lock;
-	thread_list_t threads; /* uses mutex_link */
+	struct wait wait;
 	struct thread *owner;
 };
 
 #define INITIALIZED_MUTEX {						\
 	.lock = INITIALIZED_SPINLOCK,					\
-	.threads = INITIALIZED_EMPTY_LIST,				\
+	.wait = INITIALIZED_WAIT,					\
 	.owner = NULL,							\
 }
 
 static inline void mutex_init(struct mutex *m)
 {
 	spin_lock_init(&m->lock);
-	list_init(&m->threads);
+	wait_init(&m->wait);
 	m->owner = NULL;
 }
 

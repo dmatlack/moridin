@@ -6,6 +6,7 @@
 #define SYS_FORK   2
 #define SYS_YIELD  3
 #define SYS_EXIT   4
+#define SYS_WAIT   5
 
 int __syscall(int system_call, void *arg1, void *arg2, void *arg3, void *arg4);
 

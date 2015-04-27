@@ -1,6 +1,7 @@
 #include <kernel/mutex.h>
 #include <kernel/proc.h>
 #include <kernel/sched.h>
+#include <kernel/wait.h>
 
 void mutex_aquire(struct mutex *m)
 {
@@ -10,10 +11,8 @@ void mutex_aquire(struct mutex *m)
 	spin_lock_irq(&m->lock, &flags);
 
 	while (m->owner) {
-		list_enqueue(&m->threads, current, state_link);
-		current->state = BLOCKED;
+		begin_wait(&m->wait);
 
-		disable_save_preemption();
 		spin_unlock_irq(&m->lock, flags);
 
 		/*
@@ -30,7 +29,6 @@ void mutex_aquire(struct mutex *m)
 		reschedule();
 
 		spin_lock_irq(&m->lock, &flags);
-		restore_preemption();
 	}
 
 	m->owner = current;
@@ -43,11 +41,8 @@ void mutex_release(struct mutex *m)
 
 	spin_lock_irq(&m->lock, &flags);
 
-	while (!list_empty(&m->threads)) {
-		struct thread *thread = list_dequeue(&m->threads, state_link);
-		make_runnable(thread);
-	}
-
 	m->owner = NULL;
+	kick(&m->wait);
+
 	spin_unlock_irq(&m->lock, flags);
 }

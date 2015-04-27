@@ -28,3 +28,8 @@ void exit(int status)
 {
 	SYSCALL1(SYS_EXIT, status);
 }
+
+int wait(int *status)
+{
+	return SYSCALL1(SYS_WAIT, status);
+}

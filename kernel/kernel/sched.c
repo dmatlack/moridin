@@ -12,7 +12,6 @@
 
 struct scheduler {
 	thread_list_t runnable;
-	thread_list_t exited; /* TODO remove this list from scheduler */
 	struct spinlock lock;
 };
 
@@ -55,11 +54,11 @@ void sched_switch_end(void)
 	struct thread *current = CURRENT_THREAD;
 	struct scheduler *s = &scheduler;
 
+	INFO("Context Switch to %d:%d.", current->proc->pid, current->tid);
+
 	arch_sched_switch_end();
 
 	__spin_unlock_irq(&s->lock, current->sched_switch_irqs);
-
-	INFO("Context Switch to %d:%d.", current->proc->pid, current->tid);
 }
 
 void reschedule(void)
@@ -89,8 +88,6 @@ void sched_switch(void)
 
 	if (current->state == RUNNABLE)
 		list_enqueue(&s->runnable, current, state_link);
-	if (current->state == EXITED)
-		list_enqueue(&s->exited, current, state_link);
 
 	next = list_dequeue(&s->runnable, state_link);
 	ASSERT(next);
@@ -119,7 +116,6 @@ void sched_init(void)
 	struct scheduler *s = &scheduler;
 
 	list_init(&s->runnable);
-	list_init(&s->exited);
 	spin_lock_init(&s->lock);
 
 	start_timer(CONFIG_TIMER_HZ);

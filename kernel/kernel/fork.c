@@ -32,6 +32,7 @@ pid_t sys_fork(void)
 	struct thread *current = CURRENT_THREAD;
 	struct thread *new_thread = NULL;
 	struct process *new_process = NULL;
+	unsigned long flags;
 	int error;
 
 	TRACE();
@@ -62,8 +63,12 @@ pid_t sys_fork(void)
 		goto sys_fork_fail;
 	}
 
+	spin_lock_irq(&process_lock, &flags);
+
 	add_thread(new_process, new_thread);
 	add_child_process(current->proc, new_process);
+
+	spin_unlock_irq(&process_lock, flags);
 
 	fork_context(new_thread);
 

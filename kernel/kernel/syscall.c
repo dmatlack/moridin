@@ -16,6 +16,7 @@ void *syscall_table[] =
 	[SYS_FORK]	= (void *) sys_fork,
 	[SYS_YIELD]	= (void *) sys_yield,
 	[SYS_EXIT]	= (void *) sys_exit,
+	[SYS_WAIT]	= (void *) sys_wait,
 };
 
 int sys_write(int fd, char *ptr, int len)

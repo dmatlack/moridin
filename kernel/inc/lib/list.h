@@ -2,6 +2,7 @@
  * @file list.h
  *
  */
+#include <stddef.h>
 
 #define list_typedef(elem_type)                                               \
   typedef struct {                                                            \

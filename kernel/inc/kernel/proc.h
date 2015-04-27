@@ -6,19 +6,17 @@
 #define __KERNEL_PROC_H__
 
 #include <kernel/compiler.h>
+#include <kernel/proc_types.h>
 #include <mm/kmalloc.h>
 #include <arch/atomic.h>
+#include <arch/reg.h>
 #include <mm/memory.h>
 #include <mm/vm.h>
 #include <list.h>
 
-struct thread;
-struct process;
+extern struct spinlock process_lock;
 
-list_typedef(struct thread) thread_list_t;
-list_typedef(struct process) proc_list_t;
-
-#include <arch/reg.h>
+#include <kernel/wait.h>
 
 #define _THREAD(stack_addr)		((struct thread *) PAGE_ALIGN_DOWN(stack_addr))
 #define _PROCESS(stack_addr)		((_THREAD(stack_addr))->proc)
@@ -36,11 +34,10 @@ list_typedef(struct process) proc_list_t;
 #define KSTACK_END			_KSTACK_END(CURRENT_THREAD)
 #define KSTACK_TOP			_KSTACK_TOP(CURRENT_THREAD)
 
-#define THREAD_STRUCT_ALIGN PAGE_SIZE
 struct thread {
 	char			kstack[KSTACK_SIZE];
-	struct process    *	proc;
-	struct registers  *	regs;
+	struct process *	proc;
+	struct registers *	regs;
 	void *			context;
 	int			tid;
 	int			preempt;
@@ -49,13 +46,13 @@ struct thread {
 	/*
 	 * Since sched_switch_irqs is initialized to zero, the child of
 	 * a fork will not have irqs enabled when it is first scheduled
-	 * ina (child_return_from_fork). However, irqs will be enabled
+	 * in (child_return_from_fork). However, irqs will be enabled
 	 * soon after that when the child returns into userspace.
 	 */
 	unsigned long		sched_switch_irqs;
 #define RUNNABLE	0x0 /* the default state: able to run */
 #define EXITED		0x1 /* unable to run, should not be scheduled */
-#define BLOCKED		0x2 /* blocked on a mutex */
+#define BLOCKED		0x2 /* blocked wait queue */
 	int			state;
 
 	/* used by the thread's proces */
@@ -69,7 +66,7 @@ struct thread {
 	 */
 	list_link(struct thread) state_link;
 
-} __aligned(THREAD_STRUCT_ALIGN);
+} __aligned(PAGE_SIZE);
 
 static inline bool __check_flags(struct thread *thread, u64 mask)
 {
@@ -92,15 +89,16 @@ static inline void clear_flags(u64 mask)
 }
 
 struct process {
-	struct process    *parent;
-	proc_list_t        children;
-	thread_list_t      threads;
-	struct vm_space    space;
-	int                next_tid;
-	int                pid;
+	struct process *	parent;
+	process_list_t		children;
+	thread_list_t		threads;
+	struct vm_space		space;
+	struct wait		wait;
+	int			next_tid;
+	int			pid;
+	int			status;
 
 	list_link(struct process) sibling_link;
-
 };
 
 #define num_threads(_proc) (list_size(&(_proc)->threads))
@@ -112,7 +110,7 @@ struct process {
 static inline struct thread *new_thread_struct() {
 	struct thread *t;
 
-	t = kmemalign(THREAD_STRUCT_ALIGN, sizeof(struct thread));
+	t = kmemalign(PAGE_SIZE, sizeof(struct thread));
 	if (t) {
 		memset(t, 0, sizeof(struct thread));
 	}
@@ -137,6 +135,7 @@ static inline struct process *new_process_struct()
 		list_init(&p->children);
 		list_init(&p->threads);
 		list_elem_init(p, sibling_link);
+		wait_init(&p->wait);
 		p->pid = next_pid();
 		p->next_tid = 0;
 	}

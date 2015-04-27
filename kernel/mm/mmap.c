@@ -212,6 +212,7 @@ int vm_page_fault(unsigned long addr, int flags)
 	 * ... or maybe stack growth ... (FIXME)
 	 */
 	if (!mapping) {
+		ERROR("Mapping not found!");
 		return EFAULT;
 	}
 
