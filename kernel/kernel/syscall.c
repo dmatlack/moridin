@@ -26,7 +26,7 @@ int sys_write(int fd, char *ptr, int len)
 	TRACE("fd=%d, ptr=%p, len=%d", fd, ptr, len);
 
 	for (i = 0; i < len; i++) {
-		kprintf("%c", ptr[i]);
+		log("%c", ptr[i]);
 	}
 
 	return 0;

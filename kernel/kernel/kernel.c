@@ -61,7 +61,7 @@ void kernel_main()
 	// Temporary hack to get to userspace with some test argv/arc
 	//////////////////////////////////////////////////////////////////////
 	{
-		#define INIT "/fork_test"
+		#define INIT "/init"
 		char *argv[4] = { INIT, "arg1", "arg2", ":)" };
 		int argc = 4;
 
