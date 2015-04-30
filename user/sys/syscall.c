@@ -8,14 +8,23 @@
 
 #include "syscall_internal.h"
 
+#define SYSCALL_ERROR( _ret ) ({					\
+	int __ret = (_ret);						\
+									\
+	if (__ret)							\
+		errno = __ret;						\
+									\
+	__ret ? -1 : 0;							\
+})
+
 int write(int fd, char *ptr, int len)
 {
-	return SYSCALL3(SYS_WRITE, fd, ptr, len);
+	return SYSCALL_ERROR(SYSCALL3(SYS_WRITE, fd, ptr, len));
 }
 
 int getpid(void)
 {
-	return SYSCALL0(SYS_GETPID);
+	return SYSCALL_ERROR(SYSCALL0(SYS_GETPID));
 }
 
 int fork(void)
@@ -25,7 +34,7 @@ int fork(void)
 
 int yield(void)
 {
-	return SYSCALL0(SYS_YIELD);
+	return SYSCALL_ERROR(SYSCALL0(SYS_YIELD));
 }
 
 void exit(int status)
@@ -35,7 +44,7 @@ void exit(int status)
 
 int wait(int *status)
 {
-	return SYSCALL1(SYS_WAIT, status);
+	return SYSCALL_ERROR(SYSCALL1(SYS_WAIT, status));
 }
 
 extern char _end;		/* Defined by the linker */

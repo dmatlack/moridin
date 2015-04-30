@@ -13,7 +13,7 @@ BIN = bin
 LIBC_LIBRARY = newlib/arch/$(ARCH)/libc.a
 LIBC_HEADERS = newlib/include
 
-INCLUDES = -I$(LIBC_HEADERS)
+INCLUDES = -I$(LIBC_HEADERS) -Iinclude
 
 
 #

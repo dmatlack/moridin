@@ -41,7 +41,7 @@ int sys_getpid(void)
 int sys_yield(void)
 {
 	TRACE();
-	sched_switch();
+	reschedule();
 	return 0;
 }
 
