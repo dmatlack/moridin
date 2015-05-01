@@ -65,6 +65,8 @@ void sys_exit(int status)
 
 	vm_space_destroy(&p->space);
 
+	vfs_file_put(p->binary);
+
 	process_exit(status);
 }
 

@@ -74,15 +74,13 @@ static void load_init_binary(char *path)
 	struct vfs_file *file;
 	int error;
 
-	file = vfs_file_get(path);
-	if (!file) {
-		panic("Failed to get file: %s", path);
-	}
+	file = new_vfs_file_from_path(path);
+	ASSERT(file);
 
 	error = load_binary(file);
-	if (error) {
-		panic("Failed to load %s into memory: %s", path, strerr(error));
-	}
+	ASSERT_EQUALS(0, error);
+
+	CURRENT_PROCESS->binary = file;
 }
 
 void __run_init(void *ignore)

@@ -88,18 +88,14 @@ struct vm_mapping *new_vm_mapping(unsigned long addr, unsigned long length,
 	m->flags = vmflags;
 	m->file = file;
 	m->foff = off;
-
-	if (file)
-		atomic_inc(&file->refs);
+	cond_vfs_file_get(file);
 
 	return m;
 }
 
 void free_vm_mapping(struct vm_mapping *m)
 {
-	if (m->file)
-		atomic_dec(&m->file->refs);
-
+	cond_vfs_file_put(m->file);
 	kfree(m, sizeof(*m));
 }
 

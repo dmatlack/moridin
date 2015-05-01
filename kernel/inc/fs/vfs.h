@@ -158,7 +158,24 @@ static inline void inode_init(struct vfs_inode *i, unsigned long inode)
  */
 void vfs_chroot(struct vfs_dirent *root);
 
-struct vfs_file *vfs_file_get(char *path);
+struct vfs_file *new_vfs_file_from_path(char *path);
+
+void vfs_file_get(struct vfs_file *file);
+void vfs_file_put(struct vfs_file *file);
+
+#define cond_vfs_file_get(_f) do {					\
+	struct vfs_file *__f = (_f);					\
+									\
+	if (__f)							\
+		vfs_file_get(__f);					\
+} while (0)
+
+#define cond_vfs_file_put(_f) do {					\
+	struct vfs_file *__f = (_f);					\
+									\
+	if (__f)							\
+		vfs_file_put(__f);					\
+} while (0)
 
 int     vfs_open  (struct vfs_file *file);
 void    vfs_close (struct vfs_file *file);

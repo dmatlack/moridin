@@ -445,8 +445,8 @@ int __vm_munmap(struct vm_space *space, unsigned long addr, unsigned long length
 				unmap_start = m->address;
 				unmap_end = addr + length;
 
-				if (m->file) m->foff +=
-					(unmap_end - unmap_start);
+				if (m->file)
+					m->foff += (unmap_end - unmap_start);
 				m->num_pages -=
 					(unmap_end - unmap_start) / PAGE_SIZE;
 				m->address = unmap_end;

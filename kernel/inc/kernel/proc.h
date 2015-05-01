@@ -94,6 +94,7 @@ struct process {
 	thread_list_t		threads;
 	struct vm_space		space;
 	struct wait		wait;
+	struct vfs_file *	binary;
 	int			next_tid;
 	int			pid;
 	int			status;
