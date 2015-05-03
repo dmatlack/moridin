@@ -6,7 +6,6 @@
 #include <arch/io.h>
 #include <arch/idt.h>
 #include <kernel/debug.h>
-#include <kernel/kprintf.h>
 
 void pic_remap(u32 master_offset, u32 slave_offset)
 {

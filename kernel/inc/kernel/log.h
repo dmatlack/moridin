@@ -7,7 +7,6 @@
 #include <fmt/_printf.h>
 #include <types.h>
 #include <stddef.h>
-#include <kernel/kprintf.h>
 
 #define LOG_ERROR 0
 #define LOG_WARN  1

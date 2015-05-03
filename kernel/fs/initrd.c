@@ -173,7 +173,9 @@ void initrd_init(void)
 	initrd_files = (struct initrd_file *) (initrd_location + sizeof(struct initrd_hdr));
 	ASSERT_EQUALS(INITRD_MAGIC, initrd->magic);
 
+#if 0
 	kprintf("initrd: 0x%08x\n", initrd);
+#endif
 
 	initrd_inodes_size = sizeof(struct vfs_inode) * (initrd->nfiles + 1);
 	initrd_inodes = kmalloc(initrd_inodes_size);
@@ -203,10 +205,12 @@ void initrd_init(void)
 
 		initrd_init_file(cur_dirent, cur_inode, initrd_files + i);
 
+#if 0
 		kprintf("  /%-10s: inode=%-2d 0x%06x - 0x%06x\n",
 				cur_dirent->name, cur_inode->inode,
 				initrd_location + (initrd_files + i)->data,
 				initrd_location + (initrd_files + i)->data + cur_inode->length);
+#endif
 	}
 
 	vfs_chroot(initrd_root_dirent);

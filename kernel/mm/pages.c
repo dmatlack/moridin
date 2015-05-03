@@ -6,7 +6,6 @@
 #include <mm/memory.h>
 
 #include <mm/kmalloc.h>
-#include <kernel/kprintf.h> //remove me
 #include <kernel/debug.h>
 
 #include <errno.h>
@@ -53,9 +52,11 @@ void pages_init(void)
 
 	memset(phys_pages, 0, sizeof(struct page) * phys_mem_pages);
 
+#if 0
 	kprintf("phys_pages: %d pages (page list: %d KB total)\n",
 			phys_mem_pages,
 			phys_mem_pages * sizeof(struct page) / KB(1));
+#endif
 
 	page_zones_init();
 }

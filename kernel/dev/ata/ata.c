@@ -486,9 +486,11 @@ int ata_drive_init(struct ata_drive *drive, struct ata_bus *bus,
 	/*
 	 * Do some printing for the boot screen.
 	 */
+#if 0
 	kprintf("  0x%03x: %s, %s, %d MB (irq %d)\n", 
 			drive->bus->cmd, drive->model, drive_type_string(drive->type),
 			drive->sectors * 512 / MB(1), drive->bus->irq);
+#endif
 
 	return 0;
 }

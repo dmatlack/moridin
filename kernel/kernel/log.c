@@ -12,8 +12,6 @@
 #include <assert.h>
 #include <string.h>
 
-#include <kernel/kprintf.h>
-
 struct logger {
 	struct printf_state state;
 	int level;

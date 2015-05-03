@@ -7,7 +7,6 @@
 #include <arch/reg.h>
 #include <arch/vm.h>
 
-#include <kernel/kprintf.h>
 #include <assert.h>
 #include <kernel/debug.h>
 #include <types.h>

@@ -215,7 +215,6 @@ void vga_init(void)
 	vga.cursor_row = 0;
 	vga.cursor_col = 0;
 	vga.color = VGA_WHITE;
-	kputchar_set(vga_putbyte);
 }
 
 void vga_putbyte(char ch)

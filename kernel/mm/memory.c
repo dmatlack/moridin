@@ -27,7 +27,9 @@ void mem_mb_init(struct multiboot_info *mb_info)
 	phys_mem_bytes = MB(1) + (KB(1) * mb_info->mem_upper);
 	phys_mem_pages = phys_mem_bytes / PAGE_SIZE;
 
+#if 0
 	kprintf("RAM: %d MB\n", phys_mem_bytes / MB(1));
+#endif
 
 	kdirect_start = CONFIG_KERNEL_VIRTUAL_START;
 
@@ -72,7 +74,9 @@ void mem_mb_init(struct multiboot_info *mb_info)
 	kmap_start = kdirect_end;
 	kmap_end = (char *) CONFIG_KERNEL_VIRTUAL_END;
 
+#if 0
 	kprintf("kimg:    0x%08x - 0x%08x\n", kimg_start, kimg_end);
 	kprintf("kheap:   0x%08x - 0x%08x\n", kheap_start, kheap_end);
 	kprintf("kmap:    0x%08x - 0x%08x\n", kmap_start, kmap_end);
+#endif
 }

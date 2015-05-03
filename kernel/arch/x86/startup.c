@@ -39,8 +39,10 @@ void arch_startup(void)
 	/*
 	 * Print out some symbols defined in arch/boot.S
 	 */
+#if 0
 	kprintf("boot_stack:    0x%08x, 0x%08x\n", boot_stack_bottom, boot_stack_top);
 	kprintf("boot_page_dir: 0x%08x\n", boot_page_dir);
+#endif
 
 	disable_fpu();
 

@@ -5,7 +5,6 @@
  */
 #include <kernel/loader.h>
 #include <mm/kmalloc.h>
-#include <kernel/kprintf.h>
 #include <kernel/elf.h>
 
 #include <arch/atomic.h>
