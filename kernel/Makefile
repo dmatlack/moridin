@@ -5,8 +5,7 @@
 ###############################################################################
 include ../config.mk
 
-SRCDIRS = boot          \
-          dev           \
+SRCDIRS = dev           \
           fs            \
           kernel        \
           lib           \
