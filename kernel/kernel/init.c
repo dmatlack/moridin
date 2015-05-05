@@ -80,7 +80,7 @@ static void load_init_binary(char *path)
 	error = load_binary(file);
 	ASSERT_EQUALS(0, error);
 
-	CURRENT_PROCESS->binary = file;
+	CURRENT_PROCESS->exec_file = file;
 }
 
 void __run_init(void *ignore)
@@ -104,7 +104,7 @@ void __run_init(void *ignore)
 
 	vm_dump_maps(log, &CURRENT_PROCESS->space);
 
-	_TEST_KERNEL_();
+	//_TEST_KERNEL_();
 
 	INFO("Jumping to userspace!");
 	jump_to_userspace();

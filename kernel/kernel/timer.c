@@ -17,7 +17,7 @@ void timer_tick(void)
 
 void set_timer(struct timer *t)
 {
-	INFO("Setting kernel timer to %s.\n", timer->name);
+	INFO("Setting kernel timer to %s.", t->name);
 	timer = t;
 }
 

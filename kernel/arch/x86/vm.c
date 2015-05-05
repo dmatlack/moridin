@@ -327,7 +327,8 @@ void page_fault(int vector, int error, struct registers *regs)
 	int flags = 0;
 	int ret;
 
-	TRACE("vector=%d, error=%d, regs=%p", vector, error, regs);
+	TRACE("vector=%d, error=%d, regs=%p [ cr2=0x%x ]",
+	      vector, error, regs, regs->cr2);
 
 	if (error & 1) flags |= PF_PRESENT;
 	if (error & 2) flags |= PF_WRITE;

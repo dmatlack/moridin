@@ -4,14 +4,17 @@
 #ifndef __KERNEL_LOG_H__
 #define __KERNEL_LOG_H__
 
+#include <kernel/config.h>
 #include <fmt/_printf.h>
 #include <types.h>
 #include <stddef.h>
 
-#define LOG_ERROR 0
-#define LOG_WARN  1
-#define LOG_INFO  2
-#define LOG_DEBUG 3
+/*
+ * Set up logging during early boot (will not use any locks, memory
+ * allocations, or any other features which require a full kernel
+ * initialization.
+ */
+void early_log_init(int (*putchar)(int), int level);
 
 void log_init(int (*putchar)(int), int level);
 int log(const char *fmt, ...);

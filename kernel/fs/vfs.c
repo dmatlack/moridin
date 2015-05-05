@@ -201,6 +201,8 @@ void vfs_file_get(struct vfs_file *file)
  */
 void vfs_file_put(struct vfs_file *file)
 {
+	TRACE("file=%p", file);
+
 	if (atomic_dec(&file->refs))
 		return;
 

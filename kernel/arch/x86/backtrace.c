@@ -23,7 +23,7 @@ void backtrace(void)
 	if (on_boot_stack()) {
 		stack_start = (void *) boot_stack_bottom;
 		stack_end = (void *) boot_stack_top;
-		INFO("boot");
+		INFO("early boot");
 	} else {
 		stack_start = (void *) KSTACK_START;
 		stack_end = (void *) KSTACK_END;

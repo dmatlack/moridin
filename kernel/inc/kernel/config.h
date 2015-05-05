@@ -29,4 +29,10 @@
  */
 #define CONFIG_TIMER_HZ 100
 
+#define LOG_ERROR 0
+#define LOG_WARN  1
+#define LOG_INFO  2
+#define LOG_DEBUG 3
+#define CONFIG_LOG_LEVEL LOG_INFO
+
 #endif /* !__KERNEL_CONFIG_H__ */

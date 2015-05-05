@@ -113,13 +113,11 @@ static void elf32_unmap(struct elf32_ehdr *ehdr, struct elf32_phdr *phdrs)
 
 static void log_phdr(struct elf32_phdr *p)
 {
-	INFO("\n"
-	     "  %-4s %-10s %-10s %-10s %-6s %-6s %-4s %-6s\n"
-	     "  %-4d 0x%08x 0x%08x 0x%08x %-6d %-6d 0x%02x 0x%04x",
-	     "type", "offset", "vaddr", "paddr", "filesz", "memsz", "flg",
-	     "align",
-	     p->p_type, p->p_offset, p->p_vaddr, p->p_paddr, p->p_filesz,
-	     p->p_memsz, p->p_flags, p->p_align);
+	INFO("%-4s %-10s %-10s %-10s %-6s %-6s %-4s %-6s",
+	     "type", "offset", "vaddr", "paddr", "filesz", "memsz", "flg", "align");
+
+	INFO("%-4d 0x%08x 0x%08x 0x%08x %-6d %-6d 0x%02x 0x%04x",
+	     p->p_type, p->p_offset, p->p_vaddr, p->p_paddr, p->p_filesz, p->p_memsz, p->p_flags, p->p_align);
 }
 
 /**

@@ -27,6 +27,11 @@ void log_init(int (*putchar)(int), int level)
 	logger.state.putchar = putchar;
 }
 
+void early_log_init(int (*putchar)(int), int level)
+{
+	log_init(putchar, level);
+}
+
 bool log_check(int level)
 {
 	return level <= logger.level;

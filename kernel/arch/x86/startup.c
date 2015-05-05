@@ -6,7 +6,7 @@
 #include <arch/exn.h>
 #include <arch/idt.h>
 #include <arch/irq.h>
-#include <dev/serial.h>
+#include <dev/serial/8250.h>
 #include <kernel/debug.h>
 #include <assert.h>
 
@@ -22,7 +22,6 @@ extern char boot_page_dir[];
 void invalid_interrupt(void) { panic("INVALID INTERRUPT OCCURRED"); }
 
 /* x86 startup routines */
-extern void init_8250(void);
 extern void init_8253(void);
 
 /**
@@ -32,6 +31,10 @@ void arch_startup(void)
 {
 	int vector;
 
+	/* Try to begin logging to the serial console. */
+	early_init_8250();
+	early_log_init(early_i8250_putchar, CONFIG_LOG_LEVEL);
+
 	ASSERT_EQUALS((size_t) kernel_idt, 0x10000c);
 	ASSERT_EQUALS((size_t) kernel_gdt, 0x10080c);
 	ASSERT_EQUALS((size_t) kernel_tss, 0x10083c);
@@ -39,10 +42,8 @@ void arch_startup(void)
 	/*
 	 * Print out some symbols defined in arch/boot.S
 	 */
-#if 0
-	kprintf("boot_stack:    0x%08x, 0x%08x\n", boot_stack_bottom, boot_stack_top);
-	kprintf("boot_page_dir: 0x%08x\n", boot_page_dir);
-#endif
+	INFO("boot_stack:    0x%08x, 0x%08x", boot_stack_bottom, boot_stack_top);
+	INFO("boot_page_dir: 0x%08x", boot_page_dir);
 
 	disable_fpu();
 

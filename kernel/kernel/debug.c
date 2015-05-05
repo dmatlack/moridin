@@ -2,6 +2,7 @@
  * @file debug/debug.c
  */
 #include <kernel/debug.h>
+#include <kernel/config.h>
 #include <kernel/log.h>
 #include <dev/bochs.h>
 
@@ -26,5 +27,5 @@ void debug_init(void)
 	if (!debug_serial_port) {
 		panic("Could not reserve serial port for debugging.\n");
 	}
-	log_init(debug_putchar, LOG_INFO);
+	log_init(debug_putchar, CONFIG_LOG_LEVEL);
 }

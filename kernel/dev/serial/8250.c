@@ -4,29 +4,13 @@
  * @brief Device driver for 8250 UART.
  */
 #include <dev/serial.h>
+#include <dev/serial/8250.h>
 #include <arch/io.h>
 #include <lib/stddef.h>
 #include <kernel/spinlock.h>
 
-/*
- * Offsets into the Serial Port I/O Space.
- *
- * The first 2 bytes can be used in 2 ways. When DLAB (Divisor Latch Access
- * Bit, bit 7 of SERIAL_PORT_LINE_CTL) is set, the first two bytes act
- * as writable registers for setting the Baud divisor. When DLAB is not set,
- * the first two bytes act as the DATA and IRQ registers.
- */
-#define SERIAL_PORT_DATA          0x00
-#define SERIAL_PORT_IRQ           0x01
-#define SERIAL_PORT_BAUD_LSB      0x00
-#define SERIAL_PORT_BAUD_MSB      0x01
-#define SERIAL_PORT_FIFO_CTL      0x02
-#define SERIAL_PORT_IIR           0x02
-#define SERIAL_PORT_LINE_CTL      0x03
-#define SERIAL_PORT_MODEM_CTL     0x04
-#define SERIAL_PORT_LINE_STATUS   0x05
-#define SERIAL_PORT_MODEM_STATUS  0x06
-#define SERIAL_PORT_SRATCH        0x07
+static int i8250_init(struct serial_port *s);
+static void i8250_putchar(struct serial_port *s, char c);
 
 struct i8250_port {
 	struct serial_port serial;
@@ -34,6 +18,24 @@ struct i8250_port {
 	u16 base;
 	int irq;
 };
+
+#define DECLARE_I8250_PORT(_base, _irq, _name) {			\
+	.serial = {							\
+		.init = i8250_init,					\
+		.putchar = i8250_putchar,				\
+		.name = _name,						\
+	},								\
+	.base = _base,							\
+	.irq = _irq,							\
+}
+
+struct i8250_port i8250_ports[] = {
+	DECLARE_I8250_PORT(0x3f8, 4, "COM1"),
+	DECLARE_I8250_PORT(0x2f8, 3, "COM2"),
+	DECLARE_I8250_PORT(0x3e8, 4, "COM3"),
+	DECLARE_I8250_PORT(0x3e8, 3, "COM4"),
+};
+
 
 struct i8250_port *to_i8250(struct serial_port *ptr)
 {
@@ -79,6 +81,16 @@ static int i8250_init(struct serial_port *s)
 	return 0;
 }
 
+int early_i8250_putchar(int c)
+{
+	struct i8250_port *p = i8250_ports + 0;
+
+	while ((inb(p->base + SERIAL_PORT_LINE_STATUS) & 0x20) == 0);
+	outb(p->base + SERIAL_PORT_DATA, c);
+
+	return 0;
+}
+
 static void i8250_putchar(struct serial_port *s, char c)
 {
 	struct i8250_port *p = to_i8250(s);
@@ -92,27 +104,15 @@ static void i8250_putchar(struct serial_port *s, char c)
 	spin_unlock_irq(&p->lock, flags);
 }
 
-#define DECLARE_I8250_PORT(_base, _irq, _name) {			\
-	.serial = {							\
-		.init = i8250_init,					\
-		.putchar = i8250_putchar,				\
-		.name = _name,						\
-	},								\
-	.base = _base,							\
-	.irq = _irq,							\
-}
-
-struct i8250_port i8250_ports[] = {
-	DECLARE_I8250_PORT(0x3f8, 4, "COM1"),
-	DECLARE_I8250_PORT(0x2f8, 3, "COM2"),
-	DECLARE_I8250_PORT(0x3e8, 4, "COM3"),
-	DECLARE_I8250_PORT(0x3e8, 3, "COM4"),
-};
-
 void init_8250(void)
 {
 	register_serial_port(&i8250_ports[0].serial);
 	register_serial_port(&i8250_ports[1].serial);
 	register_serial_port(&i8250_ports[2].serial);
 	register_serial_port(&i8250_ports[3].serial);
+}
+
+void early_init_8250(void)
+{
+	return;
 }

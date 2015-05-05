@@ -26,7 +26,7 @@ void exn_panic(int vector, int error, struct registers *regs)
 {
 	struct x86_exn *exn = &x86_exceptions[vector];
 
-	DEBUG("\n"
+	ERROR("\n"
 	"-------------------------------------------------------------------\n"
 	"%d %s %s (cause: %s)\n"
 	"-------------------------------------------------------------------\n"

@@ -48,7 +48,7 @@ pid_t sys_fork(void)
 
 	error = ENOMEM;
 
-	new_process = new_process_struct();
+	new_process = fork_process_struct(CURRENT_PROCESS);
 	if (!new_process) {
 		goto sys_fork_fail;
 	}

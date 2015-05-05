@@ -94,7 +94,7 @@ struct process {
 	thread_list_t		threads;
 	struct vm_space		space;
 	struct wait		wait;
-	struct vfs_file *	binary;
+	struct vfs_file *	exec_file;
 	int			next_tid;
 	int			pid;
 	int			status;
@@ -132,15 +132,30 @@ static inline struct process *new_process_struct()
 	struct process *p;
 
 	p = kmalloc(sizeof(struct process));
-	if (p) {
-		list_init(&p->children);
-		list_init(&p->threads);
-		list_elem_init(p, sibling_link);
-		wait_init(&p->wait);
-		p->pid = next_pid();
-		p->next_tid = 0;
-	}
+	if (!p)
+		return NULL;
+
+	list_init(&p->children);
+	list_init(&p->threads);
+	list_elem_init(p, sibling_link);
+	wait_init(&p->wait);
+	p->pid = next_pid();
+	p->next_tid = 0;
+
 	return p;
+}
+
+static inline struct process *fork_process_struct(struct process *parent)
+{
+	struct process *child;
+
+	child = new_process_struct();
+	if (!child)
+		return NULL;
+
+	child->exec_file = parent->exec_file;
+
+	return child;
 }
 
 static inline void free_process_struct(struct process *p)
