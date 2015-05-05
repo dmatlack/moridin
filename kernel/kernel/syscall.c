@@ -5,8 +5,8 @@
 #include <kernel/syscall.h>
 #include <kernel/proc.h>
 #include <kernel/sched.h>
-
-#include <kernel/debug.h>
+#include <kernel/log.h>
+#include <lib/assert.h>
 
 void *syscall_table[] =
 {

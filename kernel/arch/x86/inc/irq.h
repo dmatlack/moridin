@@ -9,7 +9,6 @@
 #include <arch/pic.h>
 #include <arch/reg.h>
 
-#include <kernel/debug.h>
 #include <kernel/irq.h>
 #include <list.h>
 

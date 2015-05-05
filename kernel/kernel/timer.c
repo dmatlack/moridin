@@ -3,9 +3,10 @@
  *
  */
 #include <kernel/timer.h>
-#include <kernel/debug.h>
 #include <kernel/config.h>
 #include <kernel/sched.h>
+#include <kernel/log.h>
+#include <lib/assert.h>
 
 /* The timer used to by the kernel. */
 struct timer *timer = NULL;

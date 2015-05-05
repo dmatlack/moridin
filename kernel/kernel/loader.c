@@ -10,7 +10,6 @@
 #include <arch/atomic.h>
 
 #include <errno.h>
-#include <kernel/debug.h>
 #include <assert.h>
 
 #include <fs/vfs.h>

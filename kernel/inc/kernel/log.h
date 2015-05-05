@@ -16,7 +16,8 @@
  */
 void early_log_init(int (*putchar)(int), int level);
 
-void log_init(int (*putchar)(int), int level);
+void log_init(void);
+
 int log(const char *fmt, ...);
 bool log_check(int level);
 

@@ -16,7 +16,6 @@
 
 #include <stddef.h>
 #include <errno.h>
-#include <kernel/debug.h>
 #include <assert.h>
 
 #include <arch/vm.h>

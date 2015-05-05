@@ -10,7 +10,6 @@
 #include <mm/kmalloc.h>
 
 #include <assert.h>
-#include <kernel/debug.h>
 #include <errno.h>
 
 #include <arch/vm.h>

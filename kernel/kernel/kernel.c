@@ -2,7 +2,6 @@
  * @file kernel.c
  */
 #include <kernel/config.h>
-#include <kernel/debug.h>
 #include <kernel/init.h>
 #include <kernel/irq.h>
 #include <kernel/loader.h>
@@ -35,7 +34,7 @@ void kernel_main()
 {
 	arch_startup();
 
-	debug_init();
+	log_init();
 
 	/*
 	 * Set up kmalloc to only allocate dynamic memory in the first 16 MB of

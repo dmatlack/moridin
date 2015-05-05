@@ -6,7 +6,6 @@
 #define _ASSERT_H_
 
 #include <stddef.h>
-#include <kernel/debug.h>
 #include <kernel/log.h>
 #include <arch/irq.h>
 

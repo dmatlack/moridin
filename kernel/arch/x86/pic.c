@@ -5,7 +5,6 @@
 #include <arch/pic.h>
 #include <arch/io.h>
 #include <arch/idt.h>
-#include <kernel/debug.h>
 
 void pic_remap(u32 master_offset, u32 slave_offset)
 {

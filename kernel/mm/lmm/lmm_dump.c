@@ -25,7 +25,6 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wtype-limits"
 
-#include <kernel/debug.h>
 #include <assert.h>
 
 #include <mm/lmm.h>

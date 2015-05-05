@@ -4,7 +4,6 @@
 #include <fs/vfs.h>
 
 #include <kernel/mutex.h>
-#include <kernel/debug.h>
 
 #include <mm/memory.h>
 #include <mm/kmalloc.h>
@@ -15,6 +14,7 @@
 #include <types.h>
 #include <string.h>
 #include <list.h>
+#include <assert.h>
 #include <errno.h>
 
 struct vfs_dirent *__vfs_root_dirent = NULL;

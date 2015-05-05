@@ -11,7 +11,6 @@
 
 #include <kernel/irq.h>
 
-#include <kernel/debug.h>
 #include <assert.h>
 
 /*

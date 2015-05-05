@@ -17,7 +17,6 @@
 #include <dev/ide.h>
 
 #include <errno.h>
-#include <kernel/debug.h>
 #include <assert.h>
 #include <arch/io.h>
 

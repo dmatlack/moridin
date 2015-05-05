@@ -7,7 +7,6 @@
 #include <arch/idt.h>
 #include <arch/irq.h>
 #include <dev/serial/8250.h>
-#include <kernel/debug.h>
 #include <assert.h>
 #include <boot/multiboot.h>
 

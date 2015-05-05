@@ -6,12 +6,12 @@
 #include <dev/pci.h>
 #include <string.h>
 #include <stdint.h>
-#include <kernel/debug.h>
 #include <errno.h>
 #include <arch/io.h>
 #include <types.h>
 #include <stddef.h>
 #include <mm/memory.h>
+#include <assert.h>
 
 struct pci_bus *__pci_root;
 

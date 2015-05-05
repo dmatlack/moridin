@@ -3,7 +3,6 @@
  */
 #include <mm/pages.h>
 #include <arch/vm.h>
-#include <kernel/debug.h>
 #include <kernel/spinlock.h>
 #include <assert.h>
 

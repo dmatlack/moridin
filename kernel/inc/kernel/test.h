@@ -5,7 +5,7 @@
 #define __KERNEL_TEST_H__
 
 #include <mm/kmalloc.h>
-#include <kernel/debug.h>
+#include <kernel/log.h>
 
 typedef void (*test_f)(void);
 

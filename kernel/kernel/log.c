@@ -3,7 +3,10 @@
  *
  * TODO: support time-stamped log messages
  */
-#include <kernel/debug.h>
+#include <kernel/log.h>
+#include <kernel/config.h>
+#include <dev/bochs.h>
+#include <dev/serial.h>
 
 #include <stddef.h>
 #include <types.h>
@@ -15,21 +18,37 @@
 struct logger {
 	struct printf_state state;
 	int level;
+	struct serial_port *serial_port;
 };
 
 static struct logger logger;
 
-void log_init(int (*putchar)(int), int level)
+int log_putchar(int c)
 {
-	memset(&logger, 0, sizeof(logger));
+	if (logger.serial_port)
+		serial_putchar(logger.serial_port, (char) c);
 
-	logger.level = level;
-	logger.state.putchar = putchar;
+#ifdef BOCHS
+	bochs_putchar(c);
+#endif
+
+	return c;
+}
+
+void log_init(void)
+{
+	logger.level = CONFIG_LOG_LEVEL;
+	logger.state.putchar = log_putchar;
+
+	/* TODO: allow other ways of logging. */
+	logger.serial_port = reserve_serial_port("log");
+	ASSERT(logger.serial_port);
 }
 
 void early_log_init(int (*putchar)(int), int level)
 {
-	log_init(putchar, level);
+	logger.level = level;
+	logger.state.putchar = putchar;
 }
 
 bool log_check(int level)

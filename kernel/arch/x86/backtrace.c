@@ -3,6 +3,7 @@
  */
 #include <kernel/proc.h>
 #include <kernel/symbols.h>
+#include <kernel/log.h>
 #include <arch/reg.h>
 
 extern char boot_stack_bottom[];

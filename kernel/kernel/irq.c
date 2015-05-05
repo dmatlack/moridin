@@ -9,7 +9,6 @@
 #include <kernel/spinlock.h>
 #include <mm/kmalloc.h>
 
-#include <kernel/debug.h>
 #include <assert.h>
 #include <list.h>
 #include <errno.h>

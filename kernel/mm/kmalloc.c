@@ -7,7 +7,6 @@
  * TODO locking
  */
 #include <mm/kmalloc.h>
-#include <kernel/debug.h>
 #include <kernel/spinlock.h>
 
 #include <stddef.h>

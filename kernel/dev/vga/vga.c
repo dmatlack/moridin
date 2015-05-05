@@ -8,7 +8,6 @@
 #include <arch/io.h>
 
 #include <assert.h>
-#include <kernel/debug.h>
 
 #define OFFSET(row, col) ((row)*(VGA_COLS) + (col))
 #define ROW(offset)      ((offset)/(VGA_COLS))

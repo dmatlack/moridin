@@ -13,7 +13,6 @@
 
 #include <types.h>
 #include <stdint.h>
-#include <kernel/debug.h>
 #include <list.h>
 #include <string.h>
 

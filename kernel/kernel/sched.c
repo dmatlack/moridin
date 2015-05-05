@@ -9,6 +9,7 @@
 #include <arch/irq.h>
 #include <arch/syscall.h>
 #include <list.h>
+#include <assert.h>
 
 struct scheduler {
 	thread_list_t runnable;

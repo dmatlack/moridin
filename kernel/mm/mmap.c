@@ -6,7 +6,6 @@
 #include <mm/vm.h>
 
 #include <kernel/config.h>
-#include <kernel/debug.h>
 #include <kernel/log.h>
 #include <kernel/proc.h>
 

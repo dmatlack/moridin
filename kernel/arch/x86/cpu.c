@@ -12,7 +12,6 @@
 
 #include <stdint.h>
 #include <stddef.h>
-#include <kernel/debug.h>
 
 #include <kernel/proc.h>
 

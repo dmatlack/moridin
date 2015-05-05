@@ -7,9 +7,10 @@
 #include <dev/ata.h>
 
 #include <kernel/irq.h>
+#include <kernel/log.h>
 #include <errno.h>
-#include <kernel/debug.h>
 #include <string.h>
+#include <assert.h>
 
 #include <arch/io.h>
 

@@ -17,7 +17,6 @@
 
 #include <stddef.h>
 #include <assert.h>
-#include <kernel/debug.h>
 #include <errno.h>
 
 static inline bool is_page_aligned(unsigned long addr)

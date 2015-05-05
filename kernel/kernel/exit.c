@@ -7,7 +7,9 @@
 #include <kernel/spinlock.h>
 #include <kernel/init.h>
 #include <kernel/wait.h>
+#include <kernel/log.h>
 #include <lib/errno.h>
+#include <lib/assert.h>
 
 struct spinlock process_lock = INITIALIZED_SPINLOCK;
 

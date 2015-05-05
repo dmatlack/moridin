@@ -6,7 +6,6 @@
 #include <mm/memory.h>
 
 #include <mm/kmalloc.h>
-#include <kernel/debug.h>
 
 #include <errno.h>
 #include <stddef.h>
