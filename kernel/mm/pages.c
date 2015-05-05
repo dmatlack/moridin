@@ -52,11 +52,8 @@ void pages_init(void)
 
 	memset(phys_pages, 0, sizeof(struct page) * phys_mem_pages);
 
-#if 0
-	kprintf("phys_pages: %d pages (page list: %d KB total)\n",
-			phys_mem_pages,
-			phys_mem_pages * sizeof(struct page) / KB(1));
-#endif
+	INFO("phys_pages: %d pages (page list: %d KB total)",
+	     phys_mem_pages, phys_mem_pages * sizeof(struct page) / KB(1));
 
 	page_zones_init();
 }

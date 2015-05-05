@@ -62,9 +62,7 @@ int piix_ide_device_init(struct pci_device *pci_d)
 			pci_d->bus, pci_d->device, pci_d->func,
 			pci_d->device_id);
 
-#if 0
-	kprintf("PIIX IDE Controller:\n");
-#endif
+	INFO("PIIX IDE Controller:");
 
 	/*
 	 * BAR 4 of the PCI configuration space holds the bus master base address

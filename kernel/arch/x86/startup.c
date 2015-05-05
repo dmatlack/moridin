@@ -9,6 +9,7 @@
 #include <dev/serial/8250.h>
 #include <kernel/debug.h>
 #include <assert.h>
+#include <boot/multiboot.h>
 
 extern void __syscall_entry(void);
 
@@ -24,9 +25,6 @@ void invalid_interrupt(void) { panic("INVALID INTERRUPT OCCURRED"); }
 /* x86 startup routines */
 extern void init_8253(void);
 
-/**
- * @brief This function initializes most parts of the x86 system.
- */
 void arch_startup(void)
 {
 	int vector;
@@ -38,6 +36,8 @@ void arch_startup(void)
 	ASSERT_EQUALS((size_t) kernel_idt, 0x10000c);
 	ASSERT_EQUALS((size_t) kernel_gdt, 0x10080c);
 	ASSERT_EQUALS((size_t) kernel_tss, 0x10083c);
+
+	multiboot_init();
 
 	/*
 	 * Print out some symbols defined in arch/boot.S

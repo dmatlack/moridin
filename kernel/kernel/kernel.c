@@ -1,8 +1,5 @@
 /**
  * @file kernel.c
- *
- * Welcome. Have a look around.
- *
  */
 #include <kernel/config.h>
 #include <kernel/debug.h>
@@ -32,14 +29,12 @@
 #include <fs/initrd.h>
 #include <fs/vfs.h>
 
-/**
- * @brief This is main logical entry point for the kernel, not to be confused
- * with the actual entry point, _start. Also not to be confused the multiboot
- * entry point mb_entry. Ok so it's not the entry point, but it is an entry
- * point.
- */
+extern void arch_startup(void);
+
 void kernel_main()
 {
+	arch_startup();
+
 	debug_init();
 
 	/*

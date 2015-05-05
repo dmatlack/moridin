@@ -524,14 +524,13 @@ void pci_init(void)
 
 	//lspci();
 
-#if 0
 	struct pci_device *d;
-	kprintf("PCI: \n");
 	list_foreach(d, &__pci_devices, global_link) {
-		kprintf("  %02x:%02x.%02x %04x %04x %s\n",
-				d->bus, d->device, d->func, d->vendor_id, d->device_id, d->device_desc);
+		INFO("pci: %02x:%02x.%02x %04x %04x %s",
+		     d->bus, d->device, d->func, d->vendor_id,
+		     d->device_id, d->device_desc);
 	}
-#endif
+
 	/*
 	 * register the default drivers
 	 */

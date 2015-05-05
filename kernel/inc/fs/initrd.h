@@ -33,6 +33,8 @@ struct initrd_file {
 	uint32_t length;
 };
 
+extern size_t initrd_location;
+
 void initrd_init(void);
 
 #endif /* !__FS_INITRD_H__ */

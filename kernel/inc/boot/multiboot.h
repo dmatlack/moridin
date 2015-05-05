@@ -220,6 +220,7 @@ typedef struct multiboot_mod_list multiboot_module_t;
 
 #include <arch/exn.h>
 #include <types.h>
+void multiboot_init(void);
 void mb_dump(printf_f p, struct multiboot_info *mb_info);
 size_t mb_mod_start(struct multiboot_info *mb_info, int index);
 

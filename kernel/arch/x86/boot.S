@@ -29,6 +29,9 @@
 .global lidt
 .global _start
 
+.extern multiboot_magic
+.extern multiboot_info
+
 # Declare constants used for creating a multiboot header.
 .set MULTIBOOT_HEADER_FLAGS, MULTIBOOT_PAGE_ALIGN | MULTIBOOT_MEMORY_INFO
 .set MULTIBOOT_HEADER_CHECKSUM, -(MULTIBOOT_HEADER_MAGIC + MULTIBOOT_HEADER_FLAGS)
@@ -128,8 +131,8 @@ _start:
 	push $0x0                   # fake previous base pointer
 	mov %esp, %ebp
 
-	pushl %ebx                  # push the address of the multiboot info struct
-	pushl %eax                  # push the multiboot magic value
+	movl %eax, multiboot_magic
+	movl %ebx, multiboot_info
 
 	movl $kernel_tss, %eax      # set up the Global Descriptor Table
 	subl $kernel_gdt, %eax
@@ -153,12 +156,7 @@ _start:
 	call boot_paging_init
 
 	movl %ebp, %esp             # restore the stack
-	subl $8, %esp               # move the stack pointer down below the
-	                            # multiboot info struct address and the
-	                            # multiboot magic value.
-	call mb_entry               # mb_entry(multiboot_magic, multiboot_info)
-
-	# Y U RETURN FROM KERNEL?
+	call kernel_main
 
 	cli                         # disable interrupts
 	hlt                         # halt the cpu until the next interrupt arrives
